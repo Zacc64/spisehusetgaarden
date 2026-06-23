@@ -1,0 +1,8 @@
+.DS_Store
+Thumbs.db
+.vercel
+node_modules
+Attachments-(No Subject)/
+assets/images/*.png
+assets/images/katalog.jpg
+assets/images/risbjergaard.jpg
