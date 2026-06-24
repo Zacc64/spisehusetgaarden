@@ -2,6 +2,7 @@
 Thumbs.db
 .vercel
 node_modules
+gh-login*.txt
 Attachments-(No Subject)/
 assets/images/*.png
 assets/images/katalog.jpg
