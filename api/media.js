@@ -22,17 +22,12 @@ module.exports = async (req, res) => {
       return;
     }
 
+    const buffer = Buffer.from(await new Response(result.stream).arrayBuffer());
+
     res.statusCode = 200;
     res.setHeader("Content-Type", result.blob?.contentType || "application/octet-stream");
     res.setHeader("Cache-Control", "public, max-age=86400");
-
-    const reader = result.stream.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(Buffer.from(value));
-    }
-    res.end();
+    res.end(buffer);
   } catch (err) {
     sendJson(res, 500, { error: err.message || "Could not load media" });
   }
