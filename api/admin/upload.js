@@ -1,5 +1,6 @@
-const { saveUploadedImage } = require("../../lib/menu-store");
-const { requireAuth } = require("../../lib/auth");
+const { saveUploadedImage } = require("../_lib/menu-store");
+const { requireAuth } = require("../_lib/auth");
+const { sendJson } = require("../_lib/http");
 
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
@@ -11,24 +12,24 @@ function parseMultipart(req) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  if (!requireAuth(req, res)) return;
-
-  const contentType = req.headers["content-type"] || "";
-  if (!contentType.includes("multipart/form-data")) {
-    res.status(400).json({ error: "Forventet multipart upload" });
-    return;
-  }
-
   try {
+    if (req.method !== "POST") {
+      sendJson(res, 405, { error: "Method not allowed" });
+      return;
+    }
+
+    if (!requireAuth(req, res, sendJson)) return;
+
+    const contentType = req.headers["content-type"] || "";
+    if (!contentType.includes("multipart/form-data")) {
+      sendJson(res, 400, { error: "Forventet multipart upload" });
+      return;
+    }
+
     const body = await parseMultipart(req);
     const boundary = contentType.split("boundary=")[1];
     if (!boundary) {
-      res.status(400).json({ error: "Ugyldig upload" });
+      sendJson(res, 400, { error: "Ugyldig upload" });
       return;
     }
 
@@ -49,13 +50,15 @@ module.exports = async (req, res) => {
     }
 
     if (!fileBuffer || fileBuffer.length === 0) {
-      res.status(400).json({ error: "Ingen fil modtaget" });
+      sendJson(res, 400, { error: "Ingen fil modtaget" });
       return;
     }
 
     const imageUrl = saveUploadedImage({ buffer: fileBuffer, originalname });
-    res.json({ imageUrl });
+    sendJson(res, 200, { imageUrl });
   } catch (err) {
-    res.status(400).json({ error: err.message || "Upload fejlede" });
+    sendJson(res, 400, {
+      error: err.message || "Upload fejlede i produktion",
+    });
   }
 };

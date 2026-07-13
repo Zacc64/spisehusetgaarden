@@ -3,8 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const { readMenu, writeMenu, saveUploadedImage } = require("./lib/menu-store");
-const { createToken, verifyPassword, requireAuth } = require("./lib/auth");
+const { readMenu, writeMenu, saveUploadedImage } = require("./api/_lib/menu-store");
+const { createToken, verifyPassword, requireAuth } = require("./api/_lib/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3456;

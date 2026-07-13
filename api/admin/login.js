@@ -1,16 +1,23 @@
-const { createToken, verifyPassword } = require("../../lib/auth");
+const { createToken, verifyPassword } = require("../_lib/auth");
+const { sendJson, readJsonBody } = require("../_lib/http");
 
-module.exports = (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
+module.exports = async (req, res) => {
+  try {
+    if (req.method !== "POST") {
+      sendJson(res, 405, { error: "Method not allowed" });
+      return;
+    }
+
+    const body = await readJsonBody(req);
+    const { password } = body || {};
+
+    if (!verifyPassword(password)) {
+      sendJson(res, 401, { error: "Forkert adgangskode" });
+      return;
+    }
+
+    sendJson(res, 200, { token: createToken() });
+  } catch {
+    sendJson(res, 500, { error: "Login fejlede" });
   }
-
-  const { password } = req.body || {};
-  if (!verifyPassword(password)) {
-    res.status(401).json({ error: "Forkert adgangskode" });
-    return;
-  }
-
-  res.json({ token: createToken() });
 };

@@ -81,14 +81,21 @@ loginForm.addEventListener("submit", async (e) => {
   });
 
   if (!res.ok) {
-    loginError.textContent = "Forkert adgangskode";
+    const err = await res.json().catch(() => ({}));
+    loginError.textContent =
+      err.error ||
+      (res.status === 401 ? "Forkert adgangskode" : "Kunne ikke logge ind — prøv igen");
     loginError.hidden = false;
     return;
   }
 
   const { token } = await res.json();
   setToken(token);
-  await loadMenu();
+  try {
+    await loadMenu();
+  } catch {
+    // Still open editor if menu fetch fails after successful login.
+  }
   showEditor();
 });
 

@@ -46,10 +46,14 @@ function getBearerToken(req) {
   return header.slice(7).trim();
 }
 
-function requireAuth(req, res) {
+function requireAuth(req, res, sendJson) {
   const token = getBearerToken(req);
   if (!verifyToken(token)) {
-    res.status(401).json({ error: "Unauthorized" });
+    if (typeof sendJson === "function") {
+      sendJson(res, 401, { error: "Unauthorized" });
+    } else {
+      res.status(401).json({ error: "Unauthorized" });
+    }
     return false;
   }
   return true;
