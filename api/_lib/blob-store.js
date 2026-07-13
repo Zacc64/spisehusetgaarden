@@ -1,4 +1,4 @@
-const { put, list, get } = require("@vercel/blob");
+const { put, list } = require("@vercel/blob");
 
 let resolvedAccess = process.env.BLOB_ACCESS === "private" ? "private" : null;
 
@@ -144,13 +144,15 @@ async function readBlobJson(pathname, req) {
   }
 
   if (isPrivateStore()) {
-    const result = await get(pathname, {
-      access: "private",
-      ...blobCommandOptions(req),
-    });
-    if (!result?.stream) return null;
-    const text = await new Response(result.stream).text();
-    return JSON.parse(text);
+    const headers = {};
+    const oidcToken = getOidcToken(req);
+    const token = getBlobToken();
+    if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
+    else if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(blob.url, Object.keys(headers).length ? { headers } : undefined);
+    if (!response.ok) return null;
+    return response.json();
   }
 
   const response = await fetch(blob.url);
@@ -175,12 +177,28 @@ async function readBlobFile(pathname, req) {
     throw new Error("Invalid media path");
   }
 
-  const result = await get(pathname, {
-    access: "private",
-    ...blobCommandOptions(req),
-  });
+  const { blobs } = await list(listOptions(pathname, req));
+  const blob = blobs.find((entry) => entry.pathname === pathname);
+  if (!blob) return null;
 
-  return result;
+  if (blob.url.includes(".private.blob.")) {
+    markPrivateStore();
+  }
+
+  const headers = {};
+  const oidcToken = getOidcToken(req);
+  const token = getBlobToken();
+  if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
+  else if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(blob.url, Object.keys(headers).length ? { headers } : undefined);
+  if (!response.ok) return null;
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return {
+    buffer,
+    contentType: blob.contentType || response.headers.get("content-type") || "application/octet-stream",
+  };
 }
 
 function getBlobStatus(req) {
