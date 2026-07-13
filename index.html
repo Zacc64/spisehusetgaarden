@@ -60,33 +60,31 @@
       <h2>Events, langborde, hverdagsstemning</h2>
       <p class="lead">Spisehuset Gaarden er skabt til at samle folk — fra hyggelig middag til fællesspisning og arrangementer i huset.</p>
 
-      <div class="cards">
+      <div class="cards cards--pair">
         <article class="card">
-          <h3>Fællesspisning</h3>
-          <p> </p>
-        </article>
-        <article class="card">
-          <h3>Social Dining</h3>
-          <p> </p>
+          <h3>Fællesspisning & Social Dining</h3>
+          <p>Langborde, fælles middag og hyggeligt samvær med nye og kendte ansigter.</p>
         </article>
         <article class="card">
           <h3>Events</h3>
-          <p></p>
+          <p>Arrangementer, særlige aftener og oplevelser i Spisehuset Gaarden.</p>
         </article>
       </div>
 
-      <figure class="community-feature">
-        <div class="community-feature__image">
-          <img src="assets/images/faellesspisning-web.jpg" alt="Fællesspisning i Spisehuset GAARDEN" loading="lazy">
+      <article class="community-spotlight">
+        <div class="community-spotlight__media">
+          <img src="assets/images/faellesspisning-web.jpg" alt="Fællesspisning i Spisehuset Gaarden" loading="lazy">
         </div>
-        <figcaption class="community-feature__caption">
-          <span class="community-feature__label">Fællesspisning</span>
-          <span class="community-feature__text">Langborde fyldt med gæster — mad og samvær</span>
-          <p class="community-feature__body">For og se månedens menu klik her</p>
-          
-          <a class="community-feature__link" href="#book">Book fællesspisning</a>
-        </figcaption>
-      </figure>
+        <div class="community-spotlight__body">
+          <p class="community-spotlight__eyebrow">Fællesspisning & Social Dining</p>
+          <h3 class="community-spotlight__title">Langborde fyldt med gæster — mad og samvær</h3>
+          <p class="community-spotlight__text">Se månedens menu og book din plads ved bordet. Vi glæder os til at byde dig velkommen.</p>
+          <div class="community-spotlight__actions">
+            <button class="community-spotlight__menu-btn" id="faellesspisning-menu-btn" type="button">Se månedens menu</button>
+            <a class="community-spotlight__book" href="#book">Book fællesspisning</a>
+          </div>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -212,18 +210,18 @@
     </div>
   </section>
 
-  <div class="cafe-modal" id="cafe-modal" hidden role="dialog" aria-modal="true" aria-labelledby="cafe-modal-title">
-    <div class="cafe-modal__backdrop" id="cafe-modal-backdrop"></div>
-    <div class="cafe-modal__panel">
-      <button class="cafe-modal__close" id="cafe-modal-close" type="button" aria-label="Luk menu">×</button>
-      <p class="cafe-modal__label">Café</p>
-      <h2 class="cafe-modal__title" id="cafe-modal-title">Frokostmenu</h2>
-      <p class="cafe-modal__subtitle" id="cafe-modal-subtitle"></p>
-      <div class="cafe-modal__text-wrap" id="cafe-modal-text-wrap">
-        <pre class="cafe-modal__text" id="cafe-modal-text"></pre>
+  <div class="menu-modal" id="menu-modal" hidden role="dialog" aria-modal="true" aria-labelledby="menu-modal-title">
+    <div class="menu-modal__backdrop"></div>
+    <div class="menu-modal__panel">
+      <button class="menu-modal__close" type="button" aria-label="Luk menu">×</button>
+      <p class="menu-modal__label">Menu</p>
+      <h2 class="menu-modal__title" id="menu-modal-title">Menu</h2>
+      <p class="menu-modal__subtitle"></p>
+      <div class="menu-modal__text-wrap">
+        <pre class="menu-modal__text"></pre>
       </div>
-      <div class="cafe-modal__image-wrap" id="cafe-modal-image-wrap" hidden>
-        <img class="cafe-modal__image" id="cafe-modal-image" alt="">
+      <div class="menu-modal__image-wrap" hidden>
+        <img class="menu-modal__image" alt="">
       </div>
     </div>
   </div>
@@ -236,7 +234,17 @@
     </div>
   </footer>
 
-  <script src="js/cafe-menu.js"></script>
+  <script src="js/menu-popup.js"></script>
+  <script>
+    initMenuModals("#menu-modal", [
+      { trigger: "#cafe-link", apiUrl: "/api/menu", label: "Café" },
+      {
+        trigger: "#faellesspisning-menu-btn",
+        apiUrl: "/api/faellesspisning-menu",
+        label: "Fællesspisning",
+      },
+    ]);
+  </script>
   <script>
     const header = document.getElementById("header");
     const hero = document.querySelector(".hero");

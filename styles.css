@@ -606,6 +606,114 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   margin-bottom: 0;
 }
 
+.cards--pair {
+  margin-top: 2.5rem;
+}
+
+/* Community spotlight */
+
+.community-spotlight {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 3rem);
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  background: var(--green-whisper);
+  border: 1px solid var(--green-soft);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.community-spotlight__media {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--green-mist);
+}
+
+.community-spotlight__media img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center;
+}
+
+.community-spotlight__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.community-spotlight__eyebrow {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.community-spotlight__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1.15;
+  max-width: 22rem;
+}
+
+.community-spotlight__text {
+  margin: 0;
+  max-width: 34rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.community-spotlight__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.community-spotlight__menu-btn,
+.community-spotlight__book {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.25rem;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.community-spotlight__menu-btn {
+  border: none;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.community-spotlight__menu-btn:hover {
+  background: var(--green-deep);
+}
+
+.community-spotlight__book {
+  background: transparent;
+  color: var(--green-deep);
+  border: 1px solid var(--green-soft);
+}
+
+.community-spotlight__book:hover {
+  background: var(--green-deep);
+  color: var(--white);
+  border-color: var(--green-deep);
+}
+
 /* Cards */
 
 .cards {
@@ -1040,13 +1148,24 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
     min-height: 100%;
   }
 
-  .cards {
+  .cards.cards--pair {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cards:not(.cards--pair) {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .community-feature {
-    grid-template-columns: minmax(0, 22rem) 1fr;
-    gap: clamp(2.5rem, 5vw, 4rem);
+  .community-spotlight {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(2rem, 4vw, 3rem);
+    padding: clamp(1.75rem, 3vw, 2.25rem);
+  }
+
+  .community-spotlight__media img {
+    aspect-ratio: 4 / 3;
+    min-height: 100%;
   }
 
   .contact-grid {
@@ -1071,9 +1190,9 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   }
 }
 
-/* Café menu popup */
+/* Menu popup */
 
-.cafe-modal {
+.menu-modal {
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -1082,18 +1201,18 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   padding: 1.25rem;
 }
 
-.cafe-modal[hidden] {
+.menu-modal[hidden] {
   display: none;
 }
 
-.cafe-modal__backdrop {
+.menu-modal__backdrop {
   position: absolute;
   inset: 0;
   background: rgba(20, 20, 20, 0.55);
   backdrop-filter: blur(4px);
 }
 
-.cafe-modal__panel {
+.menu-modal__panel {
   position: relative;
   width: min(100%, 520px);
   max-height: min(88vh, 720px);
@@ -1104,7 +1223,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   box-shadow: 0 24px 60px rgba(20, 20, 20, 0.2);
 }
 
-.cafe-modal__close {
+.menu-modal__close {
   position: absolute;
   top: 0.75rem;
   right: 0.85rem;
@@ -1119,11 +1238,11 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   cursor: pointer;
 }
 
-.cafe-modal__close:hover {
+.menu-modal__close:hover {
   background: var(--green-soft);
 }
 
-.cafe-modal__label {
+.menu-modal__label {
   margin: 0 0 0.35rem;
   font-family: var(--font-ui);
   font-size: 0.72rem;
@@ -1132,24 +1251,24 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   color: var(--muted);
 }
 
-.cafe-modal__title {
+.menu-modal__title {
   margin: 0 0 0.35rem;
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   line-height: 1.15;
 }
 
-.cafe-modal__subtitle {
+.menu-modal__subtitle {
   margin: 0 0 1.25rem;
   font-family: var(--font-ui);
   font-size: 0.95rem;
   color: var(--muted);
 }
 
-.cafe-modal__subtitle[hidden] {
+.menu-modal__subtitle[hidden] {
   display: none;
 }
 
-.cafe-modal__text {
+.menu-modal__text {
   margin: 0;
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -1158,22 +1277,22 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   color: var(--ink);
 }
 
-.cafe-modal__image {
+.menu-modal__image {
   display: block;
   width: 100%;
   border-radius: 0.5rem;
 }
 
 /* Image popup — fullscreen for readability */
-.cafe-modal--image {
+.menu-modal--image {
   padding: 0;
 }
 
-.cafe-modal--image .cafe-modal__backdrop {
+.menu-modal--image .menu-modal__backdrop {
   background: rgba(12, 12, 12, 0.92);
 }
 
-.cafe-modal--image .cafe-modal__panel {
+.menu-modal--image .menu-modal__panel {
   width: 100vw;
   height: 100svh;
   max-width: none;
@@ -1188,7 +1307,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   justify-content: center;
 }
 
-.cafe-modal--image .cafe-modal__image-wrap {
+.menu-modal--image .menu-modal__image-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1197,7 +1316,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   padding: 3.5rem 1rem 1rem;
 }
 
-.cafe-modal--image .cafe-modal__image {
+.menu-modal--image .menu-modal__image {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -1206,7 +1325,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   border-radius: 0;
 }
 
-.cafe-modal--image .cafe-modal__close {
+.menu-modal--image .menu-modal__close {
   position: fixed;
   top: 1rem;
   right: 1rem;
@@ -1279,7 +1398,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
     display: none;
   }
 
-  .community-feature__image {
-    max-width: 100%;
+  .community-spotlight__media img {
+    aspect-ratio: 16 / 10;
   }
 }

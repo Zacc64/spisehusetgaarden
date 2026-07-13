@@ -54,11 +54,13 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const imageUrl = saveUploadedImage({ buffer: fileBuffer, originalname });
+    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    const prefix = (url.searchParams.get("kind") || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
+    const imageUrl = await saveUploadedImage({ buffer: fileBuffer, originalname }, prefix);
     sendJson(res, 200, { imageUrl });
   } catch (err) {
     sendJson(res, 400, {
-      error: err.message || "Upload fejlede i produktion",
+      error: err.message || "Upload fejlede",
     });
   }
 };

@@ -1,20 +1,35 @@
 const TOKEN_KEY = "sg-admin-token";
 
+const MENU_CONFIG = {
+  cafe: {
+    formId: "cafe-menu-form",
+    publicApi: "/api/menu",
+    saveApi: "/api/admin/menu",
+    uploadKind: "menu",
+    modeName: "cafe-mode",
+    defaultTitle: "Frokostmenu",
+  },
+  faellesspisning: {
+    formId: "faellesspisning-menu-form",
+    publicApi: "/api/faellesspisning-menu",
+    saveApi: "/api/admin/faellesspisning-menu",
+    uploadKind: "faellesspisning",
+    modeName: "faellesspisning-mode",
+    defaultTitle: "Månedens menu",
+  },
+};
+
 const loginPanel = document.getElementById("login-panel");
 const editorPanel = document.getElementById("editor-panel");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
-const menuForm = document.getElementById("menu-form");
-const textPanel = document.getElementById("text-panel");
-const imagePanel = document.getElementById("image-panel");
-const imagePreview = document.getElementById("image-preview");
-const imagePreviewImg = document.getElementById("image-preview-img");
-const saveError = document.getElementById("save-error");
-const saveSuccess = document.getElementById("save-success");
 const logoutBtn = document.getElementById("logout-btn");
+const tabs = document.querySelectorAll(".admin-tab");
 
-let currentImageUrl = null;
-let pendingImageFile = null;
+const menuState = {
+  cafe: { imageUrl: null, pendingFile: null },
+  faellesspisning: { imageUrl: null, pendingFile: null },
+};
 
 function getToken() {
   return sessionStorage.getItem(TOKEN_KEY);
@@ -42,31 +57,131 @@ function showEditor() {
   editorPanel.hidden = false;
 }
 
-function setMode(mode) {
-  const isText = mode === "text";
-  textPanel.hidden = !isText;
-  imagePanel.hidden = isText;
-  document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
+function switchTab(tabId) {
+  tabs.forEach((tab) => {
+    tab.classList.toggle("admin-tab--active", tab.dataset.tab === tabId);
+  });
+  Object.entries(MENU_CONFIG).forEach(([key, config]) => {
+    document.getElementById(config.formId).hidden = key !== tabId;
+  });
 }
 
-function showPreview(url) {
+function getForm(type) {
+  return document.getElementById(MENU_CONFIG[type].formId);
+}
+
+function setMode(type, mode) {
+  const form = getForm(type);
+  const isText = mode === "text";
+  form.querySelector("[data-text-panel]").hidden = !isText;
+  form.querySelector("[data-image-panel]").hidden = isText;
+  form.querySelector(`input[name="${MENU_CONFIG[type].modeName}"][value="${mode}"]`).checked = true;
+}
+
+function showPreview(type, url) {
+  const form = getForm(type);
+  const preview = form.querySelector("[data-image-preview]");
+  const img = form.querySelector("[data-preview-img]");
   if (!url) {
-    imagePreview.hidden = true;
+    preview.hidden = true;
     return;
   }
-  imagePreviewImg.src = url;
-  imagePreview.hidden = false;
+  img.src = url;
+  preview.hidden = false;
 }
 
-async function loadMenu() {
-  const res = await fetch("/api/menu");
+async function loadMenu(type) {
+  const config = MENU_CONFIG[type];
+  const form = getForm(type);
+  const res = await fetch(config.publicApi);
   const menu = await res.json();
-  document.getElementById("menu-title").value = menu.title || "";
-  document.getElementById("menu-subtitle").value = menu.subtitle || "";
-  document.getElementById("menu-text").value = menu.text || "";
-  currentImageUrl = menu.imageUrl || null;
-  setMode(menu.mode || "text");
-  showPreview(currentImageUrl);
+
+  form.querySelector('[data-field="title"]').value = menu.title || "";
+  form.querySelector('[data-field="subtitle"]').value = menu.subtitle || "";
+  form.querySelector('[data-field="text"]').value = menu.text || "";
+  menuState[type].imageUrl = menu.imageUrl || null;
+  menuState[type].pendingFile = null;
+  setMode(type, menu.mode || "text");
+  showPreview(type, menuState[type].imageUrl);
+}
+
+async function loadAllMenus() {
+  await Promise.all(Object.keys(MENU_CONFIG).map((type) => loadMenu(type)));
+}
+
+function wireForm(type) {
+  const config = MENU_CONFIG[type];
+  const form = getForm(type);
+
+  form.querySelectorAll(`input[name="${config.modeName}"]`).forEach((input) => {
+    input.addEventListener("change", () => setMode(type, input.value));
+  });
+
+  form.querySelector('[data-field="image-file"]').addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    menuState[type].pendingFile = file || null;
+    if (file) showPreview(type, URL.createObjectURL(file));
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const saveError = form.querySelector("[data-save-error]");
+    const saveSuccess = form.querySelector("[data-save-success]");
+    saveError.hidden = true;
+    saveSuccess.hidden = true;
+
+    const mode = form.querySelector(`input[name="${config.modeName}"]:checked`).value;
+    let imageUrl = menuState[type].imageUrl;
+
+    if (mode === "image" && menuState[type].pendingFile) {
+      const formData = new FormData();
+      formData.append("image", menuState[type].pendingFile);
+
+      const uploadRes = await fetch(`/api/admin/upload?kind=${config.uploadKind}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        saveError.textContent = err.error || "Upload fejlede";
+        saveError.hidden = false;
+        return;
+      }
+
+      const uploaded = await uploadRes.json();
+      imageUrl = uploaded.imageUrl;
+      menuState[type].imageUrl = imageUrl;
+      menuState[type].pendingFile = null;
+    }
+
+    const payload = {
+      mode,
+      title: form.querySelector('[data-field="title"]').value,
+      subtitle: form.querySelector('[data-field="subtitle"]').value,
+      text: form.querySelector('[data-field="text"]').value,
+      imageUrl,
+    };
+
+    const res = await fetch(config.saveApi, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      saveError.textContent = err.error || "Kunne ikke gemme";
+      saveError.hidden = false;
+      return;
+    }
+
+    saveSuccess.hidden = false;
+    setTimeout(() => {
+      saveSuccess.hidden = true;
+    }, 4000);
+  });
 }
 
 loginForm.addEventListener("submit", async (e) => {
@@ -92,91 +207,29 @@ loginForm.addEventListener("submit", async (e) => {
   const { token } = await res.json();
   setToken(token);
   try {
-    await loadMenu();
+    await loadAllMenus();
   } catch {
-    // Still open editor if menu fetch fails after successful login.
+    // Open editor even if menu fetch fails.
   }
   showEditor();
 });
 
 logoutBtn.addEventListener("click", () => {
   setToken(null);
-  pendingImageFile = null;
+  Object.keys(menuState).forEach((key) => {
+    menuState[key].pendingFile = null;
+  });
   showLogin();
 });
 
-document.querySelectorAll('input[name="mode"]').forEach((input) => {
-  input.addEventListener("change", () => setMode(input.value));
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
 
-document.getElementById("menu-image-file").addEventListener("change", (e) => {
-  const file = e.target.files?.[0];
-  pendingImageFile = file || null;
-  if (file) {
-    showPreview(URL.createObjectURL(file));
-  }
-});
-
-menuForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  saveError.hidden = true;
-  saveSuccess.hidden = true;
-
-  const mode = document.querySelector('input[name="mode"]:checked').value;
-  let imageUrl = currentImageUrl;
-
-  if (mode === "image" && pendingImageFile) {
-    const formData = new FormData();
-    formData.append("image", pendingImageFile);
-
-    const uploadRes = await fetch("/api/admin/upload", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${getToken()}` },
-      body: formData,
-    });
-
-    if (!uploadRes.ok) {
-      const err = await uploadRes.json().catch(() => ({}));
-      saveError.textContent = err.error || "Upload fejlede";
-      saveError.hidden = false;
-      return;
-    }
-
-    const uploaded = await uploadRes.json();
-    imageUrl = uploaded.imageUrl;
-    currentImageUrl = imageUrl;
-    pendingImageFile = null;
-  }
-
-  const payload = {
-    mode,
-    title: document.getElementById("menu-title").value,
-    subtitle: document.getElementById("menu-subtitle").value,
-    text: document.getElementById("menu-text").value,
-    imageUrl,
-  };
-
-  const res = await fetch("/api/admin/menu", {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    saveError.textContent = err.error || "Kunne ikke gemme";
-    saveError.hidden = false;
-    return;
-  }
-
-  saveSuccess.hidden = false;
-  setTimeout(() => {
-    saveSuccess.hidden = true;
-  }, 4000);
-});
+Object.keys(MENU_CONFIG).forEach(wireForm);
 
 if (getToken()) {
-  loadMenu().then(showEditor).catch(showLogin);
+  loadAllMenus().then(showEditor).catch(showLogin);
 } else {
   showLogin();
 }

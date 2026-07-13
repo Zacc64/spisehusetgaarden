@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
 
     const menu = {
       mode,
-      title: String(title || "Frokostmenu").trim(),
+      title: String(title || "Månedens menu").trim(),
       subtitle: String(subtitle || "").trim(),
       text: String(text || ""),
       imageUrl: mode === "image" ? imageUrl || null : null,
@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const saved = await writeMenu("cafe", menu);
+    const saved = await writeMenu("faellesspisning", menu);
     sendJson(res, 200, saved);
   } catch (err) {
     sendJson(res, 500, {

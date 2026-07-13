@@ -15,8 +15,33 @@ const upload = multer({
 
 app.use(express.json({ limit: "1mb" }));
 
-app.get("/api/menu", (_req, res) => {
-  res.json(readMenu());
+function buildMenuPayload(body, defaultTitle) {
+  const { mode, title, subtitle, text, imageUrl } = body || {};
+  if (mode !== "text" && mode !== "image") {
+    return { error: "mode skal være 'text' eller 'image'" };
+  }
+
+  const menu = {
+    mode,
+    title: String(title || defaultTitle).trim(),
+    subtitle: String(subtitle || "").trim(),
+    text: String(text || ""),
+    imageUrl: mode === "image" ? imageUrl || null : null,
+  };
+
+  if (mode === "image" && !menu.imageUrl) {
+    return { error: "Upload et billede til billed-popup" };
+  }
+
+  return { menu };
+}
+
+app.get("/api/menu", async (_req, res) => {
+  res.json(await readMenu("cafe"));
+});
+
+app.get("/api/faellesspisning-menu", async (_req, res) => {
+  res.json(await readMenu("faellesspisning"));
 });
 
 app.post("/api/admin/login", (req, res) => {
@@ -28,33 +53,27 @@ app.post("/api/admin/login", (req, res) => {
   res.json({ token: createToken() });
 });
 
-app.put("/api/admin/menu", (req, res) => {
+app.put("/api/admin/menu", async (req, res) => {
   if (!requireAuth(req, res)) return;
-
-  const { mode, title, subtitle, text, imageUrl } = req.body || {};
-  if (mode !== "text" && mode !== "image") {
-    res.status(400).json({ error: "mode skal være 'text' eller 'image'" });
+  const result = buildMenuPayload(req.body, "Frokostmenu");
+  if (result.error) {
+    res.status(400).json({ error: result.error });
     return;
   }
-
-  const menu = {
-    mode,
-    title: String(title || "Frokostmenu").trim(),
-    subtitle: String(subtitle || "").trim(),
-    text: String(text || ""),
-    imageUrl: mode === "image" ? imageUrl || null : null,
-  };
-
-  if (mode === "image" && !menu.imageUrl) {
-    res.status(400).json({ error: "Upload et billede til billed-popup" });
-    return;
-  }
-
-  writeMenu(menu);
-  res.json(menu);
+  res.json(await writeMenu("cafe", result.menu));
 });
 
-app.post("/api/admin/upload", upload.single("image"), (req, res) => {
+app.put("/api/admin/faellesspisning-menu", async (req, res) => {
+  if (!requireAuth(req, res)) return;
+  const result = buildMenuPayload(req.body, "Månedens menu");
+  if (result.error) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+  res.json(await writeMenu("faellesspisning", result.menu));
+});
+
+app.post("/api/admin/upload", upload.single("image"), async (req, res) => {
   if (!requireAuth(req, res)) return;
 
   if (!req.file) {
@@ -63,7 +82,8 @@ app.post("/api/admin/upload", upload.single("image"), (req, res) => {
   }
 
   try {
-    const imageUrl = saveUploadedImage(req.file);
+    const prefix = String(req.query.kind || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
+    const imageUrl = await saveUploadedImage(req.file, prefix);
     res.json({ imageUrl });
   } catch (err) {
     res.status(400).json({ error: err.message || "Upload fejlede" });

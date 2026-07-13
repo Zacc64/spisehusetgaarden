@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — Café-menu · Spisehuset Gaarden</title>
+  <title>Admin — Spisehuset Gaarden</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
     <section class="admin-login" id="login-panel">
       <div class="admin-card">
         <p class="admin-eyebrow">Spisehuset Gaarden</p>
-        <h1>Café-menu</h1>
-        <p class="admin-lead">Log ind for at opdatere frokostmenuen eller popup-billedet.</p>
+        <h1>Admin</h1>
+        <p class="admin-lead">Log ind for at opdatere café-menuen eller fællesspisnings-menuen.</p>
         <form id="login-form">
           <label class="admin-field">
             <span>Adgangskode</span>
@@ -32,7 +32,7 @@
       <header class="admin-header">
         <div>
           <p class="admin-eyebrow">Admin</p>
-          <h1>Rediger café-popup</h1>
+          <h1>Rediger menuer</h1>
         </div>
         <div class="admin-header__actions">
           <a class="admin-link" href="/" target="_blank" rel="noopener">Se siden</a>
@@ -40,51 +40,103 @@
         </div>
       </header>
 
-      <form class="admin-form" id="menu-form">
+      <nav class="admin-tabs" aria-label="Menu-sektioner">
+        <button type="button" class="admin-tab admin-tab--active" data-tab="cafe">Café</button>
+        <button type="button" class="admin-tab" data-tab="faellesspisning">Fællesspisning</button>
+      </nav>
+
+      <form class="admin-form admin-panel" id="cafe-menu-form" data-menu="cafe">
+        <h2 class="admin-panel__title">Café-popup</h2>
+        <p class="admin-hint">Vises når gæster klikker på <strong>Café</strong> i menuen.</p>
+
         <fieldset class="admin-mode">
           <legend>Popup-type</legend>
           <label class="admin-radio">
-            <input type="radio" name="mode" value="text" checked>
+            <input type="radio" name="cafe-mode" value="text" checked>
             <span>Tekst-menu</span>
           </label>
           <label class="admin-radio">
-            <input type="radio" name="mode" value="image">
+            <input type="radio" name="cafe-mode" value="image">
             <span>Billede</span>
           </label>
         </fieldset>
 
         <label class="admin-field">
           <span>Titel</span>
-          <input type="text" id="menu-title" required>
+          <input type="text" data-field="title" required>
         </label>
-
         <label class="admin-field">
           <span>Undertitel <em>(valgfrit)</em></span>
-          <input type="text" id="menu-subtitle">
+          <input type="text" data-field="subtitle">
         </label>
 
-        <div class="admin-panel" id="text-panel">
+        <div class="admin-subpanel" data-text-panel>
           <label class="admin-field">
             <span>Menutekst</span>
-            <textarea id="menu-text" rows="12" placeholder="Én ret pr. linje eller frit format…"></textarea>
+            <textarea data-field="text" rows="10"></textarea>
           </label>
         </div>
 
-        <div class="admin-panel" id="image-panel" hidden>
+        <div class="admin-subpanel" data-image-panel hidden>
           <label class="admin-field">
             <span>Upload billede</span>
-            <input type="file" id="menu-image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+            <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
           </label>
-          <p class="admin-hint">Billedet vises i popup når gæster klikker på Café i menuen.</p>
-          <div class="admin-preview" id="image-preview" hidden>
-            <img id="image-preview-img" alt="Forhåndsvisning af menu-billede">
+          <div class="admin-preview" data-image-preview hidden>
+            <img data-preview-img alt="Forhåndsvisning">
           </div>
         </div>
 
-        <p class="admin-error" id="save-error" hidden></p>
-        <p class="admin-success" id="save-success" hidden>Gemt — ændringerne er live på siden.</p>
+        <p class="admin-error" data-save-error hidden></p>
+        <p class="admin-success" data-save-success hidden>Gemt.</p>
+        <button type="submit" class="admin-btn">Gem café-menu</button>
+      </form>
 
-        <button type="submit" class="admin-btn" id="save-btn">Gem menu</button>
+      <form class="admin-form admin-panel" id="faellesspisning-menu-form" data-menu="faellesspisning" hidden>
+        <h2 class="admin-panel__title">Fællesspisning-menu</h2>
+        <p class="admin-hint">Vises når gæster klikker på <strong>Se månedens menu</strong> under Fællesskab.</p>
+
+        <fieldset class="admin-mode">
+          <legend>Popup-type</legend>
+          <label class="admin-radio">
+            <input type="radio" name="faellesspisning-mode" value="text">
+            <span>Tekst-menu</span>
+          </label>
+          <label class="admin-radio">
+            <input type="radio" name="faellesspisning-mode" value="image" checked>
+            <span>Billede</span>
+          </label>
+        </fieldset>
+
+        <label class="admin-field">
+          <span>Titel</span>
+          <input type="text" data-field="title" required>
+        </label>
+        <label class="admin-field">
+          <span>Undertitel <em>(valgfrit)</em></span>
+          <input type="text" data-field="subtitle">
+        </label>
+
+        <div class="admin-subpanel" data-text-panel hidden>
+          <label class="admin-field">
+            <span>Menutekst</span>
+            <textarea data-field="text" rows="10"></textarea>
+          </label>
+        </div>
+
+        <div class="admin-subpanel" data-image-panel>
+          <label class="admin-field">
+            <span>Upload billede</span>
+            <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+          </label>
+          <div class="admin-preview" data-image-preview hidden>
+            <img data-preview-img alt="Forhåndsvisning">
+          </div>
+        </div>
+
+        <p class="admin-error" data-save-error hidden></p>
+        <p class="admin-success" data-save-success hidden>Gemt.</p>
+        <button type="submit" class="admin-btn">Gem fællesspisnings-menu</button>
       </form>
     </section>
   </div>

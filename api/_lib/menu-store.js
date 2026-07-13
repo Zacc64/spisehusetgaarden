@@ -1,33 +1,66 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  hasBlobStorage,
+  readBlobJson,
+  writeBlobJson,
+  writeBlobFile,
+} = require("./blob-store");
 
-const DEFAULT_MENU = {
-  mode: "text",
-  title: "Frokostmenu",
-  subtitle: "Café — torsdag, fredag og lørdag kl. 11–16",
-  text:
-    "Dagens ret\nHjemmelavet suppe eller salat\n\nBrød & smør inkluderet\n\nSpørg os om dagens dessert og drikkevarer.",
-  imageUrl: null,
+const MENU_TYPES = {
+  cafe: {
+    filename: "menu.json",
+    blobPath: "menus/cafe.json",
+    default: {
+      mode: "text",
+      title: "Frokostmenu",
+      subtitle: "Café — torsdag, fredag og lørdag kl. 11–16",
+      text:
+        "Dagens ret\nHjemmelavet suppe eller salat\n\nBrød & smør inkluderet\n\nSpørg os om dagens dessert og drikkevarer.",
+      imageUrl: null,
+    },
+  },
+  faellesspisning: {
+    filename: "faellesspisning-menu.json",
+    blobPath: "menus/faellesspisning.json",
+    default: {
+      mode: "image",
+      title: "Månedens menu",
+      subtitle: "Fællesspisning & Social Dining",
+      text: "",
+      imageUrl: null,
+    },
+  },
 };
 
-function getMenuPaths() {
+const MIME_TYPES = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
+function getMenuConfig(type = "cafe") {
+  return MENU_TYPES[type] || MENU_TYPES.cafe;
+}
+
+function getMenuPaths(type) {
+  const filename = getMenuConfig(type).filename;
   return [
-    path.join(process.cwd(), "data", "menu.json"),
-    path.join(__dirname, "..", "..", "data", "menu.json"),
-    path.join(__dirname, "..", "data", "menu.json"),
+    path.join(process.cwd(), "data", filename),
+    path.join(__dirname, "..", "..", "data", filename),
+    path.join(__dirname, "..", "data", filename),
   ];
 }
 
 function getUploadsDir() {
-  const candidates = [
-    path.join(process.cwd(), "uploads"),
-    path.join(__dirname, "..", "..", "uploads"),
-  ];
-  return candidates[0];
+  return path.join(process.cwd(), "uploads");
 }
 
-function readMenu() {
-  for (const menuPath of getMenuPaths()) {
+function readMenuFromFs(type) {
+  const config = getMenuConfig(type);
+  for (const menuPath of getMenuPaths(type)) {
     try {
       if (fs.existsSync(menuPath)) {
         return JSON.parse(fs.readFileSync(menuPath, "utf8"));
@@ -36,11 +69,11 @@ function readMenu() {
       // try next path
     }
   }
-  return { ...DEFAULT_MENU };
+  return { ...config.default };
 }
 
-function writeMenu(menu) {
-  const menuPath = getMenuPaths()[0];
+function writeMenuToFs(type, menu) {
+  const menuPath = getMenuPaths(type)[0];
   const dir = path.dirname(menuPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -49,26 +82,71 @@ function writeMenu(menu) {
   return menu;
 }
 
-function saveUploadedImage(file) {
+function validateImageFile(file) {
+  const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
+  const allowed = Object.keys(MIME_TYPES);
+  if (!allowed.includes(ext)) {
+    throw new Error("Kun billedfiler (jpg, png, webp, gif) er tilladt.");
+  }
+  return { ext, contentType: MIME_TYPES[ext] };
+}
+
+function saveUploadedImageToFs(file, prefix) {
+  const { ext } = validateImageFile(file);
   const uploadsDir = getUploadsDir();
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
-  const allowed = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-  if (!allowed.includes(ext)) {
-    throw new Error("Kun billedfiler (jpg, png, webp, gif) er tilladt.");
-  }
-
-  const filename = `menu-${Date.now()}${ext}`;
+  const filename = `${prefix}-${Date.now()}${ext}`;
   fs.writeFileSync(path.join(uploadsDir, filename), file.buffer);
   return `/uploads/${filename}`;
+}
+
+async function readMenu(type = "cafe") {
+  const config = getMenuConfig(type);
+
+  if (hasBlobStorage()) {
+    try {
+      const blobMenu = await readBlobJson(config.blobPath);
+      if (blobMenu) return blobMenu;
+    } catch {
+      // fall back to bundled defaults / filesystem
+    }
+  }
+
+  return readMenuFromFs(type);
+}
+
+async function writeMenu(type, menu) {
+  if (hasBlobStorage()) {
+    await writeBlobJson(getMenuConfig(type).blobPath, menu);
+    try {
+      writeMenuToFs(type, menu);
+    } catch {
+      // filesystem may be read-only on Vercel
+    }
+    return menu;
+  }
+
+  return writeMenuToFs(type, menu);
+}
+
+async function saveUploadedImage(file, prefix = "menu") {
+  const { ext, contentType } = validateImageFile(file);
+
+  if (hasBlobStorage()) {
+    const pathname = `menus/images/${prefix}-${Date.now()}${ext}`;
+    return writeBlobFile(pathname, file.buffer, contentType);
+  }
+
+  return saveUploadedImageToFs(file, prefix);
 }
 
 module.exports = {
   readMenu,
   writeMenu,
   saveUploadedImage,
-  DEFAULT_MENU,
+  MENU_TYPES,
+  hasBlobStorage,
 };
