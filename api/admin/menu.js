@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const saved = await writeMenu("cafe", menu);
+    const saved = await writeMenu("cafe", menu, req);
     sendJson(res, 200, saved);
   } catch (err) {
     sendJson(res, 500, {

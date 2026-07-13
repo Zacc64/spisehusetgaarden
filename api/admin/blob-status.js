@@ -10,5 +10,5 @@ module.exports = async (req, res) => {
 
   if (!requireAuth(req, res, sendJson)) return;
 
-  sendJson(res, 200, getBlobStatus());
+  sendJson(res, 200, getBlobStatus(req));
 };

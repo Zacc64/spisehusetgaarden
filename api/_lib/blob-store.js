@@ -4,6 +4,18 @@ function isVercelRuntime() {
   return process.env.VERCEL === "1";
 }
 
+function getRequestHeader(req, name) {
+  if (!req?.headers) return null;
+  const target = name.toLowerCase();
+
+  if (typeof req.headers.get === "function") {
+    return req.headers.get(name) || req.headers.get(target);
+  }
+
+  const key = Object.keys(req.headers).find((header) => header.toLowerCase() === target);
+  return key ? req.headers[key] : null;
+}
+
 function getBlobToken() {
   return (
     process.env.BLOB_READ_WRITE_TOKEN ||
@@ -16,84 +28,81 @@ function getBlobStoreId() {
   return process.env.BLOB_STORE_ID || null;
 }
 
-function getOidcToken() {
-  return process.env.VERCEL_OIDC_TOKEN || null;
+function getOidcToken(req) {
+  return getRequestHeader(req, "x-vercel-oidc-token") || process.env.VERCEL_OIDC_TOKEN || null;
 }
 
-function hasBlobCredentials() {
+function hasBlobCredentials(req) {
   if (getBlobToken()) return true;
-  if (isVercelRuntime() && getBlobStoreId() && getOidcToken()) return true;
+  if (isVercelRuntime() && getBlobStoreId() && getOidcToken(req)) return true;
   return false;
 }
 
-function hasBlobStorage() {
-  return hasBlobCredentials();
+function hasBlobStorage(req) {
+  return hasBlobCredentials(req);
 }
 
-function getBlobSetupHint() {
-  if (hasBlobCredentials()) return null;
+function getBlobSetupHint(req) {
+  if (hasBlobCredentials(req)) return null;
 
   if (!isVercelRuntime()) {
-    return "Sæt BLOB_READ_WRITE_TOKEN i .env for at bruge Blob lokalt.";
+    return "Set BLOB_READ_WRITE_TOKEN in .env to use Blob locally.";
   }
 
   if (!getBlobStoreId()) {
-    return "Forbind Vercel Blob til projektet under Storage → Connect Project.";
+    return "Connect Vercel Blob to this project under Storage.";
   }
 
-  if (!getBlobToken()) {
-    return "Aktivér «Add a read-write token env var» under Blob-forbindelsen, eller vent på redeploy efter forbindelse.";
+  if (!getBlobToken() && !getOidcToken(req)) {
+    return "Add BLOB_READ_WRITE_TOKEN in Vercel (Storage → connect with read-write token), or enable OIDC in project settings.";
   }
 
-  return "Tjek Vercel Blob-forbindelsen og redeploy projektet.";
+  return "Check the Vercel Blob connection and redeploy.";
 }
 
-function blobCommandOptions() {
-  const options = {};
+function blobCommandOptions(req) {
   const token = getBlobToken();
-
   if (token) {
-    options.token = token;
-    return options;
+    return { token };
   }
 
+  const options = {};
   const storeId = getBlobStoreId();
-  const oidcToken = getOidcToken();
+  const oidcToken = getOidcToken(req);
   if (storeId) options.storeId = storeId;
   if (oidcToken) options.oidcToken = oidcToken;
-
   return options;
 }
 
-function blobOptions(contentType) {
+function blobOptions(contentType, req) {
   return {
     access: "public",
     contentType,
     addRandomSuffix: false,
     allowOverwrite: true,
-    ...blobCommandOptions(),
+    ...blobCommandOptions(req),
   };
 }
 
-function listOptions(prefix) {
+function listOptions(prefix, req) {
   return {
     prefix,
     limit: 20,
-    ...blobCommandOptions(),
+    ...blobCommandOptions(req),
   };
 }
 
-function formatBlobError(err) {
-  const hint = getBlobSetupHint();
-  const detail = err?.message ? String(err.message) : "Ukendt fejl";
+function formatBlobError(err, req) {
+  const hint = getBlobSetupHint(req);
+  const detail = err?.message ? String(err.message) : "Unknown error";
   if (hint) {
     return `${hint} (${detail})`;
   }
   return detail;
 }
 
-async function readBlobJson(pathname) {
-  const { blobs } = await list(listOptions(pathname));
+async function readBlobJson(pathname, req) {
+  const { blobs } = await list(listOptions(pathname, req));
   const blob = blobs.find((entry) => entry.pathname === pathname);
   if (!blob) return null;
 
@@ -102,23 +111,25 @@ async function readBlobJson(pathname) {
   return response.json();
 }
 
-async function writeBlobJson(pathname, data) {
-  await put(pathname, JSON.stringify(data, null, 2), blobOptions("application/json"));
+async function writeBlobJson(pathname, data, req) {
+  await put(pathname, JSON.stringify(data, null, 2), blobOptions("application/json", req));
 }
 
-async function writeBlobFile(pathname, buffer, contentType) {
-  const blob = await put(pathname, buffer, blobOptions(contentType));
+async function writeBlobFile(pathname, buffer, contentType, req) {
+  const blob = await put(pathname, buffer, blobOptions(contentType, req));
   return blob.url;
 }
 
-function getBlobStatus() {
+function getBlobStatus(req) {
+  const oidcFromHeader = Boolean(getRequestHeader(req, "x-vercel-oidc-token"));
   return {
     runtime: isVercelRuntime() ? "vercel" : "local",
-    ready: hasBlobCredentials(),
+    ready: hasBlobCredentials(req),
     hasReadWriteToken: Boolean(getBlobToken()),
     hasStoreId: Boolean(getBlobStoreId()),
-    hasOidcToken: Boolean(getOidcToken()),
-    hint: getBlobSetupHint(),
+    hasOidcToken: Boolean(getOidcToken(req)),
+    hasOidcHeader: oidcFromHeader,
+    hint: getBlobSetupHint(req),
   };
 }
 

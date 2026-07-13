@@ -117,12 +117,12 @@ function saveUploadedImageToFs(file, prefix) {
   return `/uploads/${filename}`;
 }
 
-async function readMenu(type = "cafe") {
+async function readMenu(type = "cafe", req) {
   const config = getMenuConfig(type);
 
-  if (hasBlobStorage()) {
+  if (hasBlobStorage(req)) {
     try {
-      const blobMenu = await readBlobJson(config.blobPath);
+      const blobMenu = await readBlobJson(config.blobPath, req);
       if (blobMenu) return blobMenu;
     } catch {
       // fall back to bundled defaults / filesystem
@@ -132,9 +132,9 @@ async function readMenu(type = "cafe") {
   return readMenuFromFs(type);
 }
 
-async function writeMenu(type, menu) {
-  if (hasBlobStorage()) {
-    await writeBlobJson(getMenuConfig(type).blobPath, menu);
+async function writeMenu(type, menu, req) {
+  if (hasBlobStorage(req)) {
+    await writeBlobJson(getMenuConfig(type).blobPath, menu, req);
     if (!isVercelRuntime()) {
       try {
         writeMenuToFs(type, menu);
@@ -146,30 +146,26 @@ async function writeMenu(type, menu) {
   }
 
   if (isVercelRuntime()) {
-    throw new Error(getBlobSetupHint() || "Blob storage er ikke konfigureret.");
+    throw new Error(getBlobSetupHint(req) || "Blob storage is not configured.");
   }
 
   return writeMenuToFs(type, menu);
 }
 
-async function saveUploadedImage(file, prefix = "menu") {
+async function saveUploadedImage(file, prefix = "menu", req) {
   const { ext, contentType } = validateImageFile(file);
 
-  if (hasBlobStorage()) {
+  if (hasBlobStorage(req)) {
     const pathname = `menus/images/${prefix}-${Date.now()}${ext}`;
     try {
-      return await writeBlobFile(pathname, file.buffer, contentType);
+      return await writeBlobFile(pathname, file.buffer, contentType, req);
     } catch (err) {
-      throw new Error(
-        isVercelRuntime()
-          ? `Kunne ikke uploade billede. ${formatBlobError(err)}`
-          : formatBlobError(err)
-      );
+      throw new Error(`Could not upload image. ${formatBlobError(err, req)}`);
     }
   }
 
   if (isVercelRuntime()) {
-    throw new Error(getBlobSetupHint() || "Blob storage er ikke konfigureret.");
+    throw new Error(getBlobSetupHint(req) || "Blob storage is not configured.");
   }
 
   return saveUploadedImageToFs(file, prefix);

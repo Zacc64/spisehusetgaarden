@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const menu = await readMenu("cafe");
+    const menu = await readMenu("cafe", req);
     sendJson(res, 200, menu, {
       "Cache-Control": "s-maxage=60, stale-while-revalidate",
     });

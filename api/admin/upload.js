@@ -38,7 +38,8 @@ module.exports = async (req, res) => {
 
       const imageUrl = await saveUploadedImage(
         { buffer: Buffer.from(data, "base64"), originalname: filename || "menu.jpg" },
-        prefix
+        prefix,
+        req
       );
       sendJson(res, 200, { imageUrl });
       return;
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const imageUrl = await saveUploadedImage({ buffer: fileBuffer, originalname }, prefix);
+    const imageUrl = await saveUploadedImage({ buffer: fileBuffer, originalname }, prefix, req);
     sendJson(res, 200, { imageUrl });
   } catch (err) {
     sendJson(res, 400, {

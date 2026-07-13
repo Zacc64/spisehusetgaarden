@@ -36,16 +36,16 @@ function buildMenuPayload(body, defaultTitle) {
   return { menu };
 }
 
-app.get("/api/menu", async (_req, res) => {
-  res.json(await readMenu("cafe"));
+app.get("/api/menu", async (req, res) => {
+  res.json(await readMenu("cafe", req));
 });
 
-app.get("/api/faellesspisning-menu", async (_req, res) => {
-  res.json(await readMenu("faellesspisning"));
+app.get("/api/faellesspisning-menu", async (req, res) => {
+  res.json(await readMenu("faellesspisning", req));
 });
 
-app.get("/api/arrangementer-menu", async (_req, res) => {
-  res.json(await readMenu("arrangementer"));
+app.get("/api/arrangementer-menu", async (req, res) => {
+  res.json(await readMenu("arrangementer", req));
 });
 
 app.post("/api/admin/login", (req, res) => {
@@ -64,7 +64,7 @@ app.put("/api/admin/menu", async (req, res) => {
     res.status(400).json({ error: result.error });
     return;
   }
-  res.json(await writeMenu("cafe", result.menu));
+  res.json(await writeMenu("cafe", result.menu, req));
 });
 
 app.put("/api/admin/faellesspisning-menu", async (req, res) => {
@@ -74,7 +74,7 @@ app.put("/api/admin/faellesspisning-menu", async (req, res) => {
     res.status(400).json({ error: result.error });
     return;
   }
-  res.json(await writeMenu("faellesspisning", result.menu));
+  res.json(await writeMenu("faellesspisning", result.menu, req));
 });
 
 app.put("/api/admin/arrangementer-menu", async (req, res) => {
@@ -84,7 +84,7 @@ app.put("/api/admin/arrangementer-menu", async (req, res) => {
     res.status(400).json({ error: result.error });
     return;
   }
-  res.json(await writeMenu("arrangementer", result.menu));
+  res.json(await writeMenu("arrangementer", result.menu, req));
 });
 
 app.post("/api/admin/upload", (req, res, next) => {
@@ -114,7 +114,7 @@ app.post("/api/admin/upload", (req, res, next) => {
       return;
     }
 
-    const imageUrl = await saveUploadedImage(file, prefix);
+    const imageUrl = await saveUploadedImage(file, prefix, req);
     res.json({ imageUrl });
   } catch (err) {
     res.status(400).json({ error: err.message || "Upload fejlede" });
