@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Café-menu · Spisehuset Gaarden</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/admin.css">
+</head>
+<body>
+  <div class="admin" id="admin-app">
+    <section class="admin-login" id="login-panel">
+      <div class="admin-card">
+        <p class="admin-eyebrow">Spisehuset Gaarden</p>
+        <h1>Café-menu</h1>
+        <p class="admin-lead">Log ind for at opdatere frokostmenuen eller popup-billedet.</p>
+        <form id="login-form">
+          <label class="admin-field">
+            <span>Adgangskode</span>
+            <input type="password" id="login-password" autocomplete="current-password" required>
+          </label>
+          <p class="admin-error" id="login-error" hidden></p>
+          <button type="submit" class="admin-btn">Log ind</button>
+        </form>
+        <a class="admin-back" href="/">← Tilbage til siden</a>
+      </div>
+    </section>
+
+    <section class="admin-editor" id="editor-panel" hidden>
+      <header class="admin-header">
+        <div>
+          <p class="admin-eyebrow">Admin</p>
+          <h1>Rediger café-popup</h1>
+        </div>
+        <div class="admin-header__actions">
+          <a class="admin-link" href="/" target="_blank" rel="noopener">Se siden</a>
+          <button type="button" class="admin-btn admin-btn--ghost" id="logout-btn">Log ud</button>
+        </div>
+      </header>
+
+      <form class="admin-form" id="menu-form">
+        <fieldset class="admin-mode">
+          <legend>Popup-type</legend>
+          <label class="admin-radio">
+            <input type="radio" name="mode" value="text" checked>
+            <span>Tekst-menu</span>
+          </label>
+          <label class="admin-radio">
+            <input type="radio" name="mode" value="image">
+            <span>Billede</span>
+          </label>
+        </fieldset>
+
+        <label class="admin-field">
+          <span>Titel</span>
+          <input type="text" id="menu-title" required>
+        </label>
+
+        <label class="admin-field">
+          <span>Undertitel <em>(valgfrit)</em></span>
+          <input type="text" id="menu-subtitle">
+        </label>
+
+        <div class="admin-panel" id="text-panel">
+          <label class="admin-field">
+            <span>Menutekst</span>
+            <textarea id="menu-text" rows="12" placeholder="Én ret pr. linje eller frit format…"></textarea>
+          </label>
+        </div>
+
+        <div class="admin-panel" id="image-panel" hidden>
+          <label class="admin-field">
+            <span>Upload billede</span>
+            <input type="file" id="menu-image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+          </label>
+          <p class="admin-hint">Billedet vises i popup når gæster klikker på Café i menuen.</p>
+          <div class="admin-preview" id="image-preview" hidden>
+            <img id="image-preview-img" alt="Forhåndsvisning af menu-billede">
+          </div>
+        </div>
+
+        <p class="admin-error" id="save-error" hidden></p>
+        <p class="admin-success" id="save-success" hidden>Gemt — ændringerne er live på siden.</p>
+
+        <button type="submit" class="admin-btn" id="save-btn">Gem menu</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

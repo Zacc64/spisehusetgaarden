@@ -7,7 +7,7 @@
   <meta name="description" content="Hyggeligt spisested og mødested i den gule længe på Kulturhus Risbjerggaard. Mad, fællesskab og events i Hvidovre.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Pinyon+Script&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="is-loading">
@@ -27,7 +27,7 @@
 
       <nav class="site-nav" id="site-nav">
         <a href="#faellesskab">Fællesskab</a>
-        <a href="#mad">Mad</a>
+        <a href="#" id="cafe-link">Café</a>
         <a href="#instagram">Instagram</a>
         <a href="#kontakt">Kontakt</a>
         <a class="nav-book" href="#book">Book bord</a>
@@ -41,10 +41,10 @@
     </div>
     <div class="hero__overlay"></div>
     <div class="hero__content">
-      <p class="hero__eyebrow"><span>En del af Kulturhus Risbjerggaard</span><span class="hero__dot">·</span><span>Hvidovre</span></p>
+      <p class="hero__eyebrow"><span>En del af Kulturhus Risbjerggaard</span></p>
       <h1>
-        <span class="hero__line">Mad og <em>fællesskab</em></span>
-        <span class="hero__line"> </span>
+        <span class="hero__line">Mad &</span>
+        <span class="hero__line">Fællesskab</span>
       </h1>
       <p class="hero__desc">   </p>
       <a class="hero__cta" href="#book">Book bord</a>
@@ -95,7 +95,7 @@
       <div class="instagram__header">
         <div>
           <p class="section-label">Instagram</p>
-          <h2>Det sker i Spisehuset Gaarden</h2>
+          <h2>Det sker i Spisehuset Gaarden </h2>
         </div>
         <a class="instagram__link" href="https://www.instagram.com/spisehusetgaarden/" target="_blank" rel="noopener">
           @spisehusetgaarden
@@ -199,9 +199,9 @@
           <p class="muted">Spisehuset Gaarden</p>
         </div>
         <div class="contact-item">
-          <h3>Åbning</h3>
-          <p>Kontakt os for at høre om åbningstider</p>
-          <p class="muted">Snacks, kaffe og kage om eftermiddagen. Middag om aftenen.</p>
+          <h3>Café-Åbningstider</h3>
+          <p>Tors–lør kl. 11–16</p>
+          <p class="muted">Huset kan være lukket ved private arrangementer.</p>
         </div>
         <div class="contact-item">
           <h3>Spørg os</h3>
@@ -212,10 +212,31 @@
     </div>
   </section>
 
+  <div class="cafe-modal" id="cafe-modal" hidden role="dialog" aria-modal="true" aria-labelledby="cafe-modal-title">
+    <div class="cafe-modal__backdrop" id="cafe-modal-backdrop"></div>
+    <div class="cafe-modal__panel">
+      <button class="cafe-modal__close" id="cafe-modal-close" type="button" aria-label="Luk menu">×</button>
+      <p class="cafe-modal__label">Café</p>
+      <h2 class="cafe-modal__title" id="cafe-modal-title">Frokostmenu</h2>
+      <p class="cafe-modal__subtitle" id="cafe-modal-subtitle"></p>
+      <div class="cafe-modal__text-wrap" id="cafe-modal-text-wrap">
+        <pre class="cafe-modal__text" id="cafe-modal-text"></pre>
+      </div>
+      <div class="cafe-modal__image-wrap" id="cafe-modal-image-wrap" hidden>
+        <img class="cafe-modal__image" id="cafe-modal-image" alt="">
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer">
-    <p>Spisehuset GAARDEN · Kulturhus Risbjerggaard · Hvidovre</p>
+    <div class="container site-footer__inner">
+      <p class="site-footer__brand">Spisehuset Gaarden · Kulturhus Risbjerggaard · Hvidovre</p>
+      <p class="site-footer__hours">Café-Åbningstider: torsdag, fredag og lørdag kl. 11–16</p>
+      <p class="site-footer__note">Vi holder også private arrangementer — huset kan derfor være lukket.</p>
+    </div>
   </footer>
 
+  <script src="js/cafe-menu.js"></script>
   <script>
     const header = document.getElementById("header");
     const hero = document.querySelector(".hero");
