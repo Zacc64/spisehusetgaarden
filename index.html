@@ -63,11 +63,9 @@
       <div class="cards cards--pair">
         <article class="card">
           <h3>Fællesspisning & Social Dining</h3>
-          <p>Langborde, fælles middag og hyggeligt samvær med nye og kendte ansigter.</p>
         </article>
         <article class="card">
           <h3>Events</h3>
-          <p>Arrangementer, særlige aftener og oplevelser i Spisehuset Gaarden.</p>
         </article>
       </div>
 
@@ -81,7 +79,7 @@
           <p class="community-spotlight__text">Se månedens menu og book din plads ved bordet. Vi glæder os til at byde dig velkommen.</p>
           <div class="community-spotlight__actions">
             <button class="community-spotlight__menu-btn" id="faellesspisning-menu-btn" type="button">Se månedens menu</button>
-            <a class="community-spotlight__book" href="#book">Book fællesspisning</a>
+            <button class="community-spotlight__book" id="arrangementer-btn" type="button">Oversigt over arrangementer</button>
           </div>
         </div>
       </article>
@@ -242,6 +240,11 @@
         trigger: "#faellesspisning-menu-btn",
         apiUrl: "/api/faellesspisning-menu",
         label: "Fællesspisning",
+      },
+      {
+        trigger: "#arrangementer-btn",
+        apiUrl: "/api/arrangementer-menu",
+        label: "Arrangementer",
       },
     ]);
   </script>

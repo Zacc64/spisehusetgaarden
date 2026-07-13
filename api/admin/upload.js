@@ -1,6 +1,6 @@
 const { saveUploadedImage } = require("../_lib/menu-store");
 const { requireAuth } = require("../_lib/auth");
-const { sendJson } = require("../_lib/http");
+const { sendJson, readJsonBody } = require("../_lib/http");
 
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
@@ -9,6 +9,11 @@ function parseMultipart(req) {
     req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
+}
+
+function getUploadPrefix(req) {
+  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  return (url.searchParams.get("kind") || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
 }
 
 module.exports = async (req, res) => {
@@ -21,8 +26,26 @@ module.exports = async (req, res) => {
     if (!requireAuth(req, res, sendJson)) return;
 
     const contentType = req.headers["content-type"] || "";
+    const prefix = getUploadPrefix(req);
+
+    if (contentType.includes("application/json")) {
+      const body = await readJsonBody(req);
+      const { data, filename } = body || {};
+      if (!data) {
+        sendJson(res, 400, { error: "Ingen fil modtaget" });
+        return;
+      }
+
+      const imageUrl = await saveUploadedImage(
+        { buffer: Buffer.from(data, "base64"), originalname: filename || "menu.jpg" },
+        prefix
+      );
+      sendJson(res, 200, { imageUrl });
+      return;
+    }
+
     if (!contentType.includes("multipart/form-data")) {
-      sendJson(res, 400, { error: "Forventet multipart upload" });
+      sendJson(res, 400, { error: "Forventet fil-upload" });
       return;
     }
 
@@ -54,8 +77,6 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
-    const prefix = (url.searchParams.get("kind") || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
     const imageUrl = await saveUploadedImage({ buffer: fileBuffer, originalname }, prefix);
     sendJson(res, 200, { imageUrl });
   } catch (err) {

@@ -31,6 +31,17 @@ const MENU_TYPES = {
       imageUrl: null,
     },
   },
+  arrangementer: {
+    filename: "arrangementer-menu.json",
+    blobPath: "menus/arrangementer.json",
+    default: {
+      mode: "image",
+      title: "Oversigt over arrangementer",
+      subtitle: "",
+      text: "",
+      imageUrl: null,
+    },
+  },
 };
 
 const MIME_TYPES = {

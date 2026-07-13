@@ -27,6 +27,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -41,6 +42,8 @@ body {
   line-height: 1.6;
   font-size: 1.125rem;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  width: 100%;
 }
 
 body.is-loading {
@@ -247,6 +250,7 @@ body.is-loaded .site-header {
 
 .hero {
   position: relative;
+  width: 100%;
   height: 100svh;
   min-height: 100vh;
   max-height: 100svh;
@@ -418,6 +422,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 .site-footer {
   position: relative;
   isolation: isolate;
+  overflow-x: clip;
 }
 
 .section::before,
@@ -547,7 +552,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   margin: 0;
   max-width: 36rem;
   font-size: clamp(1rem, 2vw, 1.125rem);
-  color: var(--muted);
+  color: var(--green-deep);
 }
 
 /* Split */
@@ -654,19 +659,20 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 
 .community-spotlight__title {
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-family: var(--font-brand);
+  font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 400;
-  line-height: 1.15;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
   max-width: 22rem;
 }
 
 .community-spotlight__text {
   margin: 0;
   max-width: 34rem;
-  font-family: var(--font-ui);
   font-size: 1rem;
   line-height: 1.65;
-  color: var(--muted);
+  color: var(--green-deep);
 }
 
 .community-spotlight__actions {
@@ -690,6 +696,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   text-decoration: none;
   cursor: pointer;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  border: 1px solid transparent;
 }
 
 .community-spotlight__menu-btn {
@@ -730,9 +737,13 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 }
 
 .card h3 {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 1.5rem;
   font-weight: 400;
+}
+
+.cards--pair .card h3 {
+  margin: 0;
 }
 
 .card p {
@@ -919,11 +930,11 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 .booking__note {
   margin: 1.25rem 0 0;
   font-size: 0.95rem;
-  color: var(--muted);
+  color: var(--green-deep);
 }
 
 .booking__note a {
-  color: var(--green);
+  color: var(--green-deep);
   font-weight: 500;
   text-decoration: none;
 }
@@ -1105,6 +1116,7 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   margin-inline: auto;
   font-size: 0.95rem;
   line-height: 1.5;
+  color: var(--green-deep);
 }
 
 /* Reduced motion */
@@ -1293,8 +1305,8 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 }
 
 .menu-modal--image .menu-modal__panel {
-  width: 100vw;
-  height: 100svh;
+  width: 100%;
+  height: 100%;
   max-width: none;
   max-height: none;
   padding: 0;

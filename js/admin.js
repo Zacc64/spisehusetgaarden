@@ -17,6 +17,14 @@ const MENU_CONFIG = {
     modeName: "faellesspisning-mode",
     defaultTitle: "Månedens menu",
   },
+  arrangementer: {
+    formId: "arrangementer-menu-form",
+    publicApi: "/api/arrangementer-menu",
+    saveApi: "/api/admin/arrangementer-menu",
+    uploadKind: "arrangementer",
+    modeName: "arrangementer-mode",
+    defaultTitle: "Oversigt over arrangementer",
+  },
 };
 
 const loginPanel = document.getElementById("login-panel");
@@ -29,6 +37,7 @@ const tabs = document.querySelectorAll(".admin-tab");
 const menuState = {
   cafe: { imageUrl: null, pendingFile: null },
   faellesspisning: { imageUrl: null, pendingFile: null },
+  arrangementer: { imageUrl: null, pendingFile: null },
 };
 
 function getToken() {
@@ -109,6 +118,32 @@ async function loadAllMenus() {
   await Promise.all(Object.keys(MENU_CONFIG).map((type) => loadMenu(type)));
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      resolve(String(result).split(",")[1] || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImageFile(file, kind) {
+  const data = await fileToBase64(file);
+  const res = await fetch(`/api/admin/upload?kind=${kind}`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ data, filename: file.name }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Upload fejlede");
+  }
+  return res.json();
+}
+
 function wireForm(type) {
   const config = MENU_CONFIG[type];
   const form = getForm(type);
@@ -134,26 +169,19 @@ function wireForm(type) {
     let imageUrl = menuState[type].imageUrl;
 
     if (mode === "image" && menuState[type].pendingFile) {
-      const formData = new FormData();
-      formData.append("image", menuState[type].pendingFile);
-
-      const uploadRes = await fetch(`/api/admin/upload?kind=${config.uploadKind}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${getToken()}` },
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}));
-        saveError.textContent = err.error || "Upload fejlede";
+      try {
+        const uploaded = await uploadImageFile(
+          menuState[type].pendingFile,
+          config.uploadKind
+        );
+        imageUrl = uploaded.imageUrl;
+        menuState[type].imageUrl = imageUrl;
+        menuState[type].pendingFile = null;
+      } catch (err) {
+        saveError.textContent = err.message || "Upload fejlede";
         saveError.hidden = false;
         return;
       }
-
-      const uploaded = await uploadRes.json();
-      imageUrl = uploaded.imageUrl;
-      menuState[type].imageUrl = imageUrl;
-      menuState[type].pendingFile = null;
     }
 
     const payload = {

@@ -13,7 +13,7 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
 });
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "12mb" }));
 
 function buildMenuPayload(body, defaultTitle) {
   const { mode, title, subtitle, text, imageUrl } = body || {};
@@ -42,6 +42,10 @@ app.get("/api/menu", async (_req, res) => {
 
 app.get("/api/faellesspisning-menu", async (_req, res) => {
   res.json(await readMenu("faellesspisning"));
+});
+
+app.get("/api/arrangementer-menu", async (_req, res) => {
+  res.json(await readMenu("arrangementer"));
 });
 
 app.post("/api/admin/login", (req, res) => {
@@ -73,17 +77,44 @@ app.put("/api/admin/faellesspisning-menu", async (req, res) => {
   res.json(await writeMenu("faellesspisning", result.menu));
 });
 
-app.post("/api/admin/upload", upload.single("image"), async (req, res) => {
+app.put("/api/admin/arrangementer-menu", async (req, res) => {
   if (!requireAuth(req, res)) return;
-
-  if (!req.file) {
-    res.status(400).json({ error: "Ingen fil modtaget" });
+  const result = buildMenuPayload(req.body, "Oversigt over arrangementer");
+  if (result.error) {
+    res.status(400).json({ error: result.error });
     return;
   }
+  res.json(await writeMenu("arrangementer", result.menu));
+});
+
+app.post("/api/admin/upload", (req, res, next) => {
+  if (req.is("application/json")) return next();
+  upload.single("image")(req, res, next);
+}, async (req, res) => {
+  if (!requireAuth(req, res)) return;
 
   try {
     const prefix = String(req.query.kind || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
-    const imageUrl = await saveUploadedImage(req.file, prefix);
+    let file;
+
+    if (req.is("application/json")) {
+      const { data, filename } = req.body || {};
+      if (!data) {
+        res.status(400).json({ error: "Ingen fil modtaget" });
+        return;
+      }
+      file = {
+        buffer: Buffer.from(data, "base64"),
+        originalname: filename || "menu.jpg",
+      };
+    } else if (req.file) {
+      file = req.file;
+    } else {
+      res.status(400).json({ error: "Ingen fil modtaget" });
+      return;
+    }
+
+    const imageUrl = await saveUploadedImage(file, prefix);
     res.json({ imageUrl });
   } catch (err) {
     res.status(400).json({ error: err.message || "Upload fejlede" });

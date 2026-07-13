@@ -1,5 +1,5 @@
 /**
- * Shared fullscreen menu popup for café and fællesspisning.
+ * Shared fullscreen menu popup for café, fællesspisning and arrangementer.
  */
 function initMenuModals(modalSelector, entries) {
   const modalEl = document.querySelector(modalSelector);
@@ -16,10 +16,15 @@ function initMenuModals(modalSelector, entries) {
   const labelEl = modalEl.querySelector(".menu-modal__label");
 
   let lastFocus = null;
-  let activeLabel = "Menu";
+
+  const defaultTitles = {
+    Café: "Frokostmenu",
+    Fællesspisning: "Månedens menu",
+    Arrangementer: "Oversigt over arrangementer",
+  };
 
   function renderMenu(menu, label) {
-    const defaultTitle = label === "Café" ? "Frokostmenu" : "Månedens menu";
+    const defaultTitle = defaultTitles[label] || "Menu";
 
     if (menu.mode === "image" && menu.imageUrl) {
       modalEl.classList.add("menu-modal--image");
@@ -40,12 +45,11 @@ function initMenuModals(modalSelector, entries) {
       titleEl.textContent = menu.title || defaultTitle;
       subtitleEl.textContent = menu.subtitle || "";
       subtitleEl.hidden = !menu.subtitle;
-      textEl.textContent = menu.text || "Menu kommer snart.";
+      textEl.textContent = menu.text || "Indhold kommer snart.";
     }
   }
 
   async function openModal(apiUrl, label) {
-    activeLabel = label;
     lastFocus = document.activeElement;
 
     try {
@@ -55,9 +59,9 @@ function initMenuModals(modalSelector, entries) {
       renderMenu(
         {
           mode: "text",
-          title: label === "Café" ? "Frokostmenu" : "Månedens menu",
+          title: defaultTitles[label] || "Menu",
           subtitle: "",
-          text: "Menu kunne ikke hentes lige nu.",
+          text: "Indhold kunne ikke hentes lige nu.",
         },
         label
       );
