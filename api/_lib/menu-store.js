@@ -3,6 +3,8 @@ const path = require("path");
 const {
   isVercelRuntime,
   hasBlobStorage,
+  getBlobSetupHint,
+  formatBlobError,
   readBlobJson,
   writeBlobJson,
   writeBlobFile,
@@ -144,9 +146,7 @@ async function writeMenu(type, menu) {
   }
 
   if (isVercelRuntime()) {
-    throw new Error(
-      "Blob storage er ikke konfigureret. Forbind Vercel Blob med read-write token."
-    );
+    throw new Error(getBlobSetupHint() || "Blob storage er ikke konfigureret.");
   }
 
   return writeMenuToFs(type, menu);
@@ -160,19 +160,16 @@ async function saveUploadedImage(file, prefix = "menu") {
     try {
       return await writeBlobFile(pathname, file.buffer, contentType);
     } catch (err) {
-      if (isVercelRuntime()) {
-        throw new Error(
-          "Kunne ikke uploade billede. Tjek at Vercel Blob er forbundet med read-write token."
-        );
-      }
-      throw err;
+      throw new Error(
+        isVercelRuntime()
+          ? `Kunne ikke uploade billede. ${formatBlobError(err)}`
+          : formatBlobError(err)
+      );
     }
   }
 
   if (isVercelRuntime()) {
-    throw new Error(
-      "Blob storage er ikke konfigureret. Forbind Vercel Blob med read-write token."
-    );
+    throw new Error(getBlobSetupHint() || "Blob storage er ikke konfigureret.");
   }
 
   return saveUploadedImageToFs(file, prefix);

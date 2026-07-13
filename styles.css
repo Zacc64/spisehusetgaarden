@@ -15,7 +15,7 @@
   --line: rgba(47, 69, 53, 0.09);
   --max: 1120px;
   --header-offset: 1.5rem;
-  --font-brand: fantasy;
+  --font-brand: "Oswald", "Arial Narrow", "Helvetica Neue", sans-serif;
   --font-ui: "DM Sans", system-ui, sans-serif;
 }
 
@@ -32,7 +32,7 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--font-brand);
+  font-family: var(--font-ui);
   color: var(--ink);
   background-color: var(--cream);
   background-image:
@@ -82,6 +82,9 @@ a {
   margin: 0;
   font-family: var(--font-brand);
   font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
   color: var(--white);
   animation: loaderPulse 0.7s ease-in-out infinite alternate;
 }
@@ -162,10 +165,18 @@ body.is-loaded .site-header {
   flex-shrink: 0;
   font-family: var(--font-brand);
   font-size: clamp(1.85rem, 4vw, 2.35rem);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.03em;
   text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .nav-toggle {
@@ -334,8 +345,8 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   gap: 0.5rem;
   margin: 0 0 1.5rem;
   font-size: clamp(3rem, 8vw, 5.5rem);
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.05;
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
 }
@@ -543,8 +554,8 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 .section h2 {
   margin: 0 0 1.5rem;
   font-size: clamp(2.25rem, 5vw, 3.25rem);
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   line-height: 1.1;
 }
 
@@ -661,9 +672,8 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   margin: 0;
   font-family: var(--font-brand);
   font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 400;
   line-height: 1.2;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   max-width: 22rem;
 }
 
@@ -739,7 +749,6 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
 .card h3 {
   margin: 0;
   font-size: 1.5rem;
-  font-weight: 400;
 }
 
 .cards--pair .card h3 {
