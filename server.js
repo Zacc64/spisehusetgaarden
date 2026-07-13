@@ -121,6 +121,11 @@ app.post("/api/admin/upload", (req, res, next) => {
   }
 });
 
+app.get("/api/media", async (req, res, next) => {
+  const mediaHandler = require("./api/media");
+  mediaHandler(req, res).catch(next);
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static(__dirname));
 

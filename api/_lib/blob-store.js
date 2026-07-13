@@ -1,4 +1,6 @@
-const { put, list } = require("@vercel/blob");
+const { put, list, get } = require("@vercel/blob");
+
+let resolvedAccess = process.env.BLOB_ACCESS === "private" ? "private" : null;
 
 function isVercelRuntime() {
   return process.env.VERCEL === "1";
@@ -42,6 +44,18 @@ function hasBlobStorage(req) {
   return hasBlobCredentials(req);
 }
 
+function getBlobAccess() {
+  return resolvedAccess || "public";
+}
+
+function isPrivateStore() {
+  return getBlobAccess() === "private";
+}
+
+function markPrivateStore() {
+  resolvedAccess = "private";
+}
+
 function getBlobSetupHint(req) {
   if (hasBlobCredentials(req)) return null;
 
@@ -74,9 +88,9 @@ function blobCommandOptions(req) {
   return options;
 }
 
-function blobOptions(contentType, req) {
+function blobOptions(contentType, req, access = getBlobAccess()) {
   return {
-    access: "public",
+    access,
     contentType,
     addRandomSuffix: false,
     allowOverwrite: true,
@@ -101,10 +115,43 @@ function formatBlobError(err, req) {
   return detail;
 }
 
+function mediaUrlForPathname(pathname) {
+  return `/api/media?path=${encodeURIComponent(pathname)}`;
+}
+
+function isPrivateStoreError(err) {
+  const message = String(err?.message || "");
+  return message.includes("private store") || message.includes("private access");
+}
+
+async function putBlob(pathname, body, contentType, req) {
+  try {
+    return await put(pathname, body, blobOptions(contentType, req, "public"));
+  } catch (err) {
+    if (!isPrivateStoreError(err)) throw err;
+    markPrivateStore();
+    return put(pathname, body, blobOptions(contentType, req, "private"));
+  }
+}
+
 async function readBlobJson(pathname, req) {
   const { blobs } = await list(listOptions(pathname, req));
   const blob = blobs.find((entry) => entry.pathname === pathname);
   if (!blob) return null;
+
+  if (blob.url.includes(".private.blob.")) {
+    markPrivateStore();
+  }
+
+  if (isPrivateStore()) {
+    const result = await get(pathname, {
+      access: "private",
+      ...blobCommandOptions(req),
+    });
+    if (!result?.stream) return null;
+    const text = await new Response(result.stream).text();
+    return JSON.parse(text);
+  }
 
   const response = await fetch(blob.url);
   if (!response.ok) return null;
@@ -112,12 +159,28 @@ async function readBlobJson(pathname, req) {
 }
 
 async function writeBlobJson(pathname, data, req) {
-  await put(pathname, JSON.stringify(data, null, 2), blobOptions("application/json", req));
+  await putBlob(pathname, JSON.stringify(data, null, 2), "application/json", req);
 }
 
 async function writeBlobFile(pathname, buffer, contentType, req) {
-  const blob = await put(pathname, buffer, blobOptions(contentType, req));
+  const blob = await putBlob(pathname, buffer, contentType, req);
+  if (isPrivateStore()) {
+    return mediaUrlForPathname(pathname);
+  }
   return blob.url;
+}
+
+async function readBlobFile(pathname, req) {
+  if (!pathname.startsWith("menus/")) {
+    throw new Error("Invalid media path");
+  }
+
+  const result = await get(pathname, {
+    access: "private",
+    ...blobCommandOptions(req),
+  });
+
+  return result;
 }
 
 function getBlobStatus(req) {
@@ -129,6 +192,7 @@ function getBlobStatus(req) {
     hasStoreId: Boolean(getBlobStoreId()),
     hasOidcToken: Boolean(getOidcToken(req)),
     hasOidcHeader: oidcFromHeader,
+    blobAccess: getBlobAccess(),
     hint: getBlobSetupHint(req),
   };
 }
@@ -143,4 +207,6 @@ module.exports = {
   readBlobJson,
   writeBlobJson,
   writeBlobFile,
+  readBlobFile,
+  mediaUrlForPathname,
 };
