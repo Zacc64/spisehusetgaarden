@@ -32,7 +32,7 @@ const editorPanel = document.getElementById("editor-panel");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const logoutBtn = document.getElementById("logout-btn");
-const tabs = document.querySelectorAll(".admin-tab");
+const navItems = document.querySelectorAll(".admin-nav__item");
 
 const menuState = {
   cafe: { imageUrl: null, pendingFile: null },
@@ -67,11 +67,15 @@ function showEditor() {
 }
 
 function switchTab(tabId) {
-  tabs.forEach((tab) => {
-    tab.classList.toggle("admin-tab--active", tab.dataset.tab === tabId);
+  navItems.forEach((item) => {
+    item.classList.toggle("admin-nav__item--active", item.dataset.tab === tabId);
   });
+
   Object.entries(MENU_CONFIG).forEach(([key, config]) => {
-    document.getElementById(config.formId).hidden = key !== tabId;
+    const panel = document.getElementById(config.formId);
+    const isActive = key === tabId;
+    panel.hidden = !isActive;
+    panel.classList.toggle("admin-panel--active", isActive);
   });
 }
 
@@ -250,8 +254,8 @@ logoutBtn.addEventListener("click", () => {
   showLogin();
 });
 
-tabs.forEach((tab) => {
-  tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+navItems.forEach((item) => {
+  item.addEventListener("click", () => switchTab(item.dataset.tab));
 });
 
 Object.keys(MENU_CONFIG).forEach(wireForm);

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
+  isVercelRuntime,
   hasBlobStorage,
   readBlobJson,
   writeBlobJson,
@@ -132,12 +133,20 @@ async function readMenu(type = "cafe") {
 async function writeMenu(type, menu) {
   if (hasBlobStorage()) {
     await writeBlobJson(getMenuConfig(type).blobPath, menu);
-    try {
-      writeMenuToFs(type, menu);
-    } catch {
-      // filesystem may be read-only on Vercel
+    if (!isVercelRuntime()) {
+      try {
+        writeMenuToFs(type, menu);
+      } catch {
+        // optional local mirror
+      }
     }
     return menu;
+  }
+
+  if (isVercelRuntime()) {
+    throw new Error(
+      "Blob storage er ikke konfigureret. Forbind Vercel Blob med read-write token."
+    );
   }
 
   return writeMenuToFs(type, menu);
@@ -148,7 +157,22 @@ async function saveUploadedImage(file, prefix = "menu") {
 
   if (hasBlobStorage()) {
     const pathname = `menus/images/${prefix}-${Date.now()}${ext}`;
-    return writeBlobFile(pathname, file.buffer, contentType);
+    try {
+      return await writeBlobFile(pathname, file.buffer, contentType);
+    } catch (err) {
+      if (isVercelRuntime()) {
+        throw new Error(
+          "Kunne ikke uploade billede. Tjek at Vercel Blob er forbundet med read-write token."
+        );
+      }
+      throw err;
+    }
+  }
+
+  if (isVercelRuntime()) {
+    throw new Error(
+      "Blob storage er ikke konfigureret. Forbind Vercel Blob med read-write token."
+    );
   }
 
   return saveUploadedImageToFs(file, prefix);

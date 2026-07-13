@@ -1,5 +1,9 @@
 const { put, list } = require("@vercel/blob");
 
+function isVercelRuntime() {
+  return process.env.VERCEL === "1";
+}
+
 function getBlobToken() {
   return (
     process.env.BLOB_READ_WRITE_TOKEN ||
@@ -9,25 +13,36 @@ function getBlobToken() {
 }
 
 function hasBlobStorage() {
-  return Boolean(getBlobToken());
+  return isVercelRuntime() || Boolean(getBlobToken());
 }
 
 function blobOptions(contentType) {
-  return {
+  const options = {
     access: "public",
     contentType,
     addRandomSuffix: false,
     allowOverwrite: true,
-    token: getBlobToken(),
   };
+
+  const token = getBlobToken();
+  if (token) {
+    options.token = token;
+  }
+
+  return options;
+}
+
+function listOptions(prefix) {
+  const options = { prefix, limit: 20 };
+  const token = getBlobToken();
+  if (token) {
+    options.token = token;
+  }
+  return options;
 }
 
 async function readBlobJson(pathname) {
-  const { blobs } = await list({
-    prefix: pathname,
-    limit: 20,
-    token: getBlobToken(),
-  });
+  const { blobs } = await list(listOptions(pathname));
   const blob = blobs.find((entry) => entry.pathname === pathname);
   if (!blob) return null;
 
@@ -37,11 +52,7 @@ async function readBlobJson(pathname) {
 }
 
 async function writeBlobJson(pathname, data) {
-  await put(
-    pathname,
-    JSON.stringify(data, null, 2),
-    blobOptions("application/json")
-  );
+  await put(pathname, JSON.stringify(data, null, 2), blobOptions("application/json"));
 }
 
 async function writeBlobFile(pathname, buffer, contentType) {
@@ -50,6 +61,7 @@ async function writeBlobFile(pathname, buffer, contentType) {
 }
 
 module.exports = {
+  isVercelRuntime,
   hasBlobStorage,
   readBlobJson,
   writeBlobJson,
