@@ -47,7 +47,11 @@
         <span class="hero__line">Fællesskab</span>
       </h1>
       <p class="hero__desc">   </p>
-      <a class="hero__cta" href="#book">Book bord</a>
+      <div class="hero__actions">
+        <a class="hero__cta" href="#book">Book bord</a>
+        <button class="hero__cta" id="faellesspisning-menu-btn" type="button">Månedens begivenhed</button>
+        <button class="hero__cta" id="arrangementer-btn" type="button">Arrangementer</button>
+      </div>
     </div>
     <a class="hero__scroll" href="#faellesskab" aria-label="Scroll ned">
       <span></span>
@@ -56,33 +60,30 @@
 
   <section class="section" id="faellesskab">
     <div class="container">
-      <p class="section-label">Fællesskab</p>
-      <h2>Events, langborde, hverdagsstemning</h2>
-      <p class="lead">Spisehuset Gaarden er skabt til at samle folk — fra hyggelig middag til fællesspisning og arrangementer i huset.</p>
-
-      <div class="cards cards--pair">
-        <article class="card">
-          <h3>Fællesspisning & Social Dining</h3>
-        </article>
-        <article class="card">
-          <h3>Events</h3>
-        </article>
+      <div class="facebook-feed__header">
+        <div>
+          <p class="section-label">Fællesskab</p>
+          <h2>Events, langborde, hverdagsstemning</h2>
+          <p class="lead">Spisehuset Gaarden er skabt til at samle folk — fra hyggelig middag til fællesspisning og arrangementer i huset.</p>
+        </div>
+        <a class="facebook-feed__link" href="https://www.facebook.com/profile.php?id=61585327136722" target="_blank" rel="noopener noreferrer">
+          Følg os på Facebook
+        </a>
       </div>
 
-      <article class="community-spotlight">
-        <div class="community-spotlight__media">
-          <img src="assets/images/faellesspisning-web.jpg" alt="Fællesspisning i Spisehuset Gaarden" loading="lazy">
-        </div>
-        <div class="community-spotlight__body">
-          <p class="community-spotlight__eyebrow">Fællesspisning & Social Dining</p>
-          <h3 class="community-spotlight__title">Langborde fyldt med gæster — mad og samvær</h3>
-          <p class="community-spotlight__text">Se månedens menu og book din plads ved bordet. Vi glæder os til at byde dig velkommen.</p>
-          <div class="community-spotlight__actions">
-            <button class="community-spotlight__menu-btn" id="faellesspisning-menu-btn" type="button">Se månedens menu</button>
-            <button class="community-spotlight__book" id="arrangementer-btn" type="button">Oversigt over arrangementer</button>
-          </div>
-        </div>
-      </article>
+      <div class="facebook-feed__embed">
+        <div
+          class="fb-page"
+          data-href="https://www.facebook.com/profile.php?id=61585327136722"
+          data-tabs="timeline"
+          data-width=""
+          data-height="620"
+          data-small-header="false"
+          data-adapt-container-width="true"
+          data-hide-cover="true"
+          data-show-facepile="false"
+        ></div>
+      </div>
     </div>
   </section>
 
@@ -307,6 +308,9 @@
     window.addEventListener("scroll", updateHeader, { passive: true });
     window.addEventListener("resize", updateHeader);
   </script>
+
+  <div id="fb-root"></div>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/da_DK/sdk.js#xfbml=1&version=v22.0"></script>
 
 </body>
 </html>
