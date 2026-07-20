@@ -1,4 +1,4 @@
-const { getPublicBookingConfig } = require("../booking");
+const { getPublicBookingConfig, getSiteUrl } = require("../booking");
 const { getCapacitySettings } = require("../booking-store");
 const { sendJson } = require("../http");
 
@@ -15,6 +15,7 @@ module.exports = async (req, res) => {
     {
       ...getPublicBookingConfig(),
       defaultCapacity: settings.defaultCapacity,
+      siteUrl: getSiteUrl(req),
     },
     {
       "Cache-Control": "s-maxage=60, stale-while-revalidate",

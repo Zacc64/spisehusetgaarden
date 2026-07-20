@@ -77,8 +77,13 @@ module.exports = async (req, res) => {
       depositDkk,
     });
   } catch (err) {
+    const redirects = getBookingRedirectUrls(req);
     sendJson(res, 500, {
       error: err.message || "Kunne ikke starte betaling",
+      redirectUrls: {
+        success: redirects.successUrl,
+        cancel: redirects.cancelUrl,
+      },
     });
   }
 };
