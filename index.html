@@ -28,7 +28,6 @@
       <nav class="site-nav" id="site-nav">
         <a href="#faellesskab">Fællesskab</a>
         <a href="#" id="cafe-link">Café</a>
-        <a href="#instagram">Instagram</a>
         <a href="#kontakt">Kontakt</a>
         <a class="nav-book" href="#book">Book bord</a>
       </nav>
@@ -60,18 +59,18 @@
 
   <section class="section" id="faellesskab">
     <div class="container">
-      <div class="facebook-feed__header">
+      <div class="community-post__header">
         <div>
           <p class="section-label">Fællesskab</p>
           <h2>Events, langborde, hverdagsstemning</h2>
           <p class="lead">Spisehuset Gaarden er skabt til at samle folk — fra hyggelig middag til fællesspisning og arrangementer i huset.</p>
         </div>
-        <a class="facebook-feed__link" href="https://www.facebook.com/profile.php?id=61585327136722" target="_blank" rel="noopener noreferrer">
+        <a class="community-post__link" href="https://www.facebook.com/profile.php?id=61585327136722" target="_blank" rel="noopener noreferrer">
           Følg os på Facebook
         </a>
       </div>
 
-      <div class="facebook-feed__embed" id="facebook-feed" aria-live="polite"></div>
+      <div class="community-post__embed" id="community-post" aria-live="polite"></div>
     </div>
   </section>
 
@@ -228,7 +227,7 @@
 
   <script src="js/menu-popup.js"></script>
   <script src="js/booking.js"></script>
-  <script src="js/facebook-feed.js"></script>
+  <script src="js/community-post.js"></script>
   <script>
     initMenuModals("#menu-modal", [
       { trigger: "#cafe-link", apiUrl: "/api/menu", label: "Café" },
@@ -243,7 +242,7 @@
         label: "Arrangementer",
       },
     ]);
-    initFacebookFeed("#facebook-feed");
+    initCommunityPost("#community-post");
   </script>
   <script>
     const header = document.getElementById("header");

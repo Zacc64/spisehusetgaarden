@@ -98,6 +98,16 @@ function switchTab(tabId, { scroll = true } = {}) {
     }
   }
 
+  const communityPanel = document.getElementById("community-post-form");
+  if (communityPanel) {
+    const isCommunity = tabId === "faellesskab";
+    communityPanel.hidden = !isCommunity;
+    communityPanel.classList.toggle("admin-panel--active", isCommunity);
+    if (isCommunity && typeof window.loadCommunityPostAdmin === "function") {
+      window.loadCommunityPostAdmin();
+    }
+  }
+
   if (scroll && tabChanged) {
     window.scrollTo(0, 0);
   }
@@ -293,7 +303,7 @@ Object.keys(MENU_CONFIG).forEach(wireForm);
 
 function restoreEditorTab() {
   const savedTab = sessionStorage.getItem(TAB_KEY);
-  const validTabs = [...Object.keys(MENU_CONFIG), "bookings"];
+  const validTabs = [...Object.keys(MENU_CONFIG), "faellesskab", "bookings"];
   switchTab(validTabs.includes(savedTab) ? savedTab : "cafe", { scroll: false });
 }
 

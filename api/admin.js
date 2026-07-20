@@ -14,6 +14,7 @@ const ROUTES = {
   bookings: require("./_lib/handlers/bookings"),
   capacity: require("./_lib/handlers/capacity"),
   "blob-status": require("./_lib/handlers/blob-status"),
+  "community-post": require("./_lib/handlers/admin-save-community-post"),
 };
 
 module.exports = async (req, res) => {

@@ -11,6 +11,9 @@
     },
     "api/media.js": {
       "includeFiles": "data/**"
+    },
+    "api/community-post.js": {
+      "includeFiles": "data/**"
     }
   },
   "rewrites": [

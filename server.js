@@ -113,8 +113,12 @@ app.post("/api/admin/upload", (req, res, next) => {
   }
 });
 
-app.get("/api/facebook-posts", async (req, res) => {
-  await require("./api/_lib/handlers/facebook-posts")(req, res);
+app.get("/api/community-post", async (req, res) => {
+  await require("./api/_lib/handlers/community-post")(req, res);
+});
+
+app.put("/api/admin/community-post", async (req, res) => {
+  await require("./api/_lib/handlers/admin-save-community-post")(req, res);
 });
 
 app.get("/api/media", async (req, res, next) => {

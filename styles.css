@@ -637,9 +637,9 @@ button.hero__cta {
   margin-top: 2.5rem;
 }
 
-/* Facebook feed */
+/* Community post */
 
-.facebook-feed__header {
+.community-post__header {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -648,7 +648,7 @@ button.hero__cta {
   margin-bottom: 2rem;
 }
 
-.facebook-feed__link {
+.community-post__link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -660,11 +660,11 @@ button.hero__cta {
   color: var(--green);
 }
 
-.facebook-feed__link:hover {
+.community-post__link:hover {
   opacity: 0.75;
 }
 
-.facebook-feed__embed {
+.community-post__embed {
   overflow: hidden;
   border-radius: 1rem;
   border: 1px solid var(--green-soft);
@@ -672,99 +672,46 @@ button.hero__cta {
   min-height: 12rem;
 }
 
-.facebook-feed__loading,
-.facebook-feed__empty {
+.community-post__loading,
+.community-post__empty {
   display: grid;
   place-items: center;
-  gap: 1rem;
   min-height: 12rem;
   padding: 2rem;
   text-align: center;
   color: var(--muted);
 }
 
-.facebook-feed__empty-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.25rem;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--white);
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.facebook-feed__empty-link:hover {
-  background: var(--green-deep);
-}
-
-.facebook-feed__grid {
+.community-post__card {
   display: grid;
-  gap: 1px;
-  background: var(--line);
+  gap: clamp(1.5rem, 3vw, 2rem);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
 }
 
-.facebook-feed__card {
-  background: var(--green-whisper);
-}
-
-.facebook-feed__card-link {
-  display: grid;
-  gap: 0;
-  height: 100%;
-  color: inherit;
-  text-decoration: none;
-}
-
-.facebook-feed__media {
+.community-post__media {
   overflow: hidden;
+  border-radius: 0.75rem;
   background: var(--green-mist);
 }
 
-.facebook-feed__media img {
+.community-post__media img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
-  transition: transform 0.45s ease;
 }
 
-.facebook-feed__card-link:hover .facebook-feed__media img {
-  transform: scale(1.03);
-}
-
-.facebook-feed__card-body {
-  display: grid;
+.community-post__body {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  padding: 1.25rem 1.5rem 1.5rem;
 }
 
-.facebook-feed__date {
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--green);
-}
-
-.facebook-feed__text {
+.community-post__text {
   margin: 0;
   font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--green-deep);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
-  overflow: hidden;
-}
-
-.facebook-feed__read-more {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--green);
+  white-space: pre-wrap;
 }
 
 /* Cards */
@@ -1268,8 +1215,14 @@ button.hero__cta {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .facebook-feed__grid {
-    grid-template-columns: repeat(2, 1fr);
+  .community-post__card {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .community-post__media img {
+    aspect-ratio: 4 / 3;
+    min-height: 100%;
   }
 
   .booking__layout {

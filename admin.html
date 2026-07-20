@@ -39,6 +39,7 @@
           <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">Café</button>
           <button type="button" class="admin-nav__item" data-tab="faellesspisning">Fællesspisning</button>
           <button type="button" class="admin-nav__item" data-tab="arrangementer">Arrangementer</button>
+          <button type="button" class="admin-nav__item" data-tab="faellesskab">Fællesskab</button>
           <button type="button" class="admin-nav__item" data-tab="bookings">Bookinger</button>
         </nav>
 
@@ -118,6 +119,41 @@
             <p class="admin-error" data-save-error hidden></p>
             <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
             <button type="submit" class="admin-btn">Gem arrangementer</button>
+          </footer>
+        </form>
+
+        <form class="admin-panel" id="community-post-form" data-panel="faellesskab" hidden>
+          <header class="admin-panel__header">
+            <p class="admin-eyebrow">Fællesskab</p>
+            <h2>Opslag på forsiden</h2>
+            <p class="admin-panel__desc">Vises i <strong>Fællesskab</strong>-sektionen. Kopiér tekst fra Facebook og tilføj billede via URL eller upload.</p>
+          </header>
+
+          <div class="admin-card-block">
+            <label class="admin-field">
+              <span>Tekst</span>
+              <textarea data-field="text" rows="12" placeholder="Beskriv menu, priser, datoer osv."></textarea>
+            </label>
+
+            <label class="admin-field">
+              <span>Billede-URL <em>(valgfrit)</em></span>
+              <input type="url" data-field="image-url" placeholder="https://...">
+            </label>
+
+            <label class="admin-field">
+              <span>Eller upload billede</span>
+              <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+            </label>
+
+            <div class="admin-preview" data-image-preview hidden>
+              <img data-preview-img alt="Forhåndsvisning">
+            </div>
+          </div>
+
+          <footer class="admin-panel__footer">
+            <p class="admin-error" data-save-error hidden></p>
+            <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
+            <button type="submit" class="admin-btn">Gem opslag</button>
           </footer>
         </form>
 
@@ -225,6 +261,7 @@
   </div>
 
   <script src="js/admin.js"></script>
+  <script src="js/admin-community-post.js"></script>
   <script src="js/admin-bookings.js"></script>
 </body>
 </html>
