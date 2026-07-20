@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     }
 
     const stripe = getStripe();
-    const siteUrl = getSiteUrl();
+    const siteUrl = getSiteUrl(req);
     const depositDkk = getDepositDkk();
 
     const session = await stripe.checkout.sessions.create({

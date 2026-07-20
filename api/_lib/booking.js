@@ -1,5 +1,47 @@
-function getSiteUrl() {
-  return (process.env.SITE_URL || "http://localhost:3456").replace(/\/$/, "");
+function normalizeSiteUrl(value) {
+  const raw = String(value || "").trim().replace(/\/$/, "");
+  if (!raw) return "";
+
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+
+  return `https://${raw}`;
+}
+
+function isValidSiteUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getSiteUrl(req) {
+  const fromEnv = normalizeSiteUrl(process.env.SITE_URL);
+  if (isValidSiteUrl(fromEnv)) {
+    return fromEnv;
+  }
+
+  const vercelUrl = normalizeSiteUrl(process.env.VERCEL_URL);
+  if (isValidSiteUrl(vercelUrl)) {
+    return vercelUrl;
+  }
+
+  const host =
+    req?.headers?.["x-forwarded-host"] ||
+    req?.headers?.host ||
+    req?.headers?.Host;
+  const proto = req?.headers?.["x-forwarded-proto"] || "https";
+  if (host) {
+    const fromRequest = normalizeSiteUrl(`${proto}://${host}`);
+    if (isValidSiteUrl(fromRequest)) {
+      return fromRequest;
+    }
+  }
+
+  return "http://localhost:3456";
 }
 
 function getDepositDkk() {
