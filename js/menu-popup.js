@@ -1,5 +1,5 @@
 /**
- * Shared fullscreen menu popup for café, fællesspisning and arrangementer.
+ * Shared fullscreen menu popup for café and åbningstider.
  */
 function initMenuModals(modalSelector, entries) {
   const modalEl = document.querySelector(modalSelector);
@@ -19,8 +19,7 @@ function initMenuModals(modalSelector, entries) {
 
   const defaultTitles = {
     Café: "Frokostmenu",
-    Fællesspisning: "Månedens menu",
-    Arrangementer: "Oversigt over arrangementer",
+    Åbningstider: "Åbningstider",
   };
 
   function withCacheBust(url, version) {

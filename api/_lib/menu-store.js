@@ -40,7 +40,7 @@ const MENU_TYPES = {
     blobPath: "menus/arrangementer.json",
     default: {
       mode: "image",
-      title: "Oversigt over arrangementer",
+      title: "Åbningstider",
       subtitle: "",
       text: "",
       imageUrl: null,

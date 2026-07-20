@@ -48,8 +48,7 @@
       <p class="hero__desc">   </p>
       <div class="hero__actions">
         <a class="hero__cta" href="#book">Book bord</a>
-        <button class="hero__cta" id="faellesspisning-menu-btn" type="button">Månedens begivenhed</button>
-        <button class="hero__cta" id="arrangementer-btn" type="button">Arrangementer</button>
+        <button class="hero__cta" id="arrangementer-btn" type="button">Åbningstider</button>
       </div>
     </div>
     <a class="hero__scroll" href="#faellesskab" aria-label="Scroll ned">
@@ -232,14 +231,9 @@
     initMenuModals("#menu-modal", [
       { trigger: "#cafe-link", apiUrl: "/api/menu", label: "Café" },
       {
-        trigger: "#faellesspisning-menu-btn",
-        apiUrl: "/api/faellesspisning-menu",
-        label: "Fællesspisning",
-      },
-      {
         trigger: "#arrangementer-btn",
         apiUrl: "/api/arrangementer-menu",
-        label: "Arrangementer",
+        label: "Åbningstider",
       },
     ]);
     initCommunityPost("#community-post");

@@ -9,19 +9,12 @@ const MENU_CONFIG = {
     uploadKind: "menu",
     defaultTitle: "Frokostmenu",
   },
-  faellesspisning: {
-    formId: "faellesspisning-menu-form",
-    publicApi: "/api/faellesspisning-menu",
-    saveApi: "/api/admin/faellesspisning-menu",
-    uploadKind: "faellesspisning",
-    defaultTitle: "Månedens menu",
-  },
   arrangementer: {
     formId: "arrangementer-menu-form",
     publicApi: "/api/arrangementer-menu",
     saveApi: "/api/admin/arrangementer-menu",
     uploadKind: "arrangementer",
-    defaultTitle: "Oversigt over arrangementer",
+    defaultTitle: "Åbningstider",
   },
 };
 
@@ -35,7 +28,6 @@ let activeTab = null;
 
 const menuState = {
   cafe: { imageUrl: null, pendingFile: null },
-  faellesspisning: { imageUrl: null, pendingFile: null },
   arrangementer: { imageUrl: null, pendingFile: null },
 };
 

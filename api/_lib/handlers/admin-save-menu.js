@@ -5,7 +5,7 @@ const { sendJson, readJsonBody } = require("../http");
 const DEFAULT_TITLES = {
   cafe: "Frokostmenu",
   faellesspisning: "Månedens menu",
-  arrangementer: "Oversigt over arrangementer",
+  arrangementer: "Åbningstider",
 };
 
 module.exports = async function handleAdminSaveMenu(req, res, type) {

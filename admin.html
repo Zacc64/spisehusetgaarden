@@ -37,8 +37,7 @@
 
         <nav class="admin-nav" aria-label="Vælg sektion">
           <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">Café</button>
-          <button type="button" class="admin-nav__item" data-tab="faellesspisning">Fællesspisning</button>
-          <button type="button" class="admin-nav__item" data-tab="arrangementer">Arrangementer</button>
+          <button type="button" class="admin-nav__item" data-tab="arrangementer">Åbningstider</button>
           <button type="button" class="admin-nav__item" data-tab="faellesskab">Fællesskab</button>
           <button type="button" class="admin-nav__item" data-tab="bookings">Bookinger</button>
         </nav>
@@ -74,35 +73,11 @@
           </footer>
         </form>
 
-        <form class="admin-panel" id="faellesspisning-menu-form" data-menu="faellesspisning" hidden>
-          <header class="admin-panel__header">
-            <p class="admin-eyebrow">Fællesspisning</p>
-            <h2>Månedens menu</h2>
-            <p class="admin-panel__desc">Vises ved <strong>Månedens begivenhed</strong> i hero-sektionen.</p>
-          </header>
-
-          <div class="admin-card-block">
-            <label class="admin-field">
-              <span>Popup-billede</span>
-              <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
-            </label>
-            <div class="admin-preview" data-image-preview hidden>
-              <img data-preview-img alt="Forhåndsvisning">
-            </div>
-          </div>
-
-          <footer class="admin-panel__footer">
-            <p class="admin-error" data-save-error hidden></p>
-            <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem fællesspisnings-menu</button>
-          </footer>
-        </form>
-
         <form class="admin-panel" id="arrangementer-menu-form" data-menu="arrangementer" hidden>
           <header class="admin-panel__header">
-            <p class="admin-eyebrow">Arrangementer</p>
-            <h2>Oversigt over arrangementer</h2>
-            <p class="admin-panel__desc">Vises ved <strong>Arrangementer</strong> i hero-sektionen.</p>
+            <p class="admin-eyebrow">Åbningstider</p>
+            <h2>Åbningstider</h2>
+            <p class="admin-panel__desc">Vises når gæster klikker <strong>Åbningstider</strong> i hero-sektionen.</p>
           </header>
 
           <div class="admin-card-block">
@@ -118,7 +93,7 @@
           <footer class="admin-panel__footer">
             <p class="admin-error" data-save-error hidden></p>
             <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem arrangementer</button>
+            <button type="submit" class="admin-btn">Gem åbningstider</button>
           </footer>
         </form>
 
