@@ -1,47 +1,90 @@
+function cleanEnvValue(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^["']|["']$/g, "");
+}
+
 function normalizeSiteUrl(value) {
-  const raw = String(value || "").trim().replace(/\/$/, "");
+  const raw = cleanEnvValue(value);
   if (!raw) return "";
 
   if (/^https?:\/\//i.test(raw)) {
-    return raw;
+    try {
+      const url = new URL(raw);
+      url.pathname = url.pathname.replace(/\/+$/, "");
+      if (url.pathname === "/") url.pathname = "";
+      return `${url.origin}${url.pathname}${url.search}`;
+    } catch {
+      return "";
+    }
   }
 
-  return `https://${raw}`;
+  const host = raw.replace(/\/+$/, "");
+  if (!host || /^https?:$/i.test(host)) return "";
+  return `https://${host}`;
 }
 
-function isValidSiteUrl(value) {
+function isUsableSiteUrl(value, { allowLocalhost = false } = {}) {
   try {
     const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    if (!url.hostname || url.hostname === ".") return false;
+    if (!allowLocalhost && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) {
+      return false;
+    }
+    return true;
   } catch {
     return false;
   }
 }
 
+function getUrlFromRequest(req) {
+  if (!req?.headers) return "";
+
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const host = cleanEnvValue(
+    Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost || req.headers.host || req.headers.Host
+  );
+  if (!host) return "";
+
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const proto = cleanEnvValue(
+    Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || "https"
+  );
+
+  return normalizeSiteUrl(`${proto}://${host}`);
+}
+
 function getSiteUrl(req) {
-  const fromEnv = normalizeSiteUrl(process.env.SITE_URL);
-  if (isValidSiteUrl(fromEnv)) {
-    return fromEnv;
+  const isVercel = process.env.VERCEL === "1";
+  const allowLocalhost = !isVercel;
+  const candidates = [
+    normalizeSiteUrl(process.env.SITE_URL),
+    normalizeSiteUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+    normalizeSiteUrl(process.env.VERCEL_URL),
+    getUrlFromRequest(req),
+  ];
+
+  if (!isVercel) {
+    candidates.push("http://localhost:3456");
   }
 
-  const vercelUrl = normalizeSiteUrl(process.env.VERCEL_URL);
-  if (isValidSiteUrl(vercelUrl)) {
-    return vercelUrl;
-  }
-
-  const host =
-    req?.headers?.["x-forwarded-host"] ||
-    req?.headers?.host ||
-    req?.headers?.Host;
-  const proto = req?.headers?.["x-forwarded-proto"] || "https";
-  if (host) {
-    const fromRequest = normalizeSiteUrl(`${proto}://${host}`);
-    if (isValidSiteUrl(fromRequest)) {
-      return fromRequest;
+  for (const candidate of candidates) {
+    if (isUsableSiteUrl(candidate, { allowLocalhost })) {
+      return candidate.replace(/\/+$/, "");
     }
   }
 
   return "http://localhost:3456";
+}
+
+function getBookingRedirectUrls(req) {
+  const siteUrl = getSiteUrl(req);
+  return {
+    siteUrl,
+    successUrl: `${siteUrl}/?booking=success`,
+    cancelUrl: `${siteUrl}/?booking=cancelled`,
+  };
 }
 
 function getDepositDkk() {
@@ -145,6 +188,8 @@ function getPublicBookingConfig() {
 
 module.exports = {
   getSiteUrl,
+  getBookingRedirectUrls,
+  isUsableSiteUrl,
   getDepositDkk,
   getDepositOre,
   getNotifyEmail,

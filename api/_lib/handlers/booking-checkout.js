@@ -1,9 +1,10 @@
 const { getStripe } = require("../stripe-client");
 const {
-  getSiteUrl,
   getDepositOre,
   getDepositDkk,
   parseBookingBody,
+  getBookingRedirectUrls,
+  isUsableSiteUrl,
 } = require("../booking");
 const { assertAvailability } = require("../booking-store");
 const { sendJson, readJsonBody } = require("../http");
@@ -29,8 +30,15 @@ module.exports = async (req, res) => {
       return;
     }
 
+    const { successUrl, cancelUrl } = getBookingRedirectUrls(req);
+    if (!isUsableSiteUrl(successUrl, { allowLocalhost: process.env.VERCEL !== "1" })) {
+      sendJson(res, 500, {
+        error: "Booking redirect URL is not configured. Set SITE_URL in Vercel to https://spisehusetgaarden.vercel.app",
+      });
+      return;
+    }
+
     const stripe = getStripe();
-    const siteUrl = getSiteUrl(req);
     const depositDkk = getDepositDkk();
 
     const session = await stripe.checkout.sessions.create({
@@ -60,8 +68,8 @@ module.exports = async (req, res) => {
         guests: booking.guests,
         message: booking.message,
       },
-      success_url: `${siteUrl}/?booking=success#book`,
-      cancel_url: `${siteUrl}/?booking=cancelled#book`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     sendJson(res, 200, {
