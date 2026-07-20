@@ -1,6 +1,6 @@
-const { listBookings } = require("../_lib/booking-store");
-const { requireAuth } = require("../_lib/auth");
-const { sendJson } = require("../_lib/http");
+const { listBookings } = require("../booking-store");
+const { requireAuth } = require("../auth");
+const { sendJson } = require("../http");
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") {

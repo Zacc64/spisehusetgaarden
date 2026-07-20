@@ -1,6 +1,6 @@
-const { requireAuth } = require("../_lib/auth");
-const { sendJson } = require("../_lib/http");
-const { getBlobStatus } = require("../_lib/blob-store");
+const { requireAuth } = require("../auth");
+const { sendJson } = require("../http");
+const { getBlobStatus } = require("../blob-store");
 
 module.exports = async (req, res) => {
   if (req.method !== "GET") {

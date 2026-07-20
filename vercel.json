@@ -1,10 +1,24 @@
 {
   "functions": {
-    "api/**/*.js": {
+    "api/admin.js": {
+      "includeFiles": "data/**"
+    },
+    "api/booking.js": {
+      "includeFiles": "data/**"
+    },
+    "api/menus.js": {
+      "includeFiles": "data/**"
+    },
+    "api/media.js": {
       "includeFiles": "data/**"
     }
   },
   "rewrites": [
-    { "source": "/admin", "destination": "/admin.html" }
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/api/admin/:path*", "destination": "/api/admin?__path=:path*" },
+    { "source": "/api/booking/:path*", "destination": "/api/booking?__path=:path*" },
+    { "source": "/api/menu", "destination": "/api/menus?kind=cafe" },
+    { "source": "/api/faellesspisning-menu", "destination": "/api/menus?kind=faellesspisning" },
+    { "source": "/api/arrangementer-menu", "destination": "/api/menus?kind=arrangementer" }
   ]
 }

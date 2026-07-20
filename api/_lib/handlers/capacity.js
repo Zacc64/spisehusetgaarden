@@ -1,9 +1,9 @@
 const {
   getCapacitySettings,
   updateCapacitySettings,
-} = require("../_lib/booking-store");
-const { requireAuth } = require("../_lib/auth");
-const { sendJson, readJsonBody } = require("../_lib/http");
+} = require("../booking-store");
+const { requireAuth } = require("../auth");
+const { sendJson, readJsonBody } = require("../http");
 
 module.exports = async (req, res) => {
   try {

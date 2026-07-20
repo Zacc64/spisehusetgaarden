@@ -1,6 +1,7 @@
-const { saveUploadedImage } = require("../_lib/menu-store");
-const { requireAuth } = require("../_lib/auth");
-const { sendJson, readJsonBody } = require("../_lib/http");
+const { saveUploadedImage } = require("../menu-store");
+const { requireAuth } = require("../auth");
+const { sendJson, readJsonBody } = require("../http");
+const { getRequestUrl } = require("../router");
 
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
@@ -12,7 +13,7 @@ function parseMultipart(req) {
 }
 
 function getUploadPrefix(req) {
-  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const url = getRequestUrl(req);
   return (url.searchParams.get("kind") || "menu").replace(/[^a-z0-9-]/gi, "") || "menu";
 }
 

@@ -1,5 +1,5 @@
-const { createToken, verifyPassword } = require("../_lib/auth");
-const { sendJson, readJsonBody } = require("../_lib/http");
+const { createToken, verifyPassword } = require("../auth");
+const { sendJson, readJsonBody } = require("../http");
 
 module.exports = async (req, res) => {
   try {

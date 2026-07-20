@@ -1,5 +1,6 @@
-const { getAvailability } = require("../_lib/booking-store");
-const { sendJson } = require("../_lib/http");
+const { getAvailability } = require("../booking-store");
+const { sendJson } = require("../http");
+const { getRequestUrl } = require("../router");
 
 module.exports = async (req, res) => {
   try {
@@ -8,7 +9,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    const url = getRequestUrl(req);
     const date = url.searchParams.get("date");
 
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {

@@ -1,7 +1,8 @@
-const { getStripe } = require("../_lib/stripe-client");
-const { sendBookingEmails } = require("../_lib/email");
-const { addBookingFromSession } = require("../_lib/booking-store");
-const { sendJson, readRawBody } = require("../_lib/http");
+const { getStripe } = require("../stripe-client");
+const { sendBookingEmails } = require("../email");
+const { addBookingFromSession } = require("../booking-store");
+const { sendJson, readRawBody } = require("../http");
+
 module.exports = async (req, res) => {
   try {
     if (req.method !== "POST") {
@@ -34,7 +35,8 @@ module.exports = async (req, res) => {
         } catch (emailErr) {
           console.error("Booking emails failed:", emailErr.message);
         }
-      }    }
+      }
+    }
 
     sendJson(res, 200, { received: true });
   } catch (err) {

@@ -1,12 +1,13 @@
-const { getStripe } = require("../_lib/stripe-client");
+const { getStripe } = require("../stripe-client");
 const {
   getSiteUrl,
   getDepositOre,
   getDepositDkk,
   parseBookingBody,
-} = require("../_lib/booking");
-const { assertAvailability } = require("../_lib/booking-store");
-const { sendJson, readJsonBody } = require("../_lib/http");
+} = require("../booking");
+const { assertAvailability } = require("../booking-store");
+const { sendJson, readJsonBody } = require("../http");
+
 module.exports = async (req, res) => {
   try {
     if (req.method !== "POST") {
@@ -28,7 +29,8 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const stripe = getStripe();    const siteUrl = getSiteUrl();
+    const stripe = getStripe();
+    const siteUrl = getSiteUrl();
     const depositDkk = getDepositDkk();
 
     const session = await stripe.checkout.sessions.create({
@@ -59,7 +61,8 @@ module.exports = async (req, res) => {
         message: booking.message,
       },
       success_url: `${siteUrl}/?booking=success#book`,
-      cancel_url: `${siteUrl}/?booking=cancelled#book`,    });
+      cancel_url: `${siteUrl}/?booking=cancelled#book`,
+    });
 
     sendJson(res, 200, {
       url: session.url,

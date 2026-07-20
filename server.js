@@ -3,8 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const { readMenu, writeMenu, saveUploadedImage } = require("./api/_lib/menu-store");
-const { createToken, verifyPassword, requireAuth } = require("./api/_lib/auth");
+const { saveUploadedImage } = require("./api/_lib/menu-store");
+const { requireAuth } = require("./api/_lib/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3456;
@@ -18,7 +18,7 @@ app.post(
   express.raw({ type: "application/json" }),
   async (req, res, next) => {
     try {
-      await require("./api/booking/webhook")(req, res);
+      await require("./api/_lib/handlers/booking-webhook")(req, res);
     } catch (err) {
       next(err);
     }
@@ -27,100 +27,56 @@ app.post(
 
 app.use(express.json({ limit: "12mb" }));
 
-function buildMenuPayload(body, defaultTitle) {
-  const { mode, title, subtitle, text, imageUrl } = body || {};
-  if (mode !== "text" && mode !== "image") {
-    return { error: "mode skal være 'text' eller 'image'" };
-  }
-
-  const menu = {
-    mode,
-    title: String(title || defaultTitle).trim(),
-    subtitle: String(subtitle || "").trim(),
-    text: String(text || ""),
-    imageUrl: mode === "image" ? imageUrl || null : null,
-  };
-
-  if (mode === "image" && !menu.imageUrl) {
-    return { error: "Upload et billede til billed-popup" };
-  }
-
-  return { menu };
-}
-
 app.get("/api/menu", async (req, res) => {
-  res.json(await readMenu("cafe", req));
+  await require("./api/_lib/handlers/public-menu")(req, res, "cafe");
 });
 
 app.get("/api/faellesspisning-menu", async (req, res) => {
-  res.json(await readMenu("faellesspisning", req));
+  await require("./api/_lib/handlers/public-menu")(req, res, "faellesspisning");
 });
 
 app.get("/api/arrangementer-menu", async (req, res) => {
-  res.json(await readMenu("arrangementer", req));
+  await require("./api/_lib/handlers/public-menu")(req, res, "arrangementer");
 });
 
 app.get("/api/booking/config", async (req, res) => {
-  await require("./api/booking/config")(req, res);
+  await require("./api/_lib/handlers/booking-config")(req, res);
 });
 
 app.post("/api/booking/checkout", async (req, res) => {
-  await require("./api/booking/checkout")(req, res);
+  await require("./api/_lib/handlers/booking-checkout")(req, res);
 });
 
 app.get("/api/booking/availability", async (req, res) => {
-  await require("./api/booking/availability")(req, res);
+  await require("./api/_lib/handlers/booking-availability")(req, res);
 });
 
 app.get("/api/admin/bookings", async (req, res) => {
-  await require("./api/admin/bookings")(req, res);
+  await require("./api/_lib/handlers/bookings")(req, res);
 });
 
 app.route("/api/admin/capacity")
   .get(async (req, res) => {
-    await require("./api/admin/capacity")(req, res);
+    await require("./api/_lib/handlers/capacity")(req, res);
   })
   .put(async (req, res) => {
-    await require("./api/admin/capacity")(req, res);
+    await require("./api/_lib/handlers/capacity")(req, res);
   });
 
-app.post("/api/admin/login", (req, res) => {
-  const { password } = req.body || {};
-  if (!verifyPassword(password)) {
-    res.status(401).json({ error: "Forkert adgangskode" });
-    return;
-  }
-  res.json({ token: createToken() });
+app.post("/api/admin/login", async (req, res) => {
+  await require("./api/_lib/handlers/login")(req, res);
 });
 
 app.put("/api/admin/menu", async (req, res) => {
-  if (!requireAuth(req, res)) return;
-  const result = buildMenuPayload(req.body, "Frokostmenu");
-  if (result.error) {
-    res.status(400).json({ error: result.error });
-    return;
-  }
-  res.json(await writeMenu("cafe", result.menu, req));
+  await require("./api/_lib/handlers/admin-save-menu")(req, res, "cafe");
 });
 
 app.put("/api/admin/faellesspisning-menu", async (req, res) => {
-  if (!requireAuth(req, res)) return;
-  const result = buildMenuPayload(req.body, "Månedens menu");
-  if (result.error) {
-    res.status(400).json({ error: result.error });
-    return;
-  }
-  res.json(await writeMenu("faellesspisning", result.menu, req));
+  await require("./api/_lib/handlers/admin-save-menu")(req, res, "faellesspisning");
 });
 
 app.put("/api/admin/arrangementer-menu", async (req, res) => {
-  if (!requireAuth(req, res)) return;
-  const result = buildMenuPayload(req.body, "Oversigt over arrangementer");
-  if (result.error) {
-    res.status(400).json({ error: result.error });
-    return;
-  }
-  res.json(await writeMenu("arrangementer", result.menu, req));
+  await require("./api/_lib/handlers/admin-save-menu")(req, res, "arrangementer");
 });
 
 app.post("/api/admin/upload", (req, res, next) => {

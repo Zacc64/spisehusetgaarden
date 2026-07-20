@@ -1,8 +1,14 @@
-const { writeMenu } = require("../_lib/menu-store");
-const { requireAuth } = require("../_lib/auth");
-const { sendJson, readJsonBody } = require("../_lib/http");
+const { writeMenu } = require("../menu-store");
+const { requireAuth } = require("../auth");
+const { sendJson, readJsonBody } = require("../http");
 
-module.exports = async (req, res) => {
+const DEFAULT_TITLES = {
+  cafe: "Frokostmenu",
+  faellesspisning: "Månedens menu",
+  arrangementer: "Oversigt over arrangementer",
+};
+
+module.exports = async function handleAdminSaveMenu(req, res, type) {
   try {
     if (req.method !== "PUT") {
       sendJson(res, 405, { error: "Method not allowed" });
@@ -21,7 +27,7 @@ module.exports = async (req, res) => {
 
     const menu = {
       mode,
-      title: String(title || "Månedens menu").trim(),
+      title: String(title || DEFAULT_TITLES[type] || "Menu").trim(),
       subtitle: String(subtitle || "").trim(),
       text: String(text || ""),
       imageUrl: mode === "image" ? imageUrl || null : null,
@@ -32,7 +38,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const saved = await writeMenu("faellesspisning", menu, req);
+    const saved = await writeMenu(type, menu, req);
     sendJson(res, 200, saved);
   } catch (err) {
     sendJson(res, 500, {
