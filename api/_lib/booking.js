@@ -4,9 +4,33 @@ function cleanEnvValue(value) {
     .replace(/^["']|["']$/g, "");
 }
 
-function normalizeSiteUrl(value) {
+function salvageSiteUrl(value) {
   const raw = cleanEnvValue(value);
   if (!raw) return "";
+
+  if (!raw.includes("\\") && !/^[a-zA-Z]:/.test(raw)) {
+    return "";
+  }
+
+  const explicitMatch = raw.match(/https?:[\\/]+([a-z0-9.-]+\.[a-z]{2,})/i);
+  if (explicitMatch) {
+    return `https://${explicitMatch[1]}`;
+  }
+
+  const domainMatch = raw.match(/([a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})/i);
+  if (domainMatch) {
+    return `https://${domainMatch[1]}`;
+  }
+
+  return "";
+}
+
+function normalizeSiteUrl(value) {
+  const salvaged = salvageSiteUrl(value);
+  if (salvaged) return salvaged;
+
+  const raw = cleanEnvValue(value);
+  if (!raw || raw.includes("\\") || /^[a-zA-Z]:/.test(raw)) return "";
 
   if (/^https?:\/\//i.test(raw)) {
     try {
@@ -28,7 +52,7 @@ function isUsableSiteUrl(value, { allowLocalhost = false } = {}) {
   try {
     const url = new URL(value);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;
-    if (!url.hostname || url.hostname === ".") return false;
+    if (!url.hostname || url.hostname === "." || url.hostname.includes("\\")) return false;
     if (!allowLocalhost && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) {
       return false;
     }
