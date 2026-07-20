@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     const buffer = Buffer.from(await response.arrayBuffer());
     res.statusCode = 200;
     res.setHeader("Content-Type", response.headers.get("content-type") || "application/octet-stream");
-    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
     res.end(buffer);
   } catch (err) {
     res.statusCode = 500;

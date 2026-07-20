@@ -15,12 +15,12 @@ const MENU_TYPES = {
     filename: "menu.json",
     blobPath: "menus/cafe.json",
     default: {
-      mode: "text",
+      mode: "image",
       title: "Frokostmenu",
-      subtitle: "Café — torsdag, fredag og lørdag kl. 11–16",
-      text:
-        "Dagens ret\nHjemmelavet suppe eller salat\n\nBrød & smør inkluderet\n\nSpørg os om dagens dessert og drikkevarer.",
+      subtitle: "",
+      text: "",
       imageUrl: null,
+      updatedAt: null,
     },
   },
   faellesspisning: {
@@ -32,6 +32,7 @@ const MENU_TYPES = {
       subtitle: "Fællesspisning & Social Dining",
       text: "",
       imageUrl: null,
+      updatedAt: null,
     },
   },
   arrangementer: {
@@ -43,6 +44,7 @@ const MENU_TYPES = {
       subtitle: "",
       text: "",
       imageUrl: null,
+      updatedAt: null,
     },
   },
 };

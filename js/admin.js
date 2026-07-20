@@ -7,7 +7,6 @@ const MENU_CONFIG = {
     publicApi: "/api/menu",
     saveApi: "/api/admin/menu",
     uploadKind: "menu",
-    modeName: "cafe-mode",
     defaultTitle: "Frokostmenu",
   },
   faellesspisning: {
@@ -15,7 +14,6 @@ const MENU_CONFIG = {
     publicApi: "/api/faellesspisning-menu",
     saveApi: "/api/admin/faellesspisning-menu",
     uploadKind: "faellesspisning",
-    modeName: "faellesspisning-mode",
     defaultTitle: "Månedens menu",
   },
   arrangementer: {
@@ -23,7 +21,6 @@ const MENU_CONFIG = {
     publicApi: "/api/arrangementer-menu",
     saveApi: "/api/admin/arrangementer-menu",
     uploadKind: "arrangementer",
-    modeName: "arrangementer-mode",
     defaultTitle: "Oversigt over arrangementer",
   },
 };
@@ -110,39 +107,35 @@ function getForm(type) {
   return document.getElementById(MENU_CONFIG[type].formId);
 }
 
-function setMode(type, mode) {
-  const form = getForm(type);
-  const isText = mode === "text";
-  form.querySelector("[data-text-panel]").hidden = !isText;
-  form.querySelector("[data-image-panel]").hidden = isText;
-  form.querySelector(`input[name="${MENU_CONFIG[type].modeName}"][value="${mode}"]`).checked = true;
+function withCacheBust(url, version) {
+  if (!url) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${encodeURIComponent(version || Date.now())}`;
 }
 
-function showPreview(type, url) {
+function showPreview(type, url, version) {
   const form = getForm(type);
   const preview = form.querySelector("[data-image-preview]");
   const img = form.querySelector("[data-preview-img]");
   if (!url) {
     preview.hidden = true;
+    img.removeAttribute("src");
     return;
   }
-  img.src = url;
+  img.src = withCacheBust(url, version);
   preview.hidden = false;
 }
 
 async function loadMenu(type) {
   const config = MENU_CONFIG[type];
   const form = getForm(type);
-  const res = await fetch(config.publicApi);
+  const res = await fetch(`${config.publicApi}?t=${Date.now()}`, { cache: "no-store" });
   const menu = await res.json();
 
-  form.querySelector('[data-field="title"]').value = menu.title || "";
-  form.querySelector('[data-field="subtitle"]').value = menu.subtitle || "";
-  form.querySelector('[data-field="text"]').value = menu.text || "";
   menuState[type].imageUrl = menu.imageUrl || null;
   menuState[type].pendingFile = null;
-  setMode(type, menu.mode || "text");
-  showPreview(type, menuState[type].imageUrl);
+  form.querySelector('[data-field="image-file"]').value = "";
+  showPreview(type, menuState[type].imageUrl, menu.updatedAt);
 }
 
 async function loadAllMenus() {
@@ -179,10 +172,6 @@ function wireForm(type) {
   const config = MENU_CONFIG[type];
   const form = getForm(type);
 
-  form.querySelectorAll(`input[name="${config.modeName}"]`).forEach((input) => {
-    input.addEventListener("change", () => setMode(type, input.value));
-  });
-
   form.querySelector('[data-field="image-file"]').addEventListener("change", (e) => {
     const file = e.target.files?.[0];
     menuState[type].pendingFile = file || null;
@@ -196,18 +185,15 @@ function wireForm(type) {
     saveError.hidden = true;
     saveSuccess.hidden = true;
 
-    const mode = form.querySelector(`input[name="${config.modeName}"]:checked`).value;
     let imageUrl = menuState[type].imageUrl;
 
-    if (mode === "image" && menuState[type].pendingFile) {
+    if (menuState[type].pendingFile) {
       try {
         const uploaded = await uploadImageFile(
           menuState[type].pendingFile,
           config.uploadKind
         );
         imageUrl = uploaded.imageUrl;
-        menuState[type].imageUrl = imageUrl;
-        menuState[type].pendingFile = null;
       } catch (err) {
         saveError.textContent = err.message || "Upload fejlede";
         saveError.hidden = false;
@@ -215,11 +201,14 @@ function wireForm(type) {
       }
     }
 
+    if (!imageUrl) {
+      saveError.textContent = "Vælg et billede før du gemmer.";
+      saveError.hidden = false;
+      return;
+    }
+
     const payload = {
-      mode,
-      title: form.querySelector('[data-field="title"]').value,
-      subtitle: form.querySelector('[data-field="subtitle"]').value,
-      text: form.querySelector('[data-field="text"]').value,
+      title: config.defaultTitle,
       imageUrl,
     };
 
@@ -235,6 +224,12 @@ function wireForm(type) {
       saveError.hidden = false;
       return;
     }
+
+    const saved = await res.json();
+    menuState[type].imageUrl = saved.imageUrl || imageUrl;
+    menuState[type].pendingFile = null;
+    form.querySelector('[data-field="image-file"]').value = "";
+    showPreview(type, menuState[type].imageUrl, saved.updatedAt);
 
     saveSuccess.hidden = false;
     setTimeout(() => {

@@ -17,7 +17,7 @@ module.exports = async function handlePublicMenu(req, res, type) {
 
     const menu = await readMenu(type, req);
     sendJson(res, 200, menu, {
-      "Cache-Control": "s-maxage=60, stale-while-revalidate",
+      "Cache-Control": "no-store",
     });
   } catch {
     sendJson(res, 500, { error: "Kunne ikke hente menu" });

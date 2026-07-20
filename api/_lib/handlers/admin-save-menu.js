@@ -18,23 +18,19 @@ module.exports = async function handleAdminSaveMenu(req, res, type) {
     if (!requireAuth(req, res, sendJson)) return;
 
     const body = await readJsonBody(req);
-    const { mode, title, subtitle, text, imageUrl } = body || {};
-
-    if (mode !== "text" && mode !== "image") {
-      sendJson(res, 400, { error: "mode skal vaere 'text' eller 'image'" });
-      return;
-    }
+    const { title, imageUrl } = body || {};
 
     const menu = {
-      mode,
+      mode: "image",
       title: String(title || DEFAULT_TITLES[type] || "Menu").trim(),
-      subtitle: String(subtitle || "").trim(),
-      text: String(text || ""),
-      imageUrl: mode === "image" ? imageUrl || null : null,
+      subtitle: "",
+      text: "",
+      imageUrl: imageUrl || null,
+      updatedAt: Date.now(),
     };
 
-    if (mode === "image" && !menu.imageUrl) {
-      sendJson(res, 400, { error: "Upload et billede til billed-popup" });
+    if (!menu.imageUrl) {
+      sendJson(res, 400, { error: "Upload et billede til popup" });
       return;
     }
 

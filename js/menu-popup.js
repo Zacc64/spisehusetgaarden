@@ -23,45 +23,51 @@ function initMenuModals(modalSelector, entries) {
     Arrangementer: "Oversigt over arrangementer",
   };
 
+  function withCacheBust(url, version) {
+    if (!url) return url;
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}v=${encodeURIComponent(version || Date.now())}`;
+  }
+
   function renderMenu(menu, label) {
     const defaultTitle = defaultTitles[label] || "Menu";
+    const imageUrl = menu.imageUrl || null;
 
-    if (menu.mode === "image" && menu.imageUrl) {
+    if (imageUrl) {
       modalEl.classList.add("menu-modal--image");
       textWrap.hidden = true;
       imageWrap.hidden = false;
       titleEl.hidden = true;
       subtitleEl.hidden = true;
       labelEl.hidden = true;
-      imageEl.src = menu.imageUrl;
+      imageEl.src = withCacheBust(imageUrl, menu.updatedAt);
       imageEl.alt = menu.title || defaultTitle;
-    } else {
-      modalEl.classList.remove("menu-modal--image");
-      imageWrap.hidden = true;
-      textWrap.hidden = false;
-      titleEl.hidden = false;
-      labelEl.hidden = false;
-      labelEl.textContent = label;
-      titleEl.textContent = menu.title || defaultTitle;
-      subtitleEl.textContent = menu.subtitle || "";
-      subtitleEl.hidden = !menu.subtitle;
-      textEl.textContent = menu.text || "Indhold kommer snart.";
+      return;
     }
+
+    modalEl.classList.remove("menu-modal--image");
+    imageWrap.hidden = true;
+    textWrap.hidden = false;
+    titleEl.hidden = false;
+    labelEl.hidden = false;
+    labelEl.textContent = label;
+    titleEl.textContent = menu.title || defaultTitle;
+    subtitleEl.textContent = "";
+    subtitleEl.hidden = true;
+    textEl.textContent = "Billedet er ikke tilgængeligt lige nu.";
   }
 
   async function openModal(apiUrl, label) {
     lastFocus = document.activeElement;
 
     try {
-      const res = await fetch(apiUrl);
+      const res = await fetch(`${apiUrl}?t=${Date.now()}`, { cache: "no-store" });
       renderMenu(await res.json(), label);
     } catch {
       renderMenu(
         {
-          mode: "text",
           title: defaultTitles[label] || "Menu",
-          subtitle: "",
-          text: "Indhold kunne ikke hentes lige nu.",
+          imageUrl: null,
         },
         label
       );
@@ -75,6 +81,7 @@ function initMenuModals(modalSelector, entries) {
   function closeModal() {
     modalEl.hidden = true;
     document.body.classList.remove("modal-open");
+    imageEl.removeAttribute("src");
     if (lastFocus) lastFocus.focus();
   }
 
