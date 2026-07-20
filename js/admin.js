@@ -57,13 +57,16 @@ function authHeaders() {
 }
 
 function showLogin() {
+  document.body.classList.remove("admin--editor");
   loginPanel.hidden = false;
   editorPanel.hidden = true;
 }
 
 function showEditor() {
+  document.body.classList.add("admin--editor");
   loginPanel.hidden = true;
   editorPanel.hidden = false;
+  window.scrollTo(0, 0);
 }
 
 function switchTab(tabId) {
@@ -77,6 +80,18 @@ function switchTab(tabId) {
     panel.hidden = !isActive;
     panel.classList.toggle("admin-panel--active", isActive);
   });
+
+  const bookingsPanel = document.getElementById("bookings-panel");
+  if (bookingsPanel) {
+    const isBookings = tabId === "bookings";
+    bookingsPanel.hidden = !isBookings;
+    bookingsPanel.classList.toggle("admin-panel--active", isBookings);
+    if (isBookings && typeof window.loadBookingsAdmin === "function") {
+      window.loadBookingsAdmin();
+    }
+  }
+
+  window.scrollTo(0, 0);
 }
 
 function getForm(type) {
@@ -238,12 +253,13 @@ loginForm.addEventListener("submit", async (e) => {
 
   const { token } = await res.json();
   setToken(token);
+  showEditor();
   try {
     await loadAllMenus();
   } catch {
     // Open editor even if menu fetch fails.
   }
-  showEditor();
+  switchTab("cafe");
 });
 
 logoutBtn.addEventListener("click", () => {
@@ -261,7 +277,8 @@ navItems.forEach((item) => {
 Object.keys(MENU_CONFIG).forEach(wireForm);
 
 if (getToken()) {
-  loadAllMenus().then(showEditor).catch(showLogin);
+  showEditor();
+  loadAllMenus().catch(showLogin);
 } else {
   showLogin();
 }

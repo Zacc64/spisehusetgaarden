@@ -29,32 +29,24 @@
     </section>
 
     <section class="admin-shell" id="editor-panel" hidden>
-      <aside class="admin-sidebar">
-        <div class="admin-sidebar__top">
+      <header class="admin-topbar">
+        <div class="admin-topbar__brand">
           <p class="admin-eyebrow">Spisehuset Gaarden</p>
-          <h1 class="admin-sidebar__title">Admin</h1>
+          <h1 class="admin-topbar__title">Admin</h1>
         </div>
 
         <nav class="admin-nav" aria-label="Vælg sektion">
-          <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">
-            <span class="admin-nav__label">Café</span>
-            <span class="admin-nav__hint">Navbar-popup</span>
-          </button>
-          <button type="button" class="admin-nav__item" data-tab="faellesspisning">
-            <span class="admin-nav__label">Fællesspisning</span>
-            <span class="admin-nav__hint">Månedens menu</span>
-          </button>
-          <button type="button" class="admin-nav__item" data-tab="arrangementer">
-            <span class="admin-nav__label">Arrangementer</span>
-            <span class="admin-nav__hint">Oversigt-popup</span>
-          </button>
+          <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">Café</button>
+          <button type="button" class="admin-nav__item" data-tab="faellesspisning">Fællesspisning</button>
+          <button type="button" class="admin-nav__item" data-tab="arrangementer">Arrangementer</button>
+          <button type="button" class="admin-nav__item" data-tab="bookings">Bookinger</button>
         </nav>
 
-        <div class="admin-sidebar__footer">
+        <div class="admin-topbar__actions">
           <a class="admin-link" href="/" target="_blank" rel="noopener">Se siden ↗</a>
           <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="logout-btn">Log ud</button>
         </div>
-      </aside>
+      </header>
 
       <main class="admin-main">
         <form class="admin-panel admin-panel--active" id="cafe-menu-form" data-menu="cafe">
@@ -218,10 +210,111 @@
             <button type="submit" class="admin-btn">Gem arrangementer</button>
           </footer>
         </form>
+
+        <section class="admin-panel" id="bookings-panel" data-panel="bookings" hidden>
+          <header class="admin-panel__header">
+            <p class="admin-eyebrow">Bookinger</p>
+            <h2>Bookinger & kapacitet</h2>
+            <p class="admin-panel__desc">Administrér betalte bookinger, lukkede dage og hvor mange gæster der kan bookes.</p>
+          </header>
+
+          <div class="admin-bookings-status" id="bookings-status" hidden>
+            <p class="admin-bookings-status__text" id="bookings-status-text"></p>
+          </div>
+
+          <div class="admin-bookings-stats">
+            <article class="admin-stat-card">
+              <span class="admin-stat-card__label">Betalte bookinger</span>
+              <strong class="admin-stat-card__value" id="bookings-count">0</strong>
+            </article>
+            <article class="admin-stat-card">
+              <span class="admin-stat-card__label">Standard kapacitet</span>
+              <strong class="admin-stat-card__value" id="bookings-capacity-display">40</strong>
+            </article>
+            <article class="admin-stat-card">
+              <span class="admin-stat-card__label">Lukkede dage</span>
+              <strong class="admin-stat-card__value" id="closed-count">0</strong>
+            </article>
+          </div>
+
+          <div class="admin-bookings-grid">
+            <div class="admin-card-block">
+              <h3 class="admin-block-title">Standard kapacitet</h3>
+              <p class="admin-muted">Gælder alle dage, medmindre du sætter en særregel eller lukker dagen.</p>
+              <form id="capacity-form" class="admin-settings-form">
+                <label class="admin-field">
+                  <span>Max personer pr. dag</span>
+                  <input type="number" id="default-capacity" min="0" step="1" value="40" required>
+                </label>
+                <button type="submit" class="admin-btn" data-save-btn>Gem kapacitet</button>
+              </form>
+            </div>
+
+            <div class="admin-card-block">
+              <h3 class="admin-block-title">Særregel for én dato</h3>
+              <p class="admin-muted">F.eks. mere eller færre pladser på en bestemt dag.</p>
+              <form id="capacity-override-form" class="admin-settings-form">
+                <div class="admin-settings-form__row">
+                  <label class="admin-field">
+                    <span>Dato</span>
+                    <input type="date" id="override-date" required>
+                  </label>
+                  <label class="admin-field">
+                    <span>Max personer</span>
+                    <input type="number" id="override-capacity" min="0" step="1" placeholder="40" required>
+                  </label>
+                </div>
+                <button type="submit" class="admin-btn admin-btn--ghost" data-save-btn>Tilføj særregel</button>
+              </form>
+              <div id="capacity-overrides" class="admin-list"></div>
+            </div>
+
+            <div class="admin-card-block">
+              <h3 class="admin-block-title">Lukkede dage</h3>
+              <p class="admin-muted">Gæster kan ikke booke på disse datoer.</p>
+              <form id="closed-date-form" class="admin-settings-form admin-settings-form--inline">
+                <label class="admin-field admin-field--grow">
+                  <span>Lukket dato</span>
+                  <input type="date" id="closed-date" required>
+                </label>
+                <button type="submit" class="admin-btn admin-btn--ghost" data-save-btn>Luk dag</button>
+              </form>
+              <div id="closed-dates-list" class="admin-list"></div>
+            </div>
+
+            <div class="admin-card-block admin-card-block--wide">
+              <div class="admin-card-block__head">
+                <div>
+                  <h3 class="admin-block-title">Alle bookinger</h3>
+                  <p class="admin-muted">Kun bookinger med gennemført betaling vises her.</p>
+                </div>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
+              </div>
+              <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
+              <p class="admin-muted" id="bookings-empty">Ingen betalte bookinger endnu.</p>
+              <div class="admin-table-wrap" id="bookings-table-wrap" hidden>
+                <table class="admin-table" id="bookings-table">
+                  <thead>
+                    <tr>
+                      <th>Dato</th>
+                      <th>Tid</th>
+                      <th>Navn</th>
+                      <th>Personer</th>
+                      <th>Kontakt</th>
+                      <th>Betalt</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bookings-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </section>
   </div>
 
   <script src="js/admin.js"></script>
+  <script src="js/admin-bookings.js"></script>
 </body>
 </html>

@@ -122,7 +122,7 @@
       <div class="booking__intro">
         <p class="section-label">Booking</p>
         <h2>Book bord</h2>
-        <p class="lead">Kontakt os for at høre om åbningstider</p>
+        <p class="lead">Vælg dato og tid — betal depositum for at bekræfte.</p>
         <p class="booking__note">Eller ring direkte: <a href="tel:+4531350935">31 35 09 35</a></p>
       </div>
 
@@ -178,8 +178,13 @@
           <span>Bemærkninger <em>(valgfrit)</em></span>
           <textarea name="message" rows="3" placeholder="Allergier, børn, særlige ønsker…"></textarea>
         </label>
-        <button class="btn-submit" type="submit">Send forespørgsel</button>
-        <p class="form-success" id="form-success" hidden>Tak — din forespørgsel er sendt. Vi vender tilbage hurtigst muligt.</p>
+        <p class="booking-availability" id="booking-availability-note" hidden></p>
+        <p class="booking-test-banner" id="booking-test-banner" hidden>Test mode — ingen rigtige betalinger.</p>
+        <p class="booking-deposit" id="booking-deposit-note">Depositum betales ved booking.</p>
+        <button class="btn-submit" type="submit" id="booking-submit">Betal og book</button>
+        <p class="form-error" id="form-error" hidden></p>
+        <p class="form-success" id="form-success" hidden>Tak — din booking er betalt. Du får en bekræftelse på email.</p>
+        <p class="form-cancelled" id="form-cancelled" hidden>Betalingen blev annulleret. Du kan prøve igen.</p>
       </form>
     </div>
   </section>
@@ -233,6 +238,7 @@
   </footer>
 
   <script src="js/menu-popup.js"></script>
+  <script src="js/booking.js"></script>
   <script>
     initMenuModals("#menu-modal", [
       { trigger: "#cafe-link", apiUrl: "/api/menu", label: "Café" },
@@ -300,36 +306,6 @@
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     window.addEventListener("resize", updateHeader);
-
-    const form = document.getElementById("booking-form");
-    const success = document.getElementById("form-success");
-    const dateInput = form.querySelector('input[name="date"]');
-    dateInput.min = new Date().toISOString().split("T")[0];
-
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      const data = new FormData(form);
-      const subject = encodeURIComponent("Bordbooking — " + data.get("name"));
-      const body = encodeURIComponent(
-        "Navn: " + data.get("name") + "\n" +
-        "Telefon: " + data.get("phone") + "\n" +
-        "Email: " + data.get("email") + "\n" +
-        "Dato: " + data.get("date") + "\n" +
-        "Tid: " + data.get("time") + "\n" +
-        "Personer: " + data.get("guests") + "\n" +
-        (data.get("message") ? "Bemærkninger: " + data.get("message") : "")
-      );
-
-      window.location.href = "mailto:gaarden@locarestauranter.dk?subject=" + subject + "&body=" + body;
-
-      form.hidden = true;
-      success.hidden = false;
-    });
   </script>
 
 </body>

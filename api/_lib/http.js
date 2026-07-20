@@ -34,4 +34,20 @@ function readJsonBody(req) {
   });
 }
 
-module.exports = { sendJson, readJsonBody };
+function readRawBody(req) {
+  if (Buffer.isBuffer(req.body)) {
+    return Promise.resolve(req.body);
+  }
+  if (typeof req.body === "string") {
+    return Promise.resolve(Buffer.from(req.body));
+  }
+
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
+module.exports = { sendJson, readJsonBody, readRawBody };

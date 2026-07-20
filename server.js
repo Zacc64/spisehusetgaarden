@@ -13,6 +13,18 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
 });
 
+app.post(
+  "/api/booking/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res, next) => {
+    try {
+      await require("./api/booking/webhook")(req, res);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 app.use(express.json({ limit: "12mb" }));
 
 function buildMenuPayload(body, defaultTitle) {
@@ -47,6 +59,30 @@ app.get("/api/faellesspisning-menu", async (req, res) => {
 app.get("/api/arrangementer-menu", async (req, res) => {
   res.json(await readMenu("arrangementer", req));
 });
+
+app.get("/api/booking/config", async (req, res) => {
+  await require("./api/booking/config")(req, res);
+});
+
+app.post("/api/booking/checkout", async (req, res) => {
+  await require("./api/booking/checkout")(req, res);
+});
+
+app.get("/api/booking/availability", async (req, res) => {
+  await require("./api/booking/availability")(req, res);
+});
+
+app.get("/api/admin/bookings", async (req, res) => {
+  await require("./api/admin/bookings")(req, res);
+});
+
+app.route("/api/admin/capacity")
+  .get(async (req, res) => {
+    await require("./api/admin/capacity")(req, res);
+  })
+  .put(async (req, res) => {
+    await require("./api/admin/capacity")(req, res);
+  });
 
 app.post("/api/admin/login", (req, res) => {
   const { password } = req.body || {};

@@ -1032,13 +1032,59 @@ body.is-loaded .hero__cta { animation-delay: 0.65s; }
   transform: translateY(-1px);
 }
 
-.form-success {
+.booking-availability {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--green-deep);
+}
+
+.booking-availability--closed {
+  color: #8b2f2f;
+  font-weight: 600;
+}
+
+.booking-test-banner {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b4f1d;
+  background: #fff4d6;
+  border: 1px solid #e8c96a;
+}
+
+.booking-deposit {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: var(--green-deep);
+}
+
+.form-error {
+  margin: 0.75rem 0 0;
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  color: #8b2f2f;
+  background: rgba(139, 47, 47, 0.08);
+  border: 1px solid rgba(139, 47, 47, 0.18);
+}
+
+.form-success,
+.form-cancelled {
   margin: 0;
   padding: 1.5rem;
   font-size: 1rem;
+}
+
+.form-success {
   color: var(--green);
   background: rgba(47, 69, 53, 0.08);
   border: 1px solid rgba(47, 69, 53, 0.14);
+}
+
+.form-cancelled {
+  color: #6b4f1d;
+  background: rgba(201, 184, 150, 0.25);
+  border: 1px solid rgba(201, 184, 150, 0.5);
 }
 
 /* Contact */

@@ -3,6 +3,7 @@ Thumbs.db
 .vercel
 .env
 node_modules
+data/booking-store.json
 uploads/*
 !uploads/.gitkeep
 gh-login*.txt
