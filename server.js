@@ -113,6 +113,10 @@ app.post("/api/admin/upload", (req, res, next) => {
   }
 });
 
+app.get("/api/facebook-posts", async (req, res) => {
+  await require("./api/_lib/handlers/facebook-posts")(req, res);
+});
+
 app.get("/api/media", async (req, res, next) => {
   const mediaHandler = require("./api/media");
   mediaHandler(req, res).catch(next);

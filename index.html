@@ -71,19 +71,7 @@
         </a>
       </div>
 
-      <div class="facebook-feed__embed">
-        <div
-          class="fb-page"
-          data-href="https://www.facebook.com/profile.php?id=61585327136722"
-          data-tabs="timeline"
-          data-width=""
-          data-height="620"
-          data-small-header="false"
-          data-adapt-container-width="true"
-          data-hide-cover="true"
-          data-show-facepile="false"
-        ></div>
-      </div>
+      <div class="facebook-feed__embed" id="facebook-feed" aria-live="polite"></div>
     </div>
   </section>
 
@@ -240,6 +228,7 @@
 
   <script src="js/menu-popup.js"></script>
   <script src="js/booking.js"></script>
+  <script src="js/facebook-feed.js"></script>
   <script>
     initMenuModals("#menu-modal", [
       { trigger: "#cafe-link", apiUrl: "/api/menu", label: "Café" },
@@ -254,6 +243,7 @@
         label: "Arrangementer",
       },
     ]);
+    initFacebookFeed("#facebook-feed");
   </script>
   <script>
     const header = document.getElementById("header");
@@ -308,9 +298,6 @@
     window.addEventListener("scroll", updateHeader, { passive: true });
     window.addEventListener("resize", updateHeader);
   </script>
-
-  <div id="fb-root"></div>
-  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/da_DK/sdk.js#xfbml=1&version=v22.0"></script>
 
 </body>
 </html>

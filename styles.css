@@ -669,13 +669,102 @@ button.hero__cta {
   border-radius: 1rem;
   border: 1px solid var(--green-soft);
   background: var(--green-whisper);
-  min-height: 420px;
+  min-height: 12rem;
 }
 
-.facebook-feed__embed .fb-page,
-.facebook-feed__embed .fb-page > span,
-.facebook-feed__embed iframe {
-  width: 100% !important;
+.facebook-feed__loading,
+.facebook-feed__empty {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  min-height: 12rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.facebook-feed__empty-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.facebook-feed__empty-link:hover {
+  background: var(--green-deep);
+}
+
+.facebook-feed__grid {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+}
+
+.facebook-feed__card {
+  background: var(--green-whisper);
+}
+
+.facebook-feed__card-link {
+  display: grid;
+  gap: 0;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.facebook-feed__media {
+  overflow: hidden;
+  background: var(--green-mist);
+}
+
+.facebook-feed__media img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+.facebook-feed__card-link:hover .facebook-feed__media img {
+  transform: scale(1.03);
+}
+
+.facebook-feed__card-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.facebook-feed__date {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.facebook-feed__text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--green-deep);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+}
+
+.facebook-feed__read-more {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
 }
 
 /* Cards */
@@ -1177,6 +1266,10 @@ button.hero__cta {
 
   .instagram__grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .facebook-feed__grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .booking__layout {
