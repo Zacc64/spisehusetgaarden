@@ -246,7 +246,7 @@
                   <span>Max personer pr. dag</span>
                   <input type="number" id="default-capacity" min="0" step="1" value="40" required>
                 </label>
-                <button type="submit" class="admin-btn" data-save-btn>Gem kapacitet</button>
+                <button type="button" class="admin-btn" data-save-btn data-save-action="default-capacity">Gem kapacitet</button>
               </form>
             </div>
 
@@ -264,7 +264,7 @@
                     <input type="number" id="override-capacity" min="0" step="1" placeholder="40" required>
                   </label>
                 </div>
-                <button type="submit" class="admin-btn admin-btn--ghost" data-save-btn>Tilføj særregel</button>
+                <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="override">Tilføj særregel</button>
               </form>
               <div id="capacity-overrides" class="admin-list"></div>
             </div>
@@ -277,7 +277,7 @@
                   <span>Lukket dato</span>
                   <input type="date" id="closed-date" required>
                 </label>
-                <button type="submit" class="admin-btn admin-btn--ghost" data-save-btn>Luk dag</button>
+                <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="closed-date">Luk dag</button>
               </form>
               <div id="closed-dates-list" class="admin-list"></div>
             </div>

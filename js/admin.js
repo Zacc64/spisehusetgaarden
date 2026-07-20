@@ -1,4 +1,5 @@
 const TOKEN_KEY = "sg-admin-token";
+const TAB_KEY = "sg-admin-tab";
 
 const MENU_CONFIG = {
   cafe: {
@@ -33,6 +34,7 @@ const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const logoutBtn = document.getElementById("logout-btn");
 const navItems = document.querySelectorAll(".admin-nav__item");
+let activeTab = null;
 
 const menuState = {
   cafe: { imageUrl: null, pendingFile: null },
@@ -60,6 +62,8 @@ function showLogin() {
   document.body.classList.remove("admin--editor");
   loginPanel.hidden = false;
   editorPanel.hidden = true;
+  activeTab = null;
+  sessionStorage.removeItem(TAB_KEY);
 }
 
 function showEditor() {
@@ -69,7 +73,13 @@ function showEditor() {
   window.scrollTo(0, 0);
 }
 
-function switchTab(tabId) {
+function switchTab(tabId, { scroll = true } = {}) {
+  if (!tabId) return;
+
+  const tabChanged = tabId !== activeTab;
+  activeTab = tabId;
+  sessionStorage.setItem(TAB_KEY, tabId);
+
   navItems.forEach((item) => {
     item.classList.toggle("admin-nav__item--active", item.dataset.tab === tabId);
   });
@@ -91,7 +101,9 @@ function switchTab(tabId) {
     }
   }
 
-  window.scrollTo(0, 0);
+  if (scroll && tabChanged) {
+    window.scrollTo(0, 0);
+  }
 }
 
 function getForm(type) {
@@ -270,15 +282,31 @@ logoutBtn.addEventListener("click", () => {
   showLogin();
 });
 
+editorPanel?.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  if (form.closest("#bookings-panel")) {
+    event.preventDefault();
+  }
+});
+
 navItems.forEach((item) => {
   item.addEventListener("click", () => switchTab(item.dataset.tab));
 });
 
 Object.keys(MENU_CONFIG).forEach(wireForm);
 
+function restoreEditorTab() {
+  const savedTab = sessionStorage.getItem(TAB_KEY);
+  const validTabs = [...Object.keys(MENU_CONFIG), "bookings"];
+  switchTab(validTabs.includes(savedTab) ? savedTab : "cafe", { scroll: false });
+}
+
 if (getToken()) {
   showEditor();
-  loadAllMenus().catch(showLogin);
+  loadAllMenus()
+    .then(restoreEditorTab)
+    .catch(showLogin);
 } else {
   showLogin();
 }

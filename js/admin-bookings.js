@@ -209,6 +209,50 @@ async function saveSettings(payload, successMessage) {
   }
 }
 
+async function saveDefaultCapacity() {
+  const defaultCapacity = Number(document.getElementById("default-capacity").value);
+  if (!Number.isFinite(defaultCapacity) || defaultCapacity < 0) {
+    setStatus("Angiv et gyldigt antal personer.", "error");
+    return;
+  }
+  await saveSettings(
+    { defaultCapacity },
+    `Standard kapacitet sat til ${defaultCapacity} personer.`
+  );
+}
+
+async function saveCapacityOverride() {
+  const date = document.getElementById("override-date").value;
+  const capacity = Number(document.getElementById("override-capacity").value);
+  if (!date) {
+    setStatus("Vælg en dato for særreglen.", "error");
+    return;
+  }
+  if (!Number.isFinite(capacity) || capacity < 0) {
+    setStatus("Angiv et gyldigt antal personer.", "error");
+    return;
+  }
+
+  await saveSettings(
+    { capacityByDate: { [date]: capacity } },
+    `Særregel gemt for ${formatDateLabel(date)}.`
+  );
+
+  document.getElementById("override-date").value = "";
+  document.getElementById("override-capacity").value = "";
+}
+
+async function saveClosedDate() {
+  const date = document.getElementById("closed-date").value;
+  if (!date) {
+    setStatus("Vælg en dato der skal lukkes.", "error");
+    return;
+  }
+
+  await saveSettings({ addClosedDate: date }, `${formatDateLabel(date)} er nu lukket.`);
+  document.getElementById("closed-date").value = "";
+}
+
 async function loadBookingsAdmin() {
   const loading = document.getElementById("bookings-loading");
   const empty = document.getElementById("bookings-empty");
@@ -246,38 +290,44 @@ async function loadBookingsAdmin() {
   }
 }
 
-document.getElementById("capacity-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const defaultCapacity = Number(document.getElementById("default-capacity").value);
-  await saveSettings({ defaultCapacity }, `Standard kapacitet sat til ${defaultCapacity} personer.`);
-});
+function wireBookingsPanel() {
+  const panel = document.getElementById("bookings-panel");
+  if (!panel) return;
 
-document.getElementById("capacity-override-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const date = document.getElementById("override-date").value;
-  const capacity = Number(document.getElementById("override-capacity").value);
-  if (!date) return;
+  panel.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+  });
 
-  await saveSettings(
-    { capacityByDate: { [date]: capacity } },
-    `Særregel gemt for ${formatDateLabel(date)}.`
-  );
+  panel.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-save-action]");
+    if (!button) return;
 
-  document.getElementById("override-date").value = "";
-  document.getElementById("override-capacity").value = "";
-});
+    const action = button.dataset.saveAction;
+    if (action === "default-capacity") saveDefaultCapacity();
+    if (action === "override") saveCapacityOverride();
+    if (action === "closed-date") saveClosedDate();
+  });
 
-document.getElementById("closed-date-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const date = document.getElementById("closed-date").value;
-  if (!date) return;
+  panel.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    const field = event.target;
+    if (!(field instanceof HTMLInputElement)) return;
+    const form = field.closest("form");
+    if (!form || !panel.contains(form)) return;
 
-  await saveSettings({ addClosedDate: date }, `${formatDateLabel(date)} er nu lukket.`);
-  document.getElementById("closed-date").value = "";
-});
+    event.preventDefault();
+    const action = form.querySelector("[data-save-action]")?.dataset.saveAction;
+    if (action === "default-capacity") saveDefaultCapacity();
+    if (action === "override") saveCapacityOverride();
+    if (action === "closed-date") saveClosedDate();
+  });
+}
 
 document.getElementById("refresh-bookings-btn")?.addEventListener("click", () => {
   loadBookingsAdmin();
 });
 
+wireBookingsPanel();
 window.loadBookingsAdmin = loadBookingsAdmin;
