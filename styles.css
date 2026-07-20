@@ -684,34 +684,59 @@ button.hero__cta {
 
 .community-post__card {
   display: grid;
-  gap: clamp(1.5rem, 3vw, 2rem);
+  gap: clamp(1.25rem, 3vw, 2rem);
   padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.community-post__card--text-only {
+  max-width: 42rem;
 }
 
 .community-post__media {
   overflow: hidden;
   border-radius: 0.75rem;
   background: var(--green-mist);
+  min-height: 16rem;
 }
 
 .community-post__media img {
+  display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  height: 100%;
+  min-height: 16rem;
   object-fit: cover;
+  object-position: center;
 }
 
 .community-post__body {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 0.25rem 0;
+}
+
+.community-post__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-wrap: balance;
 }
 
 .community-post__text {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: 0.98rem;
+  line-height: 1.75;
   color: var(--green-deep);
-  white-space: pre-wrap;
+}
+
+.community-post__text strong {
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* Cards */
@@ -1216,12 +1241,14 @@ button.hero__cta {
   }
 
   .community-post__card {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-items: stretch;
+    gap: clamp(1.75rem, 3vw, 2.5rem);
+    padding: clamp(1.5rem, 3vw, 2rem);
   }
 
+  .community-post__media,
   .community-post__media img {
-    aspect-ratio: 4 / 3;
     min-height: 100%;
   }
 

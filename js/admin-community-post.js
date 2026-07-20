@@ -38,6 +38,7 @@ async function loadCommunityPost() {
   const res = await fetch(`/api/community-post?t=${Date.now()}`, { cache: "no-store" });
   const post = await res.json();
 
+  communityPostForm.querySelector('[data-field="title"]').value = post.title || "";
   communityPostForm.querySelector('[data-field="text"]').value = post.text || "";
   communityPostForm.querySelector('[data-field="image-url"]').value =
     post.imageUrl && !post.imageUrl.startsWith("/api/media") ? post.imageUrl : "";
@@ -115,12 +116,14 @@ function wireCommunityPostForm() {
       imageUrl = communityPostState.imageUrl || "";
     }
 
+    const title = communityPostForm.querySelector('[data-field="title"]').value;
     const text = communityPostForm.querySelector('[data-field="text"]').value;
 
     const res = await fetch("/api/admin/community-post", {
       method: "PUT",
       headers: communityAuthHeaders(),
       body: JSON.stringify({
+        title,
         text,
         imageUrl: imageUrl || null,
       }),

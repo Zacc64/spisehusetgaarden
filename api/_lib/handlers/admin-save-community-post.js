@@ -12,15 +12,17 @@ module.exports = async function handleAdminSaveCommunityPost(req, res) {
     if (!requireAuth(req, res, sendJson)) return;
 
     const body = await readJsonBody(req);
+    const title = String(body?.title || "").trim();
     const text = String(body?.text || "").trim();
     const imageUrl = String(body?.imageUrl || "").trim() || null;
 
-    if (!text && !imageUrl) {
-      sendJson(res, 400, { error: "Tilføj tekst eller et billede" });
+    if (!title && !text && !imageUrl) {
+      sendJson(res, 400, { error: "Tilføj en titel, tekst eller et billede" });
       return;
     }
 
     const post = {
+      title,
       text,
       imageUrl,
       updatedAt: Date.now(),

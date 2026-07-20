@@ -4,6 +4,7 @@ const { hasBlobStorage, readBlobJson, writeBlobJson } = require("./blob-store");
 
 const BLOB_PATH = "content/community-post.json";
 const DEFAULT_POST = {
+  title: "",
   text: "",
   imageUrl: null,
   updatedAt: null,
