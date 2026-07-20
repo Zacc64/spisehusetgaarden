@@ -49,11 +49,12 @@ function setStatus(message, type = "success") {
   banner.classList.remove("admin-bookings-status--error", "admin-bookings-status--success");
   banner.classList.add(type === "error" ? "admin-bookings-status--error" : "admin-bookings-status--success");
   text.textContent = message;
+  banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
   if (statusTimer) clearTimeout(statusTimer);
   statusTimer = setTimeout(() => {
     banner.hidden = true;
-  }, 5000);
+  }, 6000);
 }
 
 function setSaving(isSaving) {
@@ -190,6 +191,7 @@ async function saveSettings(payload, successMessage) {
     const res = await fetch("/api/admin/capacity", {
       method: "PUT",
       headers: authHeaders(),
+      cache: "no-store",
       body: JSON.stringify(payload),
     });
     const data = await res.json().catch(() => ({}));
@@ -200,6 +202,7 @@ async function saveSettings(payload, successMessage) {
 
     applyCapacityState(data);
     setStatus(successMessage || "Ændringerne er gemt og live på siden.");
+    await loadBookingsAdmin({ quiet: true });
     return data;
   } catch (err) {
     setStatus(err.message || "Kunne ikke gemme", "error");
@@ -253,26 +256,31 @@ async function saveClosedDate() {
   document.getElementById("closed-date").value = "";
 }
 
-async function loadBookingsAdmin() {
+async function loadBookingsAdmin(options = {}) {
+  const { quiet = false } = options;
   const loading = document.getElementById("bookings-loading");
   const empty = document.getElementById("bookings-empty");
   const wrap = document.getElementById("bookings-table-wrap");
 
-  loading.hidden = false;
-  empty.hidden = true;
-  wrap.hidden = true;
+  if (!quiet) {
+    loading.hidden = false;
+    empty.hidden = true;
+    wrap.hidden = true;
+  }
 
   try {
+    const fetchOptions = { headers: authHeaders(), cache: "no-store" };
     const [bookingsRes, capacityRes] = await Promise.all([
-      fetch("/api/admin/bookings", { headers: authHeaders() }),
-      fetch("/api/admin/capacity", { headers: authHeaders() }),
+      fetch("/api/admin/bookings", fetchOptions),
+      fetch("/api/admin/capacity", fetchOptions),
     ]);
 
     if (bookingsRes.status === 401 || capacityRes.status === 401) {
       throw new Error("Du er logget ud. Log ind igen.");
     }
     if (!bookingsRes.ok || !capacityRes.ok) {
-      throw new Error("Kunne ikke hente booking-data. Prøv at opdatere siden.");
+      const errBody = await bookingsRes.json().catch(() => ({}));
+      throw new Error(errBody.error || "Kunne ikke hente booking-data. Prøv at opdatere siden.");
     }
 
     const bookingsData = await bookingsRes.json();
@@ -280,8 +288,11 @@ async function loadBookingsAdmin() {
 
     applyCapacityState(capacityData);
     renderBookings(bookingsData.bookings || []);
+    empty.textContent = "Ingen betalte bookinger endnu.";
   } catch (err) {
-    setStatus(err.message || "Kunne ikke indlæse bookinger", "error");
+    if (!quiet) {
+      setStatus(err.message || "Kunne ikke indlæse bookinger", "error");
+    }
     empty.hidden = false;
     empty.textContent = err.message || "Kunne ikke indlæse bookinger.";
     wrap.hidden = true;
@@ -302,7 +313,7 @@ function wireBookingsPanel() {
 
   panel.addEventListener("click", (event) => {
     const button = event.target.closest("[data-save-action]");
-    if (!button) return;
+    if (!button || button.disabled) return;
 
     const action = button.dataset.saveAction;
     if (action === "default-capacity") saveDefaultCapacity();

@@ -63,9 +63,24 @@ async function readStore(req) {
 }
 
 async function writeStore(store, req) {
-  const normalized = normalizeStore(store);
+  let normalized = normalizeStore(store);
 
   if (hasBlobStorage(req)) {
+    try {
+      const existing = await readBlobJson(BLOB_PATH, req);
+      if (existing) {
+        const existingNorm = normalizeStore(existing);
+        if (normalized.bookings.length < existingNorm.bookings.length) {
+          normalized = {
+            ...normalized,
+            bookings: existingNorm.bookings,
+          };
+        }
+      }
+    } catch {
+      // Continue with normalized store.
+    }
+
     await writeBlobJson(BLOB_PATH, normalized, req);
     if (!isVercelRuntime()) {
       try {

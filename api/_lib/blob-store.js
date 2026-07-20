@@ -1,4 +1,4 @@
-const { put, list } = require("@vercel/blob");
+const { put, list, get } = require("@vercel/blob");
 
 let resolvedAccess = process.env.BLOB_ACCESS === "private" ? "private" : null;
 
@@ -134,7 +134,52 @@ async function putBlob(pathname, body, contentType, req) {
   }
 }
 
+async function fetchBlobJson(url, req) {
+  const headers = {};
+  const oidcToken = getOidcToken(req);
+  const token = getBlobToken();
+  if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
+  else if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      ...headers,
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
 async function readBlobJson(pathname, req) {
+  const accessModes = isPrivateStore() ? ["private", "public"] : ["public", "private"];
+
+  for (const access of accessModes) {
+    try {
+      const result = await get(pathname, {
+        access,
+        useCache: false,
+        ...blobCommandOptions(req),
+      });
+      if (!result?.stream) continue;
+
+      if (access === "private") {
+        markPrivateStore();
+      }
+
+      const text = await new Response(result.stream).text();
+      return text ? JSON.parse(text) : null;
+    } catch (err) {
+      const message = String(err?.message || "");
+      if (message.includes("404") || message.includes("not found")) {
+        continue;
+      }
+    }
+  }
+
+  // Fallback for older blobs discovered via list().
   const { blobs } = await list(listOptions(pathname, req));
   const blob = blobs.find((entry) => entry.pathname === pathname);
   if (!blob) return null;
@@ -143,21 +188,7 @@ async function readBlobJson(pathname, req) {
     markPrivateStore();
   }
 
-  if (isPrivateStore()) {
-    const headers = {};
-    const oidcToken = getOidcToken(req);
-    const token = getBlobToken();
-    if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
-    else if (token) headers.Authorization = `Bearer ${token}`;
-
-    const response = await fetch(blob.url, Object.keys(headers).length ? { headers } : undefined);
-    if (!response.ok) return null;
-    return response.json();
-  }
-
-  const response = await fetch(blob.url);
-  if (!response.ok) return null;
-  return response.json();
+  return fetchBlobJson(blob.url, req);
 }
 
 async function writeBlobJson(pathname, data, req) {
@@ -191,7 +222,14 @@ async function readBlobFile(pathname, req) {
   if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
   else if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(blob.url, Object.keys(headers).length ? { headers } : undefined);
+  const response = await fetch(blob.url, {
+    cache: "no-store",
+    headers: {
+      ...headers,
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+  });
   if (!response.ok) return null;
 
   const buffer = Buffer.from(await response.arrayBuffer());
