@@ -7,6 +7,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function inlineFormat(text) {
+  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
 function withCacheBust(url, version) {
   if (!url) return url;
   const separator = url.includes("?") ? "&" : "?";
@@ -14,9 +18,25 @@ function withCacheBust(url, version) {
 }
 
 function formatText(text) {
-  return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
+  const raw = String(text).trim();
+  if (!raw) return "";
+
+  return raw
+    .split(/\n{2,}/)
+    .filter(Boolean)
+    .map((block) => {
+      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      const isBulletList = lines.length > 1 && lines.every((line) => /^[-•*–]\s/.test(line));
+
+      if (isBulletList) {
+        return `<ul class="community-post__list">${lines
+          .map((line) => `<li>${inlineFormat(line.replace(/^[-•*–]\s*/, ""))}</li>`)
+          .join("")}</ul>`;
+      }
+
+      return `<p class="community-post__paragraph">${inlineFormat(block).replace(/\n/g, "<br>")}</p>`;
+    })
+    .join("");
 }
 
 function renderPost(post) {
@@ -34,7 +54,7 @@ function renderPost(post) {
   return `
     <article class="community-post__card${hasImage ? "" : " community-post__card--text-only"}">
       ${image}
-      <div class="community-post__body">
+      <div class="community-post__content">
         ${title}
         ${text}
       </div>

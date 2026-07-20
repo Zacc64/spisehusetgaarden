@@ -645,7 +645,7 @@ button.hero__cta {
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1.5rem, 3vw, 2rem);
 }
 
 .community-post__link {
@@ -667,8 +667,9 @@ button.hero__cta {
 .community-post__embed {
   overflow: hidden;
   border-radius: 1rem;
-  border: 1px solid var(--green-soft);
-  background: var(--green-whisper);
+  border: 1px solid rgba(47, 69, 53, 0.1);
+  background: var(--white);
+  box-shadow: 0 12px 40px rgba(47, 69, 53, 0.07);
 }
 
 .community-post__loading,
@@ -676,28 +677,21 @@ button.hero__cta {
   display: grid;
   place-items: center;
   min-height: 8rem;
-  padding: 1.5rem;
+  padding: 2rem;
   text-align: center;
   color: var(--muted);
 }
 
 .community-post__card {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1rem;
-}
-
-.community-post__card--text-only {
-  max-width: 38rem;
-  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .community-post__media {
   overflow: hidden;
-  border-radius: 0.65rem;
   background: var(--green-mist);
-  aspect-ratio: 16 / 10;
-  max-height: 14rem;
+  aspect-ratio: 16 / 9;
+  max-height: 20rem;
 }
 
 .community-post__media img {
@@ -708,16 +702,20 @@ button.hero__cta {
   object-position: center;
 }
 
-.community-post__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+.community-post__content {
+  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.25rem, 3vw, 2rem);
+}
+
+.community-post__card--text-only .community-post__content {
+  max-width: 40rem;
 }
 
 .community-post__title {
-  margin: 0;
+  margin: 0 0 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--green-soft);
   font-family: var(--font-brand);
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.4rem, 2.8vw, 1.9rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: 0.02em;
@@ -726,13 +724,47 @@ button.hero__cta {
 }
 
 .community-post__text {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 42rem;
+}
+
+.community-post__paragraph {
   margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.65;
+  font-size: 0.95rem;
+  line-height: 1.7;
   color: var(--green-deep);
 }
 
-.community-post__text strong {
+.community-post__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.community-post__list li {
+  position: relative;
+  padding-left: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--green-deep);
+}
+
+.community-post__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.community-post__paragraph strong,
+.community-post__list strong {
   font-weight: 600;
   color: var(--ink);
 }
@@ -1238,16 +1270,33 @@ button.hero__cta {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .community-post__card {
-    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-    align-items: start;
-    gap: 1.5rem;
-    padding: 1.25rem 1.35rem;
+  .community-post__media {
+    aspect-ratio: 21 / 9;
+    max-height: 18rem;
   }
 
-  .community-post__media {
-    aspect-ratio: 4 / 3;
-    max-height: 13.5rem;
+  .community-post__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: start;
+    padding: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .community-post__card--text-only .community-post__content {
+    display: block;
+    max-width: 40rem;
+  }
+
+  .community-post__title {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+  }
+
+  .community-post__text {
+    max-width: none;
   }
 
   .booking__layout {
