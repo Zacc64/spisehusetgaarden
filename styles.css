@@ -397,32 +397,6 @@ button.hero__cta {
   cursor: pointer;
 }
 
-.hero__scroll {
-  position: absolute;
-  bottom: 1.75rem;
-  left: 50%;
-  z-index: 2;
-  transform: translateX(-50%);
-  width: 1.5rem;
-  height: 2.5rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  border-radius: 999px;
-  text-decoration: none;
-  opacity: 0;
-  animation: heroReveal 0.6s ease 0.85s forwards, scrollBounce 2s ease 1.4s infinite;
-}
-
-.hero__scroll span {
-  position: absolute;
-  top: 0.45rem;
-  left: 50%;
-  width: 3px;
-  height: 8px;
-  margin-left: -1.5px;
-  border-radius: 999px;
-  background: var(--white);
-}
-
 @keyframes heroKenBurns {
   from { transform: scale(1) translate(0, 0); }
   to { transform: scale(1.1) translate(-1.5%, -1%); }
@@ -430,11 +404,6 @@ button.hero__cta {
 
 @keyframes heroReveal {
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scrollBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(6px); }
 }
 
 /* Soft background shapes */
@@ -461,7 +430,7 @@ button.hero__cta {
   right: -8%;
   width: min(32rem, 55vw);
   height: min(32rem, 55vw);
-  background: radial-gradient(circle, rgba(47, 69, 53, 0.09) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 0%, transparent 68%);
 }
 
 #faellesskab::after {
@@ -469,7 +438,7 @@ button.hero__cta {
   left: -12%;
   width: min(24rem, 45vw);
   height: min(24rem, 45vw);
-  background: radial-gradient(circle, rgba(47, 69, 53, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
 }
 
 .instagram::before {
@@ -545,7 +514,27 @@ button.hero__cta {
 }
 
 #faellesskab {
-  background: var(--green-mist);
+  background: #2f4535;
+  color: var(--white);
+}
+
+#faellesskab .section-label,
+#faellesskab h2,
+#faellesskab .lead,
+#faellesskab .community-post__link {
+  color: var(--white);
+}
+
+#faellesskab .section-label {
+  opacity: 0.78;
+}
+
+#faellesskab .lead {
+  opacity: 0.9;
+}
+
+#faellesskab .community-post__link:hover {
+  opacity: 0.75;
 }
 
 .section--tight {
@@ -1222,11 +1211,6 @@ button.hero__cta {
     animation: none;
   }
 
-  .hero__scroll {
-    animation: none;
-    opacity: 0.6;
-  }
-
   .hero__content > * {
     opacity: 1;
     transform: none;
@@ -1497,9 +1481,5 @@ button.hero__cta {
 
   .nav-toggle[aria-expanded="true"] span:last-child {
     transform: translateY(-3.75px) rotate(-45deg);
-  }
-
-  .hero__scroll {
-    display: none;
   }
 }
