@@ -1202,6 +1202,26 @@ button.hero__cta {
   box-shadow: 0 0 0 2px var(--green-deep), 0 0 0 3px #1f4fbf;
 }
 
+.contact-item__smiley {
+  display: inline-block;
+  margin-top: 1rem;
+  line-height: 0;
+  opacity: 0.95;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.contact-item__smiley:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.contact-item__smiley-badge {
+  display: block;
+  width: auto;
+  max-width: 8.5rem;
+  height: auto;
+}
+
 /* Footer */
 
 .site-footer {
