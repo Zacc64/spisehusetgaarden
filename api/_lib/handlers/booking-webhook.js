@@ -29,7 +29,14 @@ module.exports = async (req, res) => {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       if (session.payment_status === "paid") {
-        await addBookingFromSession(session, req);
+        try {
+          await addBookingFromSession(session, req);
+        } catch (storeErr) {
+          console.error("Booking storage failed:", storeErr.message);
+          sendJson(res, 500, { error: storeErr.message || "Booking storage failed" });
+          return;
+        }
+
         try {
           await sendBookingEmails(session);
         } catch (emailErr) {
@@ -40,8 +47,9 @@ module.exports = async (req, res) => {
 
     sendJson(res, 200, { received: true });
   } catch (err) {
-    sendJson(res, 400, {
-      error: err.message || "Webhook error",
-    });
+    const message = err.message || "Webhook error";
+    const status = message.includes("signature") || message.includes("Stripe") ? 400 : 500;
+    console.error("Stripe webhook error:", message);
+    sendJson(res, status, { error: message });
   }
 };

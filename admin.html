@@ -149,6 +149,10 @@
             <p class="admin-bookings-status__text" id="bookings-status-text"></p>
           </div>
 
+          <div class="admin-bookings-status admin-bookings-status--error" id="bookings-storage-warning" hidden>
+            <p class="admin-bookings-status__text" id="bookings-storage-warning-text"></p>
+          </div>
+
           <div class="admin-bookings-stats">
             <article class="admin-stat-card">
               <span class="admin-stat-card__label">Betalte bookinger</span>
@@ -215,7 +219,10 @@
                   <h3 class="admin-block-title">Alle bookinger</h3>
                   <p class="admin-muted">Kun bookinger med gennemført betaling vises her.</p>
                 </div>
-                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
+                <div class="admin-card-block__actions">
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="sync-bookings-btn">Hent fra Stripe</button>
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
+                </div>
               </div>
               <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
               <p class="admin-muted" id="bookings-empty">Ingen betalte bookinger endnu.</p>

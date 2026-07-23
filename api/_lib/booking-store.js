@@ -3,6 +3,7 @@ const path = require("path");
 const {
   isVercelRuntime,
   hasBlobStorage,
+  getBlobSetupHint,
   readBlobJson,
   writeBlobJson,
 } = require("./blob-store");
@@ -45,20 +46,34 @@ function writeStoreToFs(store) {
   fs.writeFileSync(storePath, JSON.stringify(store, null, 2), "utf8");
 }
 
+function getStorageError(req) {
+  if (!isVercelRuntime()) return null;
+  if (hasBlobStorage(req)) return null;
+  return (
+    getBlobSetupHint(req) ||
+    "Booking-lager er ikke konfigureret. Tilslut Vercel Blob og tilføj BLOB_READ_WRITE_TOKEN i Vercel."
+  );
+}
+
+function assertBookingStorage(req) {
+  const error = getStorageError(req);
+  if (error) {
+    throw new Error(error);
+  }
+}
+
 async function readStore(req) {
   if (hasBlobStorage(req)) {
     try {
       const blobStore = await readBlobJson(BLOB_PATH, req);
       if (blobStore) return normalizeStore(blobStore);
-    } catch {
-      // fall back
+      return defaultStore();
+    } catch (err) {
+      throw new Error(`Kunne ikke læse booking-lager. ${err.message || err}`);
     }
   }
 
-  if (isVercelRuntime()) {
-    return defaultStore();
-  }
-
+  assertBookingStorage(req);
   return normalizeStore(readStoreFromFs());
 }
 
@@ -92,9 +107,7 @@ async function writeStore(store, req) {
     return normalized;
   }
 
-  if (isVercelRuntime()) {
-    throw new Error("Booking storage is not configured on Vercel.");
-  }
+  assertBookingStorage(req);
 
   writeStoreToFs(normalized);
   return normalized;
@@ -288,4 +301,6 @@ module.exports = {
   getCapacitySettings,
   updateCapacitySettings,
   readStore,
+  getStorageError,
+  assertBookingStorage,
 };

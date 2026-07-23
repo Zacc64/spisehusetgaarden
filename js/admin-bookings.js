@@ -40,6 +40,73 @@ function formatDateTime(iso) {
   });
 }
 
+function setStorageWarning(message) {
+  const banner = document.getElementById("bookings-storage-warning");
+  const text = document.getElementById("bookings-storage-warning-text");
+  if (!banner || !text) return;
+
+  if (!message) {
+    banner.hidden = true;
+    return;
+  }
+
+  banner.hidden = false;
+  text.textContent = message;
+}
+
+async function checkBookingStorage() {
+  try {
+    const res = await fetch("/api/admin/blob-status", { headers: authHeaders(), cache: "no-store" });
+    if (!res.ok) return;
+    const status = await res.json();
+    if (!status.ready) {
+      setStorageWarning(
+        status.hint ||
+          "Booking-lager er ikke konfigureret. Tilslut Vercel Blob og tilføj BLOB_READ_WRITE_TOKEN, så bookinger og lukkede dage kan gemmes."
+      );
+      return;
+    }
+    setStorageWarning("");
+  } catch {
+    // ignore
+  }
+}
+
+async function syncBookingsFromStripe() {
+  const button = document.getElementById("sync-bookings-btn");
+  if (!button) return;
+
+  const defaultLabel = button.dataset.defaultLabel || button.textContent;
+  button.dataset.defaultLabel = defaultLabel;
+  button.disabled = true;
+  button.textContent = "Henter…";
+
+  try {
+    const res = await fetch("/api/admin/sync-bookings", {
+      method: "POST",
+      headers: authHeaders(),
+      cache: "no-store",
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || "Kunne ikke hente bookinger fra Stripe");
+    }
+
+    await loadBookingsAdmin({ quiet: true });
+    setStatus(
+      data.added > 0
+        ? `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.`
+        : "Ingen nye bookinger at hente fra Stripe."
+    );
+  } catch (err) {
+    setStatus(err.message || "Kunne ikke synkronisere med Stripe", "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = defaultLabel;
+  }
+}
+
 function setStatus(message, type = "success") {
   const banner = document.getElementById("bookings-status");
   const text = document.getElementById("bookings-status-text");
@@ -263,6 +330,10 @@ async function loadBookingsAdmin(options = {}) {
   const wrap = document.getElementById("bookings-table-wrap");
 
   if (!quiet) {
+    await checkBookingStorage();
+  }
+
+  if (!quiet) {
     loading.hidden = false;
     empty.hidden = true;
     wrap.hidden = true;
@@ -338,6 +409,10 @@ function wireBookingsPanel() {
 
 document.getElementById("refresh-bookings-btn")?.addEventListener("click", () => {
   loadBookingsAdmin();
+});
+
+document.getElementById("sync-bookings-btn")?.addEventListener("click", () => {
+  syncBookingsFromStripe();
 });
 
 wireBookingsPanel();

@@ -477,6 +477,13 @@ body {
   margin-bottom: 1rem;
 }
 
+.admin-card-block__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .admin-settings-form {
   display: grid;
   gap: 0.85rem;

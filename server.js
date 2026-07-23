@@ -55,6 +55,14 @@ app.get("/api/admin/bookings", async (req, res) => {
   await require("./api/_lib/handlers/bookings")(req, res);
 });
 
+app.post("/api/admin/sync-bookings", async (req, res) => {
+  await require("./api/_lib/handlers/booking-sync")(req, res);
+});
+
+app.get("/api/admin/blob-status", async (req, res) => {
+  await require("./api/_lib/handlers/blob-status")(req, res);
+});
+
 app.route("/api/admin/capacity")
   .get(async (req, res) => {
     await require("./api/_lib/handlers/capacity")(req, res);
