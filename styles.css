@@ -639,6 +639,7 @@ button.hero__cta {
 
 .community-post__embed {
   overflow: hidden;
+  width: 100%;
   border-radius: 1rem;
   border: 1px solid rgba(47, 69, 53, 0.1);
   background: var(--white);
@@ -658,13 +659,14 @@ button.hero__cta {
 .community-post__card {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .community-post__media {
   overflow: hidden;
+  width: 100%;
   background: var(--green-mist);
-  aspect-ratio: 16 / 9;
-  max-height: 20rem;
+  aspect-ratio: 21 / 9;
 }
 
 .community-post__media img {
@@ -1175,6 +1177,31 @@ button.hero__cta {
   color: var(--yellow);
 }
 
+.contact-item__parking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem !important;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.contact-item__parking-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.3rem;
+  background: #1f4fbf;
+  color: var(--white);
+  font-family: var(--font-brand);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--green-deep), 0 0 0 3px #1f4fbf;
+}
+
 /* Footer */
 
 .site-footer {
@@ -1195,32 +1222,6 @@ button.hero__cta {
   font-size: 0.95rem;
   letter-spacing: 0.04em;
   color: var(--ink);
-}
-
-.site-footer__parking {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  margin: 0.35rem 0 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--green-deep);
-}
-
-.site-footer__parking-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  border-radius: 0.3rem;
-  background: #1f4fbf;
-  color: var(--white);
-  font-family: var(--font-brand);
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 0 0 2px var(--white), 0 0 0 3px #1f4fbf;
 }
 
 .site-footer__hours {
@@ -1285,11 +1286,6 @@ button.hero__cta {
   .contact-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 3rem;
-  }
-
-  .community-post__media {
-    aspect-ratio: 21 / 9;
-    max-height: 18rem;
   }
 
   .community-post__content {
