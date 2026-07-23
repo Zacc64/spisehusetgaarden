@@ -1,5 +1,3 @@
-const TOKEN_KEY = "sg-admin-token";
-
 let capacityState = {
   defaultCapacity: 40,
   capacityByDate: {},
@@ -10,7 +8,7 @@ let statusTimer = null;
 
 function authHeaders() {
   return {
-    Authorization: `Bearer ${sessionStorage.getItem(TOKEN_KEY)}`,
+    Authorization: `Bearer ${sessionStorage.getItem("sg-admin-token")}`,
     "Content-Type": "application/json",
   };
 }
