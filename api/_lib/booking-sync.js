@@ -3,7 +3,7 @@ const { addBookingFromSession, readStore } = require("./booking-store");
 
 function isBookingSession(session) {
   const metadata = session?.metadata || {};
-  return Boolean(metadata.date && metadata.time && metadata.name);
+  return Boolean(metadata.date && metadata.time && (metadata.name || metadata.email));
 }
 
 async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
@@ -13,6 +13,8 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
 
   let added = 0;
   let checked = 0;
+  let paid = 0;
+  let bookingLike = 0;
   let hasMore = true;
   let startingAfter;
 
@@ -26,11 +28,23 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
     for (const session of page.data) {
       checked += 1;
       if (session.payment_status !== "paid") continue;
-      if (!isBookingSession(session)) continue;
-      if (existingIds.has(session.id)) continue;
+      paid += 1;
 
-      await addBookingFromSession(session, req);
-      existingIds.add(session.id);
+      let fullSession = session;
+      if (!isBookingSession(fullSession)) {
+        try {
+          fullSession = await stripe.checkout.sessions.retrieve(session.id);
+        } catch {
+          continue;
+        }
+      }
+
+      if (!isBookingSession(fullSession)) continue;
+      bookingLike += 1;
+      if (existingIds.has(fullSession.id)) continue;
+
+      await addBookingFromSession(fullSession, req);
+      existingIds.add(fullSession.id);
       added += 1;
     }
 
@@ -42,7 +56,7 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
     }
   }
 
-  return { added, checked };
+  return { added, checked, paid, bookingLike, totalBookings: store.bookings.length + added };
 }
 
 module.exports = { syncBookingsFromStripe };

@@ -67,9 +67,56 @@ async function checkBookingStorage() {
       return;
     }
     setStorageWarning("");
+    setActionFeedback("Booking-lager er klar.", "success");
   } catch {
     // ignore
   }
+}
+
+function setActionFeedback(message, type = "info") {
+  const el = document.getElementById("bookings-action-feedback");
+  if (!el) return;
+
+  if (!message) {
+    el.hidden = true;
+    el.textContent = "";
+    el.className = "admin-bookings-action";
+    return;
+  }
+
+  el.hidden = false;
+  el.textContent = message;
+  el.className = `admin-bookings-action admin-bookings-action--${type}`;
+}
+
+function buildSyncMessage(data) {
+  if (data.added > 0) {
+    return {
+      type: "success",
+      message: `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.`,
+    };
+  }
+
+  if (data.paid === 0) {
+    return {
+      type: "info",
+      message:
+        "Ingen gennemførte Stripe-betalinger fundet. Tjek at STRIPE_SECRET_KEY i Vercel er live (sk_live_...), hvis betalingen blev lavet i live mode.",
+    };
+  }
+
+  if (data.bookingLike === 0) {
+    return {
+      type: "info",
+      message:
+        "Stripe-betalinger blev fundet, men ingen med booking-data. Betalingen kan være fra en anden Stripe-konto eller test mode.",
+    };
+  }
+
+  return {
+    type: "info",
+    message: "Ingen nye bookinger at hente. De fundne betalinger ligger allerede i listen.",
+  };
 }
 
 async function syncBookingsFromStripe() {
@@ -80,6 +127,7 @@ async function syncBookingsFromStripe() {
   button.dataset.defaultLabel = defaultLabel;
   button.disabled = true;
   button.textContent = "Henter…";
+  setActionFeedback("Henter betalinger fra Stripe…", "info");
 
   try {
     const res = await fetch("/api/admin/sync-bookings", {
@@ -94,13 +142,13 @@ async function syncBookingsFromStripe() {
     }
 
     await loadBookingsAdmin({ quiet: true });
-    setStatus(
-      data.added > 0
-        ? `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.`
-        : "Ingen nye bookinger at hente fra Stripe."
-    );
+    const feedback = buildSyncMessage(data);
+    setActionFeedback(feedback.message, feedback.type);
+    setStatus(feedback.message, feedback.type === "error" ? "error" : "success");
   } catch (err) {
-    setStatus(err.message || "Kunne ikke synkronisere med Stripe", "error");
+    const message = err.message || "Kunne ikke synkronisere med Stripe";
+    setActionFeedback(message, "error");
+    setStatus(message, "error");
   } finally {
     button.disabled = false;
     button.textContent = defaultLabel;
@@ -269,10 +317,13 @@ async function saveSettings(payload, successMessage) {
 
     applyCapacityState(data);
     setStatus(successMessage || "Ændringerne er gemt og live på siden.");
+    setActionFeedback(successMessage || "Ændringerne er gemt og live på siden.", "success");
     await loadBookingsAdmin({ quiet: true });
     return data;
   } catch (err) {
-    setStatus(err.message || "Kunne ikke gemme", "error");
+    const message = err.message || "Kunne ikke gemme";
+    setStatus(message, "error");
+    setActionFeedback(message, "error");
     return null;
   } finally {
     setSaving(false);
@@ -328,15 +379,21 @@ async function loadBookingsAdmin(options = {}) {
   const loading = document.getElementById("bookings-loading");
   const empty = document.getElementById("bookings-empty");
   const wrap = document.getElementById("bookings-table-wrap");
+  const refreshBtn = document.getElementById("refresh-bookings-btn");
 
   if (!quiet) {
     await checkBookingStorage();
+    setActionFeedback("");
   }
 
   if (!quiet) {
     loading.hidden = false;
     empty.hidden = true;
     wrap.hidden = true;
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "Opdaterer…";
+    }
   }
 
   try {
@@ -350,7 +407,7 @@ async function loadBookingsAdmin(options = {}) {
       throw new Error("Du er logget ud. Log ind igen.");
     }
     if (!bookingsRes.ok || !capacityRes.ok) {
-      const errBody = await bookingsRes.json().catch(() => ({}));
+      const errBody = await (bookingsRes.ok ? capacityRes : bookingsRes).json().catch(() => ({}));
       throw new Error(errBody.error || "Kunne ikke hente booking-data. Prøv at opdatere siden.");
     }
 
@@ -360,15 +417,25 @@ async function loadBookingsAdmin(options = {}) {
     applyCapacityState(capacityData);
     renderBookings(bookingsData.bookings || []);
     empty.textContent = "Ingen betalte bookinger endnu.";
+
+    if (!quiet && !(bookingsData.bookings || []).length) {
+      setActionFeedback("Listen er opdateret. Der er ingen betalte bookinger endnu.", "info");
+    }
   } catch (err) {
+    const message = err.message || "Kunne ikke indlæse bookinger.";
+    setActionFeedback(message, "error");
     if (!quiet) {
-      setStatus(err.message || "Kunne ikke indlæse bookinger", "error");
+      setStatus(message, "error");
     }
     empty.hidden = false;
-    empty.textContent = err.message || "Kunne ikke indlæse bookinger.";
+    empty.textContent = message;
     wrap.hidden = true;
   } finally {
     loading.hidden = true;
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = "Opdater liste";
+    }
   }
 }
 

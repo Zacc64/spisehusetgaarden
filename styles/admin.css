@@ -469,6 +469,36 @@ body {
   grid-column: 1 / -1;
 }
 
+.admin-bookings-loading {
+  margin-top: 0.75rem;
+}
+
+.admin-bookings-action {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.admin-bookings-action--success {
+  background: #edf5ee;
+  border: 1px solid #c5dcc8;
+  color: var(--green-deep);
+}
+
+.admin-bookings-action--error {
+  background: #fdeaea;
+  border: 1px solid #e8b4b4;
+  color: #8b2f2f;
+}
+
+.admin-bookings-action--info {
+  background: #f3f5f1;
+  border: 1px solid #d8e2d8;
+  color: var(--green-deep);
+}
+
 .admin-card-block__head {
   display: flex;
   align-items: start;
