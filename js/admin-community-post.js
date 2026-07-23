@@ -48,27 +48,10 @@ async function loadCommunityPost() {
   showCommunityPreview(communityPostState.imageUrl, post.updatedAt);
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 async function uploadCommunityImage(file) {
-  const data = await fileToBase64(file);
-  const res = await fetch("/api/admin/upload?kind=community", {
-    method: "POST",
-    headers: communityAuthHeaders(),
-    body: JSON.stringify({ data, filename: file.name }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Upload fejlede");
-  }
-  return res.json();
+  return uploadAdminImage(file, "community", () => ({
+    Authorization: communityAuthHeaders().Authorization,
+  }));
 }
 
 function wireCommunityPostForm() {

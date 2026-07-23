@@ -37,8 +37,14 @@ module.exports = async (req, res) => {
         return;
       }
 
+      const buffer = Buffer.from(data, "base64");
+      if (buffer.length > 8 * 1024 * 1024) {
+        sendJson(res, 400, { error: "Billedet er for stort (max 8 MB)." });
+        return;
+      }
+
       const imageUrl = await saveUploadedImage(
-        { buffer: Buffer.from(data, "base64"), originalname: filename || "menu.jpg" },
+        { buffer, originalname: filename || "menu.jpg" },
         prefix,
         req
       );
@@ -76,6 +82,11 @@ module.exports = async (req, res) => {
 
     if (!fileBuffer || fileBuffer.length === 0) {
       sendJson(res, 400, { error: "Ingen fil modtaget" });
+      return;
+    }
+
+    if (fileBuffer.length > 8 * 1024 * 1024) {
+      sendJson(res, 400, { error: "Billedet er for stort (max 8 MB)." });
       return;
     }
 

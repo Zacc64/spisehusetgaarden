@@ -144,30 +144,10 @@ async function loadAllMenus() {
   await Promise.all(Object.keys(MENU_CONFIG).map((type) => loadMenu(type)));
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      resolve(String(result).split(",")[1] || "");
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 async function uploadImageFile(file, kind) {
-  const data = await fileToBase64(file);
-  const res = await fetch(`/api/admin/upload?kind=${kind}`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ data, filename: file.name }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Upload fejlede");
-  }
-  return res.json();
+  return uploadAdminImage(file, kind, () => ({
+    Authorization: authHeaders().Authorization,
+  }));
 }
 
 function wireForm(type) {
