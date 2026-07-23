@@ -1204,7 +1204,7 @@ button.hero__cta {
 
 .contact-item__smiley {
   display: inline-block;
-  margin-top: 1rem;
+  margin-top: 1.75rem;
   line-height: 0;
   opacity: 0.95;
   transition: opacity 0.25s ease, transform 0.25s ease;
