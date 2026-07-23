@@ -4,7 +4,20 @@ let capacityState = {
   closedDates: [],
 };
 
+let allBookings = [];
+let bookingsView = {
+  calendarYear: new Date().getFullYear(),
+  calendarMonth: new Date().getMonth(),
+  selectedDate: null,
+  sort: "date-desc",
+  pageSize: 20,
+  page: 1,
+  dateFilter: "all",
+};
+
 let statusTimer = null;
+
+const WEEKDAY_LABELS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
 
 function authHeaders() {
   return {
@@ -246,43 +259,279 @@ function renderClosedDates() {
   });
 }
 
-function renderBookings(bookings) {
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function toIsoDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getTodayIso() {
+  const now = new Date();
+  return toIsoDate(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function getBookingCountsByDate() {
+  const counts = {};
+  allBookings.forEach((booking) => {
+    if (!booking.date) return;
+    counts[booking.date] = (counts[booking.date] || 0) + 1;
+  });
+  return counts;
+}
+
+function sortBookings(bookings, sortKey) {
+  const sorted = [...bookings];
+  sorted.sort((a, b) => {
+    if (sortKey === "paid-desc") {
+      return String(b.paidAt || "").localeCompare(String(a.paidAt || ""));
+    }
+
+    const aKey = `${a.date || ""}T${a.time || ""}`;
+    const bKey = `${b.date || ""}T${b.time || ""}`;
+    if (sortKey === "date-asc") return aKey.localeCompare(bKey);
+    return bKey.localeCompare(aKey);
+  });
+  return sorted;
+}
+
+function getFilteredBookings() {
+  let bookings = [...allBookings];
+  if (bookingsView.dateFilter !== "all") {
+    bookings = bookings.filter((booking) => booking.date === bookingsView.dateFilter);
+  }
+  return sortBookings(bookings, bookingsView.sort);
+}
+
+function getBookingsForDate(date) {
+  return sortBookings(
+    allBookings.filter((booking) => booking.date === date),
+    "date-asc"
+  );
+}
+
+function renderBookingRow(booking) {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${escapeHtml(formatDateLabel(booking.date))}</td>
+    <td>${escapeHtml(booking.time || "—")}</td>
+    <td>${escapeHtml(booking.name || "—")}</td>
+    <td>${escapeHtml(booking.guests || booking.guestCount || "—")}</td>
+    <td>
+      <div class="admin-table__stack">
+        <a href="mailto:${escapeHtml(booking.email || "")}">${escapeHtml(booking.email || "—")}</a>
+        <span>${escapeHtml(booking.phone || "")}</span>
+      </div>
+    </td>
+    <td>${escapeHtml(formatDateTime(booking.paidAt))}</td>
+  `;
+  if (booking.message) {
+    row.title = booking.message;
+  }
+  return row;
+}
+
+function renderDateFilterOptions() {
+  const select = document.getElementById("bookings-date-filter");
+  if (!select) return;
+
+  const current = bookingsView.dateFilter;
+  const dates = [...new Set(allBookings.map((b) => b.date).filter(Boolean))].sort((a, b) =>
+    b.localeCompare(a)
+  );
+
+  select.innerHTML = '<option value="all">Alle datoer</option>';
+  dates.forEach((date) => {
+    const option = document.createElement("option");
+    option.value = date;
+    option.textContent = formatDateLabel(date);
+    select.appendChild(option);
+  });
+
+  select.value = dates.includes(current) || current === "all" ? current : "all";
+  if (select.value !== current) {
+    bookingsView.dateFilter = select.value;
+  }
+}
+
+function renderCalendar() {
+  const container = document.getElementById("bookings-calendar");
+  const title = document.getElementById("bookings-cal-title");
+  if (!container || !title) return;
+
+  const { calendarYear, calendarMonth, selectedDate } = bookingsView;
+  const monthDate = new Date(calendarYear, calendarMonth, 1);
+  title.textContent = monthDate.toLocaleDateString("da-DK", { month: "long", year: "numeric" });
+
+  const counts = getBookingCountsByDate();
+  const todayIso = getTodayIso();
+  const closedDates = new Set(capacityState.closedDates || []);
+  const firstWeekday = (monthDate.getDay() + 6) % 7;
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+  container.innerHTML = "";
+
+  WEEKDAY_LABELS.forEach((label) => {
+    const weekday = document.createElement("div");
+    weekday.className = "admin-bookings-calendar__weekday";
+    weekday.textContent = label;
+    container.appendChild(weekday);
+  });
+
+  for (let i = 0; i < firstWeekday; i += 1) {
+    const pad = document.createElement("div");
+    pad.className = "admin-bookings-calendar__pad";
+    pad.setAttribute("aria-hidden", "true");
+    container.appendChild(pad);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const iso = toIsoDate(calendarYear, calendarMonth, day);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "admin-bookings-calendar__day";
+    button.dataset.date = iso;
+
+    if (iso === todayIso) button.classList.add("admin-bookings-calendar__day--today");
+    if (iso === selectedDate) button.classList.add("admin-bookings-calendar__day--selected");
+    if (closedDates.has(iso)) button.classList.add("admin-bookings-calendar__day--closed");
+
+    const count = counts[iso] || 0;
+    button.innerHTML = `
+      <span>${day}</span>
+      ${count ? `<span class="admin-bookings-calendar__count">${count}</span>` : ""}
+    `;
+
+    button.addEventListener("click", () => {
+      bookingsView.selectedDate = iso;
+      bookingsView.dateFilter = iso;
+      bookingsView.page = 1;
+      const filter = document.getElementById("bookings-date-filter");
+      if (filter) filter.value = iso;
+      refreshBookingsView();
+    });
+
+    container.appendChild(button);
+  }
+}
+
+function renderDayPanel() {
+  const panel = document.getElementById("bookings-day-panel");
+  const title = document.getElementById("bookings-day-title");
+  const list = document.getElementById("bookings-day-list");
+  if (!panel || !title || !list) return;
+
+  const { selectedDate } = bookingsView;
+  if (!selectedDate) {
+    panel.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+
+  const dayBookings = getBookingsForDate(selectedDate);
+  title.textContent = `Bookinger ${formatDateLabel(selectedDate)}`;
+  list.innerHTML = "";
+
+  if (!dayBookings.length) {
+    list.innerHTML = '<p class="admin-muted">Ingen bookinger denne dag.</p>';
+    panel.hidden = false;
+    return;
+  }
+
+  dayBookings.forEach((booking) => {
+    const item = document.createElement("article");
+    item.className = "admin-bookings-day-item";
+    item.innerHTML = `
+      <div class="admin-bookings-day-item__time">${escapeHtml(booking.time || "—")}</div>
+      <div>
+        <strong>${escapeHtml(booking.name || "—")}</strong>
+        <div class="admin-bookings-day-item__meta">
+          ${escapeHtml(booking.guests || booking.guestCount || "—")} personer
+          ${booking.phone ? ` · ${escapeHtml(booking.phone)}` : ""}
+        </div>
+      </div>
+      <div class="admin-bookings-day-item__meta">${escapeHtml(booking.email || "")}</div>
+    `;
+    if (booking.message) item.title = booking.message;
+    list.appendChild(item);
+  });
+
+  panel.hidden = false;
+}
+
+function renderBookingsList() {
   const wrap = document.getElementById("bookings-table-wrap");
   const body = document.getElementById("bookings-body");
   const empty = document.getElementById("bookings-empty");
+  const pagination = document.getElementById("bookings-pagination");
+  const pageInfo = document.getElementById("bookings-page-info");
+  const prevBtn = document.getElementById("bookings-page-prev");
+  const nextBtn = document.getElementById("bookings-page-next");
+
+  if (!wrap || !body || !empty) return;
+
+  const filtered = getFilteredBookings();
+  const total = filtered.length;
+  const pageSize = bookingsView.pageSize;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (bookingsView.page > totalPages) {
+    bookingsView.page = totalPages;
+  }
+
+  const start = (bookingsView.page - 1) * pageSize;
+  const pageItems = filtered.slice(start, start + pageSize);
 
   body.innerHTML = "";
-  updateStats(bookings.length);
+  updateStats(allBookings.length);
 
-  if (!bookings.length) {
+  if (!allBookings.length) {
     wrap.hidden = true;
     empty.hidden = false;
+    if (pagination) pagination.hidden = true;
+    empty.textContent = "Ingen betalte bookinger endnu.";
+    return;
+  }
+
+  if (!total) {
+    wrap.hidden = true;
+    empty.hidden = false;
+    if (pagination) pagination.hidden = true;
+    empty.textContent =
+      bookingsView.dateFilter === "all"
+        ? "Ingen bookinger matcher filteret."
+        : `Ingen bookinger for ${formatDateLabel(bookingsView.dateFilter)}.`;
     return;
   }
 
   empty.hidden = true;
   wrap.hidden = false;
+  pageItems.forEach((booking) => body.appendChild(renderBookingRow(booking)));
 
-  bookings.forEach((booking) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${formatDateLabel(booking.date)}</td>
-      <td>${booking.time || "—"}</td>
-      <td>${booking.name || "—"}</td>
-      <td>${booking.guests || booking.guestCount || "—"}</td>
-      <td>
-        <div class="admin-table__stack">
-          <a href="mailto:${booking.email || ""}">${booking.email || "—"}</a>
-          <span>${booking.phone || ""}</span>
-        </div>
-      </td>
-      <td>${formatDateTime(booking.paidAt)}</td>
-    `;
-    if (booking.message) {
-      row.title = booking.message;
-    }
-    body.appendChild(row);
-  });
+  if (pagination && pageInfo && prevBtn && nextBtn) {
+    pagination.hidden = total <= pageSize;
+    pageInfo.textContent = `Side ${bookingsView.page} af ${totalPages} · ${total} booking${total === 1 ? "" : "er"}`;
+    prevBtn.disabled = bookingsView.page <= 1;
+    nextBtn.disabled = bookingsView.page >= totalPages;
+  }
+}
+
+function refreshBookingsView() {
+  renderDateFilterOptions();
+  renderCalendar();
+  renderDayPanel();
+  renderBookingsList();
+}
+
+function setAllBookings(bookings) {
+  allBookings = Array.isArray(bookings) ? bookings : [];
+  refreshBookingsView();
 }
 
 function applyCapacityState(data) {
@@ -295,7 +544,8 @@ function applyCapacityState(data) {
   document.getElementById("default-capacity").value = capacityState.defaultCapacity;
   renderOverrides();
   renderClosedDates();
-  updateStats(document.getElementById("bookings-body").children.length);
+  renderCalendar();
+  updateStats(allBookings.length);
 }
 
 async function saveSettings(payload, successMessage) {
@@ -413,7 +663,7 @@ async function loadBookingsAdmin(options = {}) {
     const capacityData = await capacityRes.json();
 
     applyCapacityState(capacityData);
-    renderBookings(bookingsData.bookings || []);
+    setAllBookings(bookingsData.bookings || []);
     empty.textContent = "Ingen betalte bookinger endnu.";
 
     if (!quiet && !(bookingsData.bookings || []).length) {
@@ -445,6 +695,71 @@ function wireBookingsPanel() {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
     });
+  });
+
+  document.getElementById("bookings-cal-prev")?.addEventListener("click", () => {
+    bookingsView.calendarMonth -= 1;
+    if (bookingsView.calendarMonth < 0) {
+      bookingsView.calendarMonth = 11;
+      bookingsView.calendarYear -= 1;
+    }
+    renderCalendar();
+  });
+
+  document.getElementById("bookings-cal-next")?.addEventListener("click", () => {
+    bookingsView.calendarMonth += 1;
+    if (bookingsView.calendarMonth > 11) {
+      bookingsView.calendarMonth = 0;
+      bookingsView.calendarYear += 1;
+    }
+    renderCalendar();
+  });
+
+  document.getElementById("bookings-day-clear")?.addEventListener("click", () => {
+    bookingsView.selectedDate = null;
+    bookingsView.dateFilter = "all";
+    bookingsView.page = 1;
+    const filter = document.getElementById("bookings-date-filter");
+    if (filter) filter.value = "all";
+    refreshBookingsView();
+  });
+
+  document.getElementById("bookings-sort")?.addEventListener("change", (e) => {
+    bookingsView.sort = e.target.value;
+    bookingsView.page = 1;
+    renderBookingsList();
+  });
+
+  document.getElementById("bookings-page-size")?.addEventListener("change", (e) => {
+    bookingsView.pageSize = Number(e.target.value) || 20;
+    bookingsView.page = 1;
+    renderBookingsList();
+  });
+
+  document.getElementById("bookings-date-filter")?.addEventListener("change", (e) => {
+    bookingsView.dateFilter = e.target.value;
+    bookingsView.page = 1;
+    if (bookingsView.dateFilter === "all") {
+      bookingsView.selectedDate = null;
+    } else {
+      bookingsView.selectedDate = bookingsView.dateFilter;
+      const [year, month] = bookingsView.dateFilter.split("-").map(Number);
+      bookingsView.calendarYear = year;
+      bookingsView.calendarMonth = month - 1;
+    }
+    refreshBookingsView();
+  });
+
+  document.getElementById("bookings-page-prev")?.addEventListener("click", () => {
+    if (bookingsView.page > 1) {
+      bookingsView.page -= 1;
+      renderBookingsList();
+    }
+  });
+
+  document.getElementById("bookings-page-next")?.addEventListener("click", () => {
+    bookingsView.page += 1;
+    renderBookingsList();
   });
 
   panel.addEventListener("click", (event) => {

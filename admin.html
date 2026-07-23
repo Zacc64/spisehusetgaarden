@@ -226,6 +226,48 @@
               </div>
               <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
               <p class="admin-bookings-action" id="bookings-action-feedback" hidden></p>
+
+              <div class="admin-bookings-calendar-wrap">
+                <div class="admin-bookings-calendar__head">
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
+                  <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-next" aria-label="Næste måned">›</button>
+                </div>
+                <div class="admin-bookings-calendar" id="bookings-calendar" aria-label="Bookingkalender"></div>
+              </div>
+
+              <div class="admin-bookings-day-panel" id="bookings-day-panel" hidden>
+                <div class="admin-bookings-day-panel__head">
+                  <h4 class="admin-block-title" id="bookings-day-title">Bookinger</h4>
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-clear">Vis alle dage</button>
+                </div>
+                <div id="bookings-day-list" class="admin-bookings-day-list"></div>
+              </div>
+
+              <div class="admin-bookings-toolbar">
+                <label class="admin-field admin-field--inline">
+                  <span>Sorter</span>
+                  <select id="bookings-sort">
+                    <option value="date-desc">Dato (nyeste først)</option>
+                    <option value="date-asc">Dato (ældste først)</option>
+                    <option value="paid-desc">Betalt (nyeste først)</option>
+                  </select>
+                </label>
+                <label class="admin-field admin-field--inline">
+                  <span>Vis</span>
+                  <select id="bookings-page-size">
+                    <option value="20" selected>20 pr. side</option>
+                    <option value="50">50 pr. side</option>
+                  </select>
+                </label>
+                <label class="admin-field admin-field--inline">
+                  <span>Filter dato</span>
+                  <select id="bookings-date-filter">
+                    <option value="all">Alle datoer</option>
+                  </select>
+                </label>
+              </div>
+
               <p class="admin-muted" id="bookings-empty">Ingen betalte bookinger endnu.</p>
               <div class="admin-table-wrap" id="bookings-table-wrap" hidden>
                 <table class="admin-table" id="bookings-table">
@@ -241,6 +283,11 @@
                   </thead>
                   <tbody id="bookings-body"></tbody>
                 </table>
+              </div>
+              <div class="admin-bookings-pagination" id="bookings-pagination" hidden>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-page-prev">Forrige</button>
+                <p class="admin-muted" id="bookings-page-info"></p>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-page-next">Næste</button>
               </div>
             </div>
           </div>
