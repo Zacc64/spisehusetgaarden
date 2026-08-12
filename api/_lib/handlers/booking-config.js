@@ -15,6 +15,7 @@ module.exports = async (req, res) => {
     {
       ...getPublicBookingConfig(),
       defaultCapacity: settings.defaultCapacity,
+      defaultBookingHours: settings.defaultBookingHours,
       siteUrl: getSiteUrl(req),
     },
     {

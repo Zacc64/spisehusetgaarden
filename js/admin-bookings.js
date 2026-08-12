@@ -1,7 +1,20 @@
+const ALL_BOOKING_HOURS = [
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+];
+
 let capacityState = {
   defaultCapacity: 40,
   capacityByDate: {},
   closedDates: [],
+  defaultBookingHours: [...ALL_BOOKING_HOURS],
+  hoursByDate: {},
 };
 
 let allBookings = [];
@@ -9,6 +22,9 @@ let bookingsView = {
   calendarYear: new Date().getFullYear(),
   calendarMonth: new Date().getMonth(),
   selectedDate: null,
+  bulkSelectMode: false,
+  bulkSelectedDates: [],
+  modalDate: null,
   sort: "date-desc",
   pageSize: 20,
   page: 1,
@@ -49,6 +65,40 @@ function formatDateTime(iso) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function normalizeHours(hours) {
+  if (!Array.isArray(hours) || !hours.length) return [...ALL_BOOKING_HOURS];
+  const normalized = [...new Set(hours.map((value) => String(value).trim()).filter(Boolean))].sort();
+  return normalized.length ? normalized : [...ALL_BOOKING_HOURS];
+}
+
+function hoursEqual(left, right) {
+  const a = normalizeHours(left);
+  const b = normalizeHours(right);
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function getDefaultHours() {
+  return normalizeHours(capacityState.defaultBookingHours);
+}
+
+function getHoursForDate(date) {
+  if (capacityState.hoursByDate?.[date]) {
+    return normalizeHours(capacityState.hoursByDate[date]);
+  }
+  return getDefaultHours();
+}
+
+function hasCustomHours(date) {
+  return Boolean(capacityState.hoursByDate?.[date]);
+}
+
+function getCapacityForDate(date) {
+  if (capacityState.capacityByDate?.[date] !== undefined) {
+    return capacityState.capacityByDate[date];
+  }
+  return capacityState.defaultCapacity ?? 40;
 }
 
 function setStorageWarning(message) {
@@ -203,60 +253,85 @@ function updateStats(bookingsCount) {
   );
 }
 
-function renderOverrides() {
-  const container = document.getElementById("capacity-overrides");
-  const entries = Object.entries(capacityState.capacityByDate || {}).sort(([a], [b]) =>
-    a.localeCompare(b)
-  );
+function renderHoursGrid(container, selectedHours, { namePrefix = "hour" } = {}) {
+  if (!container) return;
+  const selected = new Set(normalizeHours(selectedHours));
   container.innerHTML = "";
 
-  if (!entries.length) {
-    container.innerHTML = '<p class="admin-muted">Ingen særregler endnu.</p>';
-    return;
-  }
-
-  entries.forEach(([date, capacity]) => {
-    const row = document.createElement("div");
-    row.className = "admin-list-item";
-    row.innerHTML = `
-      <div>
-        <strong>${formatDateLabel(date)}</strong>
-        <span class="admin-muted">${capacity} personer</span>
-      </div>
-      <button type="button" class="admin-list-item__remove">Fjern</button>
+  ALL_BOOKING_HOURS.forEach((hour) => {
+    const label = document.createElement("label");
+    label.className = "admin-hours-option";
+    label.innerHTML = `
+      <input type="checkbox" name="${namePrefix}" value="${hour}" ${selected.has(hour) ? "checked" : ""}>
+      <span>${hour}</span>
     `;
-    row.querySelector("button").addEventListener("click", async () => {
-      await saveSettings({ removeCapacityDate: date }, "Særregel fjernet.");
-    });
-    container.appendChild(row);
+    container.appendChild(label);
   });
 }
 
-function renderClosedDates() {
-  const container = document.getElementById("closed-dates-list");
-  const dates = [...(capacityState.closedDates || [])].sort();
-  container.innerHTML = "";
+function getCheckedHoursFromGrid(container) {
+  if (!container) return [];
+  return normalizeHours(
+    [...container.querySelectorAll('input[type="checkbox"]:checked')].map((input) => input.value)
+  );
+}
 
-  if (!dates.length) {
-    container.innerHTML = '<p class="admin-muted">Ingen lukkede dage.</p>';
-    return;
+function renderDefaultHoursForm() {
+  renderHoursGrid(document.getElementById("default-hours-grid"), getDefaultHours(), {
+    namePrefix: "default-hour",
+  });
+  renderHoursGrid(document.getElementById("bulk-hours-grid"), getDefaultHours(), {
+    namePrefix: "bulk-hour",
+  });
+}
+
+function updateBulkUi() {
+  const count = bookingsView.bulkSelectedDates.length;
+  const hasSelection = count > 0;
+  const countEl = document.getElementById("bulk-selected-count");
+  if (countEl) {
+    countEl.textContent = `${count} valgt`;
   }
 
-  dates.forEach((date) => {
-    const row = document.createElement("div");
-    row.className = "admin-list-item admin-list-item--closed";
-    row.innerHTML = `
-      <div>
-        <strong>${formatDateLabel(date)}</strong>
-        <span class="admin-muted">Lukket for booking</span>
-      </div>
-      <button type="button" class="admin-list-item__remove">Åbn igen</button>
-    `;
-    row.querySelector("button").addEventListener("click", async () => {
-      await saveSettings({ removeClosedDate: date }, "Dagen er åben igen.");
-    });
-    container.appendChild(row);
+  [
+    "bulk-open-days",
+    "bulk-close-days",
+    "bulk-apply-capacity",
+    "bulk-clear-capacity",
+    "bulk-apply-hours",
+    "bulk-reset-hours",
+    "bulk-clear-selection",
+  ].forEach((id) => {
+    const button = document.getElementById(id);
+    if (button) button.disabled = !hasSelection;
   });
+}
+
+function toggleBulkDate(date) {
+  const selected = new Set(bookingsView.bulkSelectedDates);
+  if (selected.has(date)) {
+    selected.delete(date);
+  } else {
+    selected.add(date);
+  }
+  bookingsView.bulkSelectedDates = [...selected].sort();
+  updateBulkUi();
+  renderCalendar();
+}
+
+function clearBulkSelection() {
+  bookingsView.bulkSelectedDates = [];
+  updateBulkUi();
+  renderCalendar();
+}
+
+function selectDayForList(date) {
+  bookingsView.selectedDate = date;
+  bookingsView.dateFilter = date;
+  bookingsView.page = 1;
+  const filter = document.getElementById("bookings-date-filter");
+  if (filter) filter.value = date;
+  refreshBookingsView();
 }
 
 function escapeHtml(value) {
@@ -316,6 +391,34 @@ function getBookingsForDate(date) {
   );
 }
 
+function renderBookingCards(container, bookings) {
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!bookings.length) {
+    container.innerHTML = '<p class="admin-muted">Ingen bookinger denne dag.</p>';
+    return;
+  }
+
+  bookings.forEach((booking) => {
+    const item = document.createElement("article");
+    item.className = "admin-bookings-day-item";
+    item.innerHTML = `
+      <div class="admin-bookings-day-item__time">${escapeHtml(booking.time || "—")}</div>
+      <div>
+        <strong>${escapeHtml(booking.name || "—")}</strong>
+        <div class="admin-bookings-day-item__meta">
+          ${escapeHtml(booking.guests || booking.guestCount || "—")} personer
+          ${booking.phone ? ` · ${escapeHtml(booking.phone)}` : ""}
+        </div>
+      </div>
+      <div class="admin-bookings-day-item__meta">${escapeHtml(booking.email || "")}</div>
+    `;
+    if (booking.message) item.title = booking.message;
+    container.appendChild(item);
+  });
+}
+
 function renderBookingRow(booking) {
   const row = document.createElement("tr");
   row.innerHTML = `
@@ -365,13 +468,14 @@ function renderCalendar() {
   const title = document.getElementById("bookings-cal-title");
   if (!container || !title) return;
 
-  const { calendarYear, calendarMonth, selectedDate } = bookingsView;
+  const { calendarYear, calendarMonth, selectedDate, bulkSelectMode, bulkSelectedDates } = bookingsView;
   const monthDate = new Date(calendarYear, calendarMonth, 1);
   title.textContent = monthDate.toLocaleDateString("da-DK", { month: "long", year: "numeric" });
 
   const counts = getBookingCountsByDate();
   const todayIso = getTodayIso();
   const closedDates = new Set(capacityState.closedDates || []);
+  const bulkSelected = new Set(bulkSelectedDates);
   const firstWeekday = (monthDate.getDay() + 6) % 7;
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
 
@@ -401,20 +505,41 @@ function renderCalendar() {
     if (iso === todayIso) button.classList.add("admin-bookings-calendar__day--today");
     if (iso === selectedDate) button.classList.add("admin-bookings-calendar__day--selected");
     if (closedDates.has(iso)) button.classList.add("admin-bookings-calendar__day--closed");
+    if (bulkSelected.has(iso)) button.classList.add("admin-bookings-calendar__day--bulk-selected");
 
     const count = counts[iso] || 0;
+    const customHours = hasCustomHours(iso);
+    const capacity = getCapacityForDate(iso);
+    const badges = [];
+
+    if (closedDates.has(iso)) {
+      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--closed">Lukket</span>');
+    } else if (count) {
+      badges.push(`<span class="admin-bookings-calendar__badge">${count} booking${count === 1 ? "" : "er"}</span>`);
+    }
+
+    if (customHours && !closedDates.has(iso)) {
+      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--hours">Egne timer</span>');
+    }
+
     button.innerHTML = `
-      <span>${day}</span>
-      ${count ? `<span class="admin-bookings-calendar__count">${count}</span>` : ""}
+      <div class="admin-bookings-calendar__day-top">
+        <span class="admin-bookings-calendar__day-num">${day}</span>
+        ${count ? `<span class="admin-bookings-calendar__count">${count}</span>` : ""}
+      </div>
+      <div class="admin-bookings-calendar__meta">
+        ${badges.join("")}
+        ${!closedDates.has(iso) ? `<span class="admin-muted" style="font-size:0.62rem;">Max ${capacity}</span>` : ""}
+      </div>
     `;
 
     button.addEventListener("click", () => {
-      bookingsView.selectedDate = iso;
-      bookingsView.dateFilter = iso;
-      bookingsView.page = 1;
-      const filter = document.getElementById("bookings-date-filter");
-      if (filter) filter.value = iso;
-      refreshBookingsView();
+      if (bulkSelectMode) {
+        toggleBulkDate(iso);
+        return;
+      }
+      openDayModal(iso);
+      selectDayForList(iso);
     });
 
     container.appendChild(button);
@@ -434,35 +559,140 @@ function renderDayPanel() {
     return;
   }
 
-  const dayBookings = getBookingsForDate(selectedDate);
   title.textContent = `Bookinger ${formatDateLabel(selectedDate)}`;
-  list.innerHTML = "";
+  renderBookingCards(list, getBookingsForDate(selectedDate));
+  panel.hidden = false;
+}
 
-  if (!dayBookings.length) {
-    list.innerHTML = '<p class="admin-muted">Ingen bookinger denne dag.</p>';
-    panel.hidden = false;
+function openDayModal(date) {
+  const modal = document.getElementById("day-settings-modal");
+  if (!modal) return;
+
+  bookingsView.modalDate = date;
+  document.getElementById("day-modal-title").textContent = formatDateLabel(date);
+  document.getElementById("day-modal-closed").checked = (capacityState.closedDates || []).includes(date);
+
+  const capacityInput = document.getElementById("day-modal-capacity");
+  const hasOverride = capacityState.capacityByDate?.[date] !== undefined;
+  capacityInput.value = hasOverride ? String(capacityState.capacityByDate[date]) : "";
+  document.getElementById("day-modal-capacity-hint").textContent = hasOverride
+    ? `Standard er ${capacityState.defaultCapacity} personer.`
+    : `Bruger standard på ${capacityState.defaultCapacity} personer.`;
+
+  renderHoursGrid(document.getElementById("day-modal-hours-grid"), getHoursForDate(date), {
+    namePrefix: "day-hour",
+  });
+
+  document.getElementById("day-modal-bookings-title").textContent = `Bookinger ${formatDateLabel(date)}`;
+  renderBookingCards(
+    document.getElementById("day-modal-bookings-list"),
+    getBookingsForDate(date)
+  );
+
+  if (typeof modal.showModal === "function") {
+    modal.showModal();
+  } else {
+    modal.setAttribute("open", "open");
+  }
+}
+
+function closeDayModal() {
+  const modal = document.getElementById("day-settings-modal");
+  if (!modal) return;
+  bookingsView.modalDate = null;
+  if (typeof modal.close === "function") {
+    modal.close();
+  } else {
+    modal.removeAttribute("open");
+  }
+}
+
+async function saveDayModal() {
+  const date = bookingsView.modalDate;
+  if (!date) return;
+
+  const closed = document.getElementById("day-modal-closed").checked;
+  const capacityValue = document.getElementById("day-modal-capacity").value.trim();
+  const hours = getCheckedHoursFromGrid(document.getElementById("day-modal-hours-grid"));
+
+  if (!hours.length) {
+    setStatus("Vælg mindst ét tidspunkt.", "error");
     return;
   }
 
-  dayBookings.forEach((booking) => {
-    const item = document.createElement("article");
-    item.className = "admin-bookings-day-item";
-    item.innerHTML = `
-      <div class="admin-bookings-day-item__time">${escapeHtml(booking.time || "—")}</div>
-      <div>
-        <strong>${escapeHtml(booking.name || "—")}</strong>
-        <div class="admin-bookings-day-item__meta">
-          ${escapeHtml(booking.guests || booking.guestCount || "—")} personer
-          ${booking.phone ? ` · ${escapeHtml(booking.phone)}` : ""}
-        </div>
-      </div>
-      <div class="admin-bookings-day-item__meta">${escapeHtml(booking.email || "")}</div>
-    `;
-    if (booking.message) item.title = booking.message;
-    list.appendChild(item);
-  });
+  const settings = {
+    date,
+    closed,
+    hours,
+  };
 
-  panel.hidden = false;
+  if (capacityValue === "") {
+    settings.clearCapacity = true;
+  } else {
+    const capacity = Number(capacityValue);
+    if (!Number.isFinite(capacity) || capacity < 0) {
+      setStatus("Angiv et gyldigt antal personer.", "error");
+      return;
+    }
+    settings.capacity = capacity;
+  }
+
+  if (hoursEqual(hours, getDefaultHours())) {
+    settings.clearHours = true;
+    delete settings.hours;
+  }
+
+  const result = await saveSettings(
+    { dateSettings: settings },
+    `${formatDateLabel(date)} er opdateret.`
+  );
+
+  if (result) {
+    closeDayModal();
+  }
+}
+
+async function applyBulkAction(action) {
+  const dates = [...bookingsView.bulkSelectedDates];
+  if (!dates.length) return;
+
+  let payload = { bulkDates: dates };
+  let message = "Valgte dage er opdateret.";
+
+  if (action === "open") {
+    payload.bulkClosed = false;
+    message = `${dates.length} dag${dates.length === 1 ? "" : "e"} er åbnet.`;
+  } else if (action === "close") {
+    payload.bulkClosed = true;
+    message = `${dates.length} dag${dates.length === 1 ? "" : "e"} er lukket.`;
+  } else if (action === "capacity") {
+    const capacity = Number(document.getElementById("bulk-capacity").value);
+    if (!Number.isFinite(capacity) || capacity < 0) {
+      setStatus("Angiv en gyldig kapacitet til masseændring.", "error");
+      return;
+    }
+    payload.bulkCapacity = capacity;
+    message = `Kapacitet sat til ${capacity} for ${dates.length} dag${dates.length === 1 ? "" : "e"}.`;
+  } else if (action === "clear-capacity") {
+    payload.bulkClearCapacity = true;
+    message = `Kapacitetssærregler fjernet for ${dates.length} dag${dates.length === 1 ? "" : "e"}.`;
+  } else if (action === "hours") {
+    const hours = getCheckedHoursFromGrid(document.getElementById("bulk-hours-grid"));
+    if (!hours.length) {
+      setStatus("Vælg mindst ét tidspunkt til masseændring.", "error");
+      return;
+    }
+    payload.bulkHours = hours;
+    message = `Timer opdateret for ${dates.length} dag${dates.length === 1 ? "" : "e"}.`;
+  } else if (action === "reset-hours") {
+    payload.bulkClearHours = true;
+    message = `Standardtider gendannet for ${dates.length} dag${dates.length === 1 ? "" : "e"}.`;
+  }
+
+  const result = await saveSettings(payload, message);
+  if (result) {
+    clearBulkSelection();
+  }
 }
 
 function renderBookingsList() {
@@ -527,6 +757,7 @@ function refreshBookingsView() {
   renderCalendar();
   renderDayPanel();
   renderBookingsList();
+  updateBulkUi();
 }
 
 function setAllBookings(bookings) {
@@ -539,11 +770,12 @@ function applyCapacityState(data) {
     defaultCapacity: data.defaultCapacity ?? 40,
     capacityByDate: data.capacityByDate || {},
     closedDates: data.closedDates || [],
+    defaultBookingHours: normalizeHours(data.defaultBookingHours),
+    hoursByDate: data.hoursByDate || {},
   };
 
   document.getElementById("default-capacity").value = capacityState.defaultCapacity;
-  renderOverrides();
-  renderClosedDates();
+  renderDefaultHoursForm();
   renderCalendar();
   updateStats(allBookings.length);
 }
@@ -590,36 +822,13 @@ async function saveDefaultCapacity() {
   );
 }
 
-async function saveCapacityOverride() {
-  const date = document.getElementById("override-date").value;
-  const capacity = Number(document.getElementById("override-capacity").value);
-  if (!date) {
-    setStatus("Vælg en dato for særreglen.", "error");
+async function saveDefaultHours() {
+  const hours = getCheckedHoursFromGrid(document.getElementById("default-hours-grid"));
+  if (!hours.length) {
+    setStatus("Vælg mindst ét standardtidspunkt.", "error");
     return;
   }
-  if (!Number.isFinite(capacity) || capacity < 0) {
-    setStatus("Angiv et gyldigt antal personer.", "error");
-    return;
-  }
-
-  await saveSettings(
-    { capacityByDate: { [date]: capacity } },
-    `Særregel gemt for ${formatDateLabel(date)}.`
-  );
-
-  document.getElementById("override-date").value = "";
-  document.getElementById("override-capacity").value = "";
-}
-
-async function saveClosedDate() {
-  const date = document.getElementById("closed-date").value;
-  if (!date) {
-    setStatus("Vælg en dato der skal lukkes.", "error");
-    return;
-  }
-
-  await saveSettings({ addClosedDate: date }, `${formatDateLabel(date)} er nu lukket.`);
-  document.getElementById("closed-date").value = "";
+  await saveSettings({ defaultBookingHours: hours }, "Standard bookingstider er gemt.");
 }
 
 async function loadBookingsAdmin(options = {}) {
@@ -697,6 +906,43 @@ function wireBookingsPanel() {
     });
   });
 
+  document.getElementById("bulk-select-mode")?.addEventListener("change", (event) => {
+    bookingsView.bulkSelectMode = event.target.checked;
+    if (!bookingsView.bulkSelectMode) {
+      clearBulkSelection();
+    } else {
+      renderCalendar();
+    }
+  });
+
+  document.getElementById("bulk-open-days")?.addEventListener("click", () => applyBulkAction("open"));
+  document.getElementById("bulk-close-days")?.addEventListener("click", () => applyBulkAction("close"));
+  document.getElementById("bulk-apply-capacity")?.addEventListener("click", () => applyBulkAction("capacity"));
+  document.getElementById("bulk-clear-capacity")?.addEventListener("click", () => applyBulkAction("clear-capacity"));
+  document.getElementById("bulk-apply-hours")?.addEventListener("click", () => applyBulkAction("hours"));
+  document.getElementById("bulk-reset-hours")?.addEventListener("click", () => applyBulkAction("reset-hours"));
+  document.getElementById("bulk-clear-selection")?.addEventListener("click", clearBulkSelection);
+
+  document.getElementById("day-modal-close")?.addEventListener("click", closeDayModal);
+  document.getElementById("day-modal-cancel")?.addEventListener("click", closeDayModal);
+  document.getElementById("day-modal-save")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    saveDayModal();
+  });
+  document.getElementById("day-settings-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveDayModal();
+  });
+  document.getElementById("day-modal-reset-hours")?.addEventListener("click", () => {
+    renderHoursGrid(document.getElementById("day-modal-hours-grid"), getDefaultHours(), {
+      namePrefix: "day-hour",
+    });
+  });
+  document.getElementById("day-settings-modal")?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeDayModal();
+  });
+
   document.getElementById("bookings-cal-prev")?.addEventListener("click", () => {
     bookingsView.calendarMonth -= 1;
     if (bookingsView.calendarMonth < 0) {
@@ -768,8 +1014,7 @@ function wireBookingsPanel() {
 
     const action = button.dataset.saveAction;
     if (action === "default-capacity") saveDefaultCapacity();
-    if (action === "override") saveCapacityOverride();
-    if (action === "closed-date") saveClosedDate();
+    if (action === "default-hours") saveDefaultHours();
   });
 
   panel.addEventListener("keydown", (event) => {
@@ -782,9 +1027,11 @@ function wireBookingsPanel() {
     event.preventDefault();
     const action = form.querySelector("[data-save-action]")?.dataset.saveAction;
     if (action === "default-capacity") saveDefaultCapacity();
-    if (action === "override") saveCapacityOverride();
-    if (action === "closed-date") saveClosedDate();
+    if (action === "default-hours") saveDefaultHours();
   });
+
+  renderDefaultHoursForm();
+  updateBulkUi();
 }
 
 document.getElementById("refresh-bookings-btn")?.addEventListener("click", () => {

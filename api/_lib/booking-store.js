@@ -8,6 +8,15 @@ const {
   writeBlobJson,
 } = require("./blob-store");
 const { getDepositDkk } = require("./booking");
+const {
+  DEFAULT_BOOKING_HOURS,
+  normalizeHoursArray,
+  hoursEqual,
+  getDefaultBookingHours,
+  getHoursForDate,
+  isTimeAllowed,
+  normalizeHoursByDate,
+} = require("./booking-hours");
 
 const BLOB_PATH = "bookings/store.json";
 const DEFAULT_CAPACITY = 40;
@@ -21,6 +30,8 @@ function defaultStore() {
     defaultCapacity: DEFAULT_CAPACITY,
     capacityByDate: {},
     closedDates: [],
+    defaultBookingHours: [...DEFAULT_BOOKING_HOURS],
+    hoursByDate: {},
     bookings: [],
   };
 }
@@ -118,12 +129,16 @@ function normalizeStore(store) {
     ? [...new Set(store.closedDates.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort()
     : [];
 
+  const defaultBookingHours = getDefaultBookingHours(store);
+
   return {
     defaultCapacity: clampCapacity(store?.defaultCapacity ?? DEFAULT_CAPACITY),
     capacityByDate: store?.capacityByDate && typeof store.capacityByDate === "object"
       ? store.capacityByDate
       : {},
     closedDates,
+    defaultBookingHours,
+    hoursByDate: normalizeHoursByDate(store?.hoursByDate),
     bookings: Array.isArray(store?.bookings) ? store.bookings : [],
   };
 }
@@ -160,6 +175,8 @@ function getBookedGuestsForDate(store, date) {
 async function getAvailability(date, req) {
   const store = await readStore(req);
 
+  const hours = getHoursForDate(store, date);
+
   if (isDateClosed(store, date)) {
     return {
       date,
@@ -167,6 +184,8 @@ async function getAvailability(date, req) {
       capacity: 0,
       booked: 0,
       remaining: 0,
+      hours: [],
+      hasCustomHours: Boolean(store.hoursByDate?.[date]),
     };
   }
 
@@ -174,7 +193,15 @@ async function getAvailability(date, req) {
   const booked = getBookedGuestsForDate(store, date);
   const remaining = Math.max(0, capacity - booked);
 
-  return { date, closed: false, capacity, booked, remaining };
+  return {
+    date,
+    closed: false,
+    capacity,
+    booked,
+    remaining,
+    hours,
+    hasCustomHours: Boolean(store.hoursByDate?.[date]),
+  };
 }
 
 async function assertAvailability(booking, req) {
@@ -183,9 +210,13 @@ async function assertAvailability(booking, req) {
     return { error: "Vælg antal personer." };
   }
 
+  const store = await readStore(req);
   const availability = await getAvailability(booking.date, req);
   if (availability.closed) {
     return { error: "Denne dag er lukket for booking." };
+  }
+  if (!isTimeAllowed(store, booking.date, booking.time)) {
+    return { error: "Det valgte tidspunkt er ikke tilgængeligt på denne dato." };
   }
   if (guestCount > availability.remaining) {
     return {
@@ -243,7 +274,36 @@ async function getCapacitySettings(req) {
     defaultCapacity: store.defaultCapacity,
     capacityByDate: store.capacityByDate,
     closedDates: store.closedDates,
+    defaultBookingHours: store.defaultBookingHours,
+    hoursByDate: store.hoursByDate,
   };
+}
+
+function applyDateSettings(store, date, settings = {}) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+
+  if (settings.closed === true) {
+    store.closedDates = [...new Set([...store.closedDates, date])].sort();
+  } else if (settings.closed === false) {
+    store.closedDates = store.closedDates.filter((d) => d !== date);
+  }
+
+  if (settings.clearCapacity) {
+    delete store.capacityByDate[date];
+  } else if (settings.capacity !== undefined && settings.capacity !== "") {
+    store.capacityByDate[date] = clampCapacity(settings.capacity);
+  }
+
+  if (settings.clearHours) {
+    delete store.hoursByDate[date];
+  } else if (settings.hours !== undefined) {
+    const hours = normalizeHoursArray(settings.hours);
+    if (hoursEqual(hours, store.defaultBookingHours)) {
+      delete store.hoursByDate[date];
+    } else {
+      store.hoursByDate[date] = hours;
+    }
+  }
 }
 
 async function updateCapacitySettings(payload, req) {
@@ -251,6 +311,10 @@ async function updateCapacitySettings(payload, req) {
 
   if (payload.defaultCapacity !== undefined) {
     store.defaultCapacity = clampCapacity(payload.defaultCapacity);
+  }
+
+  if (payload.defaultBookingHours !== undefined) {
+    store.defaultBookingHours = normalizeHoursArray(payload.defaultBookingHours);
   }
 
   if (payload.capacityByDate && typeof payload.capacityByDate === "object") {
@@ -266,6 +330,26 @@ async function updateCapacitySettings(payload, req) {
 
   if (payload.removeCapacityDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.removeCapacityDate)) {
     delete store.capacityByDate[payload.removeCapacityDate];
+  }
+
+  if (payload.hoursByDate && typeof payload.hoursByDate === "object") {
+    for (const [date, hours] of Object.entries(payload.hoursByDate)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      if (hours === null) {
+        delete store.hoursByDate[date];
+      } else {
+        const normalized = normalizeHoursArray(hours);
+        if (hoursEqual(normalized, store.defaultBookingHours)) {
+          delete store.hoursByDate[date];
+        } else {
+          store.hoursByDate[date] = normalized;
+        }
+      }
+    }
+  }
+
+  if (payload.removeHoursDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.removeHoursDate)) {
+    delete store.hoursByDate[payload.removeHoursDate];
   }
 
   if (payload.addClosedDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.addClosedDate)) {
@@ -284,11 +368,58 @@ async function updateCapacitySettings(payload, req) {
     ].sort();
   }
 
+  if (payload.dateSettings && typeof payload.dateSettings === "object") {
+    const { date, ...settings } = payload.dateSettings;
+    applyDateSettings(store, date, settings);
+  }
+
+  if (Array.isArray(payload.bulkDates) && payload.bulkDates.length) {
+    const dates = [
+      ...new Set(
+        payload.bulkDates.filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d))
+      ),
+    ];
+
+    if (payload.bulkClosed === true) {
+      store.closedDates = [...new Set([...store.closedDates, ...dates])].sort();
+    } else if (payload.bulkClosed === false) {
+      store.closedDates = store.closedDates.filter((d) => !dates.includes(d));
+    }
+
+    if (payload.bulkClearCapacity) {
+      dates.forEach((date) => {
+        delete store.capacityByDate[date];
+      });
+    } else if (payload.bulkCapacity !== undefined && payload.bulkCapacity !== "") {
+      const capacity = clampCapacity(payload.bulkCapacity);
+      dates.forEach((date) => {
+        store.capacityByDate[date] = capacity;
+      });
+    }
+
+    if (payload.bulkClearHours) {
+      dates.forEach((date) => {
+        delete store.hoursByDate[date];
+      });
+    } else if (payload.bulkHours !== undefined) {
+      const hours = normalizeHoursArray(payload.bulkHours);
+      dates.forEach((date) => {
+        if (hoursEqual(hours, store.defaultBookingHours)) {
+          delete store.hoursByDate[date];
+        } else {
+          store.hoursByDate[date] = hours;
+        }
+      });
+    }
+  }
+
   await writeStore(store, req);
   return {
     defaultCapacity: store.defaultCapacity,
     capacityByDate: store.capacityByDate,
     closedDates: store.closedDates,
+    defaultBookingHours: store.defaultBookingHours,
+    hoursByDate: store.hoursByDate,
   };
 }
 

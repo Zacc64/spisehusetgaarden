@@ -168,10 +168,10 @@
             </article>
           </div>
 
-          <div class="admin-bookings-grid">
+          <div class="admin-bookings-settings-row">
             <div class="admin-card-block">
               <h3 class="admin-block-title">Standard kapacitet</h3>
-              <p class="admin-muted">Gælder alle dage, medmindre du sætter en særregel eller lukker dagen.</p>
+              <p class="admin-muted">Gælder alle dage, medmindre du ændrer det i kalenderen.</p>
               <form id="capacity-form" class="admin-settings-form">
                 <label class="admin-field">
                   <span>Max personer pr. dag</span>
@@ -182,67 +182,73 @@
             </div>
 
             <div class="admin-card-block">
-              <h3 class="admin-block-title">Særregel for én dato</h3>
-              <p class="admin-muted">F.eks. mere eller færre pladser på en bestemt dag.</p>
-              <form id="capacity-override-form" class="admin-settings-form">
-                <div class="admin-settings-form__row">
-                  <label class="admin-field">
-                    <span>Dato</span>
-                    <input type="date" id="override-date" required>
-                  </label>
-                  <label class="admin-field">
-                    <span>Max personer</span>
-                    <input type="number" id="override-capacity" min="0" step="1" placeholder="40" required>
-                  </label>
-                </div>
-                <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="override">Tilføj særregel</button>
-              </form>
-              <div id="capacity-overrides" class="admin-list"></div>
+              <h3 class="admin-block-title">Standard bookingstider</h3>
+              <p class="admin-muted">Tidspunkter gæster kan vælge, medmindre en dag har egne timer.</p>
+              <div id="default-hours-grid" class="admin-hours-grid" aria-label="Standard bookingstider"></div>
+              <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="default-hours">Gem standardtider</button>
+            </div>
+          </div>
+
+          <div class="admin-card-block admin-card-block--wide admin-calendar-main">
+            <div class="admin-card-block__head">
+              <div>
+                <h3 class="admin-block-title">Kalender</h3>
+                <p class="admin-muted">Klik på en dag for indstillinger og bookinger. Brug vælg-tilstand til masseændringer.</p>
+              </div>
+              <div class="admin-card-block__actions">
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="sync-bookings-btn">Hent fra Stripe</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
+              </div>
             </div>
 
-            <div class="admin-card-block">
-              <h3 class="admin-block-title">Lukkede dage</h3>
-              <p class="admin-muted">Gæster kan ikke booke på disse datoer.</p>
-              <form id="closed-date-form" class="admin-settings-form admin-settings-form--inline">
-                <label class="admin-field admin-field--grow">
-                  <span>Lukket dato</span>
-                  <input type="date" id="closed-date" required>
+            <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
+            <p class="admin-bookings-action" id="bookings-action-feedback" hidden></p>
+
+            <div class="admin-calendar-bulk" id="calendar-bulk-bar">
+              <label class="admin-calendar-bulk__toggle">
+                <input type="checkbox" id="bulk-select-mode">
+                <span>Vælg flere dage</span>
+              </label>
+              <span class="admin-calendar-bulk__count" id="bulk-selected-count">0 valgt</span>
+              <div class="admin-calendar-bulk__actions">
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-open-days" disabled>Åbn valgte</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-close-days" disabled>Luk valgte</button>
+                <label class="admin-field admin-field--inline admin-field--compact">
+                  <span>Kapacitet</span>
+                  <input type="number" id="bulk-capacity" min="0" step="1" placeholder="40">
                 </label>
-                <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="closed-date">Luk dag</button>
-              </form>
-              <div id="closed-dates-list" class="admin-list"></div>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-apply-capacity" disabled>Sæt kapacitet</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-clear-capacity" disabled>Fjern kapacitet</button>
+              </div>
+              <div class="admin-calendar-bulk__hours">
+                <span class="admin-calendar-bulk__hours-label">Timer for valgte dage</span>
+                <div id="bulk-hours-grid" class="admin-hours-grid admin-hours-grid--compact"></div>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-apply-hours" disabled>Sæt timer</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-reset-hours" disabled>Brug standard</button>
+              </div>
+              <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bulk-clear-selection" disabled>Ryd valg</button>
             </div>
 
-            <div class="admin-card-block admin-card-block--wide">
-              <div class="admin-card-block__head">
-                <div>
-                  <h3 class="admin-block-title">Alle bookinger</h3>
-                  <p class="admin-muted">Kun bookinger med gennemført betaling vises her.</p>
-                </div>
-                <div class="admin-card-block__actions">
-                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="sync-bookings-btn">Hent fra Stripe</button>
-                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
-                </div>
+            <div class="admin-bookings-calendar-wrap admin-bookings-calendar-wrap--large">
+              <div class="admin-bookings-calendar__head">
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
+                <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-next" aria-label="Næste måned">›</button>
               </div>
-              <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
-              <p class="admin-bookings-action" id="bookings-action-feedback" hidden></p>
+              <div class="admin-bookings-calendar admin-bookings-calendar--large" id="bookings-calendar" aria-label="Bookingkalender"></div>
+            </div>
 
-              <div class="admin-bookings-calendar-wrap">
-                <div class="admin-bookings-calendar__head">
-                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
-                  <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
-                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-cal-next" aria-label="Næste måned">›</button>
-                </div>
-                <div class="admin-bookings-calendar" id="bookings-calendar" aria-label="Bookingkalender"></div>
+            <div class="admin-bookings-day-panel" id="bookings-day-panel" hidden>
+              <div class="admin-bookings-day-panel__head">
+                <h4 class="admin-block-title" id="bookings-day-title">Bookinger</h4>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-clear">Vis alle dage</button>
               </div>
+              <div id="bookings-day-list" class="admin-bookings-day-list"></div>
+            </div>
 
-              <div class="admin-bookings-day-panel" id="bookings-day-panel" hidden>
-                <div class="admin-bookings-day-panel__head">
-                  <h4 class="admin-block-title" id="bookings-day-title">Bookinger</h4>
-                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-clear">Vis alle dage</button>
-                </div>
-                <div id="bookings-day-list" class="admin-bookings-day-list"></div>
-              </div>
+            <div class="admin-bookings-list-section">
+              <h4 class="admin-block-title">Alle bookinger</h4>
+              <p class="admin-muted">Kun bookinger med gennemført betaling vises her.</p>
 
               <div class="admin-bookings-toolbar">
                 <label class="admin-field admin-field--inline">
@@ -291,6 +297,45 @@
               </div>
             </div>
           </div>
+
+          <dialog class="admin-day-modal" id="day-settings-modal">
+            <form method="dialog" class="admin-day-modal__inner" id="day-settings-form">
+              <header class="admin-day-modal__head">
+                <div>
+                  <p class="admin-eyebrow">Dagindstillinger</p>
+                  <h3 class="admin-day-modal__title" id="day-modal-title"></h3>
+                </div>
+                <button type="button" class="admin-day-modal__close" id="day-modal-close" aria-label="Luk">×</button>
+              </header>
+
+              <label class="admin-day-modal__closed">
+                <input type="checkbox" id="day-modal-closed">
+                <span>Lukket for booking</span>
+              </label>
+
+              <label class="admin-field">
+                <span>Max personer denne dag</span>
+                <input type="number" id="day-modal-capacity" min="0" step="1" placeholder="Bruger standard">
+              </label>
+              <p class="admin-muted admin-day-modal__hint" id="day-modal-capacity-hint"></p>
+
+              <fieldset class="admin-day-modal__hours">
+                <legend>Tilgængelige tidspunkter</legend>
+                <div id="day-modal-hours-grid" class="admin-hours-grid"></div>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="day-modal-reset-hours">Brug standardtider</button>
+              </fieldset>
+
+              <div class="admin-day-modal__bookings">
+                <h4 class="admin-block-title" id="day-modal-bookings-title">Bookinger</h4>
+                <div id="day-modal-bookings-list" class="admin-bookings-day-list"></div>
+              </div>
+
+              <footer class="admin-day-modal__footer">
+                <button type="button" class="admin-btn admin-btn--ghost" id="day-modal-cancel">Annuller</button>
+                <button type="submit" class="admin-btn" id="day-modal-save">Gem dag</button>
+              </footer>
+            </form>
+          </dialog>
         </section>
       </main>
     </section>

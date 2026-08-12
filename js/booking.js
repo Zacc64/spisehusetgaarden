@@ -24,16 +24,43 @@ async function updateAvailability() {
     return;
   }
 
+  const timeSelect = form?.querySelector('select[name="time"]');
+  const previousTime = timeSelect?.value || "";
+
   try {
     const res = await fetch(`/api/booking/availability?date=${encodeURIComponent(dateInput.value)}`);
     const data = await res.json();
     if (!res.ok) throw new Error();
+
+    if (timeSelect) {
+      const hours = Array.isArray(data.hours) && data.hours.length ? data.hours : [];
+      timeSelect.innerHTML = '<option value="" disabled selected>Vælg tid</option>';
+      hours.forEach((hour) => {
+        const option = document.createElement("option");
+        option.value = hour;
+        option.textContent = hour;
+        timeSelect.appendChild(option);
+      });
+      if (previousTime && hours.includes(previousTime)) {
+        timeSelect.value = previousTime;
+      }
+      timeSelect.disabled = !hours.length;
+    }
+
     if (data.closed) {
       availabilityNote.textContent = `Den ${data.date} er lukket for booking.`;
       availabilityNote.classList.add("booking-availability--closed");
       if (submitBtn) submitBtn.disabled = true;
       return;
     }
+
+    if (!data.hours?.length) {
+      availabilityNote.textContent = `Der er ingen ledige tidspunkter den ${data.date}.`;
+      availabilityNote.classList.add("booking-availability--closed");
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
     availabilityNote.classList.remove("booking-availability--closed");
     if (submitBtn) submitBtn.disabled = false;
     availabilityNote.textContent = `${data.remaining} af ${data.capacity} pladser tilbage den ${data.date}.`;
@@ -64,6 +91,9 @@ async function loadBookingConfig() {
       dateInput.min = new Date().toISOString().split("T")[0];
       if (config.maxBookableDate) {
         dateInput.max = config.maxBookableDate;
+      }
+      if (dateInput.value) {
+        updateAvailability();
       }
     }
   } catch {
