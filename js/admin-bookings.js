@@ -290,7 +290,7 @@ function updateBulkUi() {
   const hasSelection = count > 0;
   const countEl = document.getElementById("bulk-selected-count");
   if (countEl) {
-    countEl.textContent = `${count} valgt`;
+    countEl.textContent = count === 1 ? "1 dag valgt" : `${count} dage valgt`;
   }
 
   [
@@ -529,7 +529,7 @@ function renderCalendar() {
       </div>
       <div class="admin-bookings-calendar__meta">
         ${badges.join("")}
-        ${!closedDates.has(iso) ? `<span class="admin-muted" style="font-size:0.62rem;">Max ${capacity}</span>` : ""}
+        ${!closedDates.has(iso) ? `<span class="admin-bookings-calendar__capacity">Max ${capacity}</span>` : ""}
       </div>
     `;
 
@@ -908,6 +908,12 @@ function wireBookingsPanel() {
 
   document.getElementById("bulk-select-mode")?.addEventListener("change", (event) => {
     bookingsView.bulkSelectMode = event.target.checked;
+    document
+      .getElementById("bookings-calendar")
+      ?.classList.toggle("admin-bookings-calendar--bulk-mode", bookingsView.bulkSelectMode);
+    document
+      .getElementById("calendar-bulk-bar")
+      ?.classList.toggle("admin-calendar-bulk--active", bookingsView.bulkSelectMode);
     if (!bookingsView.bulkSelectMode) {
       clearBulkSelection();
     } else {
