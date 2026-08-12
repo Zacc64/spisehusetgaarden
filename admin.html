@@ -185,7 +185,7 @@
               <div class="admin-card-block admin-card-block--compact">
                 <h3 class="admin-block-title">Standardtider</h3>
                 <div id="default-hours-grid" class="admin-hours-grid admin-hours-grid--compact" aria-label="Standard bookingstider"></div>
-                <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="default-hours">Gem standardtider</button>
+                <button type="button" class="admin-btn admin-btn--ghost admin-btn--block" data-save-btn data-save-action="default-hours">Gem standardtider</button>
               </div>
 
               <div class="admin-card-block admin-card-block--compact admin-calendar-bulk" id="calendar-bulk-bar">
@@ -245,9 +245,11 @@
 
                 <div class="admin-bookings-calendar-wrap admin-bookings-calendar-wrap--large">
                   <div class="admin-bookings-calendar__head">
-                    <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
-                    <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
-                    <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-next" aria-label="Næste måned">›</button>
+                    <div class="admin-bookings-calendar__nav-group">
+                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
+                      <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
+                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-next" aria-label="Næste måned">›</button>
+                    </div>
                   </div>
                   <div class="admin-bookings-calendar admin-bookings-calendar--large" id="bookings-calendar" aria-label="Bookingkalender"></div>
                 </div>
