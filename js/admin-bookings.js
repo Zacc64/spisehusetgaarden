@@ -251,6 +251,11 @@ function updateStats(bookingsCount) {
   document.getElementById("closed-count").textContent = String(
     (capacityState.closedDates || []).length
   );
+
+  const toggleCount = document.getElementById("bookings-list-toggle-count");
+  if (toggleCount) {
+    toggleCount.textContent = String(bookingsCount);
+  }
 }
 
 function renderHoursGrid(container, selectedHours, { namePrefix = "hour" } = {}) {
@@ -928,6 +933,17 @@ function wireBookingsPanel() {
   document.getElementById("bulk-apply-hours")?.addEventListener("click", () => applyBulkAction("hours"));
   document.getElementById("bulk-reset-hours")?.addEventListener("click", () => applyBulkAction("reset-hours"));
   document.getElementById("bulk-clear-selection")?.addEventListener("click", clearBulkSelection);
+
+  document.getElementById("bookings-list-toggle")?.addEventListener("click", () => {
+    const body = document.getElementById("bookings-list-body");
+    const toggle = document.getElementById("bookings-list-toggle");
+    if (!body || !toggle) return;
+
+    const isOpen = !body.hidden;
+    body.hidden = isOpen;
+    toggle.setAttribute("aria-expanded", String(!isOpen));
+    toggle.querySelector("span").textContent = isOpen ? "Vis alle bookinger" : "Skjul bookingliste";
+  });
 
   document.getElementById("day-modal-close")?.addEventListener("click", closeDayModal);
   document.getElementById("day-modal-cancel")?.addEventListener("click", closeDayModal);

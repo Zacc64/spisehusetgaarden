@@ -138,11 +138,12 @@
           </footer>
         </form>
 
-        <section class="admin-panel" id="bookings-panel" data-panel="bookings" hidden>
-          <header class="admin-panel__header">
-            <p class="admin-eyebrow">Bookinger</p>
-            <h2>Bookinger & kapacitet</h2>
-            <p class="admin-panel__desc">Administrér betalte bookinger, lukkede dage og hvor mange gæster der kan bookes.</p>
+        <section class="admin-panel admin-panel--bookings" id="bookings-panel" data-panel="bookings" hidden>
+          <header class="admin-panel__header admin-panel__header--compact">
+            <div>
+              <p class="admin-eyebrow">Bookinger</p>
+              <h2>Bookinger & kapacitet</h2>
+            </div>
           </header>
 
           <div class="admin-bookings-status" id="bookings-status" hidden>
@@ -172,8 +173,7 @@
             <aside class="admin-bookings-sidebar">
               <div class="admin-card-block admin-card-block--compact">
                 <h3 class="admin-block-title">Standard kapacitet</h3>
-                <p class="admin-muted">Gælder alle dage, medmindre du ændrer det i kalenderen.</p>
-                <form id="capacity-form" class="admin-settings-form">
+                <form id="capacity-form" class="admin-settings-form admin-settings-form--compact">
                   <label class="admin-field">
                     <span>Max personer pr. dag</span>
                     <input type="number" id="default-capacity" min="0" step="1" value="40" required>
@@ -183,15 +183,13 @@
               </div>
 
               <div class="admin-card-block admin-card-block--compact">
-                <h3 class="admin-block-title">Standard bookingstider</h3>
-                <p class="admin-muted">Tidspunkter gæster kan vælge på en normal dag.</p>
-                <div id="default-hours-grid" class="admin-hours-grid" aria-label="Standard bookingstider"></div>
+                <h3 class="admin-block-title">Standardtider</h3>
+                <div id="default-hours-grid" class="admin-hours-grid admin-hours-grid--compact" aria-label="Standard bookingstider"></div>
                 <button type="button" class="admin-btn admin-btn--ghost" data-save-btn data-save-action="default-hours">Gem standardtider</button>
               </div>
 
               <div class="admin-card-block admin-card-block--compact admin-calendar-bulk" id="calendar-bulk-bar">
                 <h3 class="admin-block-title">Masseændring</h3>
-                <p class="admin-muted">Slå vælg-tilstand til, markér dage i kalenderen, og opdater dem her.</p>
 
                 <label class="admin-calendar-bulk__toggle">
                   <input type="checkbox" id="bulk-select-mode">
@@ -234,11 +232,8 @@
 
             <div class="admin-bookings-center">
               <div class="admin-card-block admin-calendar-main">
-                <div class="admin-card-block__head">
-                  <div>
-                    <h3 class="admin-block-title">Kalender</h3>
-                    <p class="admin-muted">Klik på en dag for at redigere den. Grøn markering = valgt dag i listen nedenfor.</p>
-                  </div>
+                <div class="admin-card-block__head admin-card-block__head--compact">
+                  <h3 class="admin-block-title">Kalender</h3>
                   <div class="admin-card-block__actions">
                     <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="sync-bookings-btn">Hent fra Stripe</button>
                     <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="refresh-bookings-btn">Opdater liste</button>
@@ -269,9 +264,12 @@
           </div>
 
           <div class="admin-card-block admin-bookings-list-card">
-              <h4 class="admin-block-title">Alle bookinger</h4>
-              <p class="admin-muted">Kun bookinger med gennemført betaling vises her.</p>
+            <button type="button" class="admin-bookings-list-toggle" id="bookings-list-toggle" aria-expanded="false">
+              <span>Vis alle bookinger</span>
+              <strong id="bookings-list-toggle-count">0</strong>
+            </button>
 
+            <div id="bookings-list-body" class="admin-bookings-list-body" hidden>
               <div class="admin-bookings-toolbar">
                 <label class="admin-field admin-field--inline">
                   <span>Sorter</span>
@@ -317,6 +315,7 @@
                 <p class="admin-muted" id="bookings-page-info"></p>
                 <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-page-next">Næste</button>
               </div>
+            </div>
           </div>
 
           <dialog class="admin-day-modal" id="day-settings-modal">

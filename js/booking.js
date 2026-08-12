@@ -8,7 +8,20 @@ const availabilityNote = document.getElementById("booking-availability-note");
 const testBanner = document.getElementById("booking-test-banner");
 const dateInput = form?.querySelector('input[name="date"]');
 const guestsInput = form?.querySelector('[name="guests"]');
+const timeInput = form?.querySelector('select[name="time"]');
 let isTestMode = false;
+let paymentsEnabled = true;
+let bookingSubmitAllowed = false;
+
+function setBookingSubmitAllowed(allowed) {
+  bookingSubmitAllowed = Boolean(allowed);
+  if (!submitBtn) return;
+
+  const blocked = !bookingSubmitAllowed || !paymentsEnabled;
+  submitBtn.disabled = blocked;
+  submitBtn.classList.toggle("btn-submit--blocked", blocked);
+  submitBtn.setAttribute("aria-disabled", String(blocked));
+}
 
 function showMessage(el) {
   if (!form) return;
@@ -21,11 +34,13 @@ function showMessage(el) {
 async function updateAvailability() {
   if (!availabilityNote || !dateInput?.value) {
     if (availabilityNote) availabilityNote.hidden = true;
+    setBookingSubmitAllowed(false);
     return;
   }
 
-  const timeSelect = form?.querySelector('select[name="time"]');
+  const timeSelect = timeInput;
   const previousTime = timeSelect?.value || "";
+  setBookingSubmitAllowed(false);
 
   try {
     const res = await fetch(`/api/booking/availability?date=${encodeURIComponent(dateInput.value)}`);
@@ -47,26 +62,28 @@ async function updateAvailability() {
       timeSelect.disabled = !hours.length;
     }
 
+    availabilityNote.hidden = false;
+
     if (data.closed) {
-      availabilityNote.textContent = `Den ${data.date} er lukket for booking.`;
+      availabilityNote.textContent = `Den ${data.date} er lukket for booking. Vælg en anden dato.`;
       availabilityNote.classList.add("booking-availability--closed");
-      if (submitBtn) submitBtn.disabled = true;
+      setBookingSubmitAllowed(false);
       return;
     }
 
     if (!data.hours?.length) {
       availabilityNote.textContent = `Der er ingen ledige tidspunkter den ${data.date}.`;
       availabilityNote.classList.add("booking-availability--closed");
-      if (submitBtn) submitBtn.disabled = true;
+      setBookingSubmitAllowed(false);
       return;
     }
 
     availabilityNote.classList.remove("booking-availability--closed");
-    if (submitBtn) submitBtn.disabled = false;
+    setBookingSubmitAllowed(true);
     availabilityNote.textContent = `${data.remaining} af ${data.capacity} pladser tilbage den ${data.date}.`;
-    availabilityNote.hidden = false;
   } catch {
     availabilityNote.hidden = true;
+    setBookingSubmitAllowed(false);
   }
 }
 
@@ -78,8 +95,9 @@ async function loadBookingConfig() {
     if (config.depositDkk) {
       depositNote.textContent = `Depositum: ${config.depositDkk} kr. Betales nu for at bekræfte booking.`;
     }
-    if (!config.paymentsEnabled && submitBtn) {
-      submitBtn.disabled = true;
+    paymentsEnabled = Boolean(config.paymentsEnabled);
+    if (!paymentsEnabled) {
+      setBookingSubmitAllowed(false);
       depositNote.textContent = "Online betaling er ikke sat op endnu.";
     }
     if (config.testMode && testBanner) {
@@ -122,6 +140,12 @@ form?.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorEl.hidden = true;
 
+  if (!bookingSubmitAllowed || !paymentsEnabled) {
+    errorEl.textContent = "Vælg en dato der er åben for booking.";
+    errorEl.hidden = false;
+    return;
+  }
+
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
@@ -147,9 +171,10 @@ form?.addEventListener("submit", async (e) => {
   } catch (err) {
     errorEl.textContent = err.message || "Noget gik galt. Prøv igen.";
     errorEl.hidden = false;
-    submitBtn.disabled = false;
+    setBookingSubmitAllowed(true);
     submitBtn.textContent = isTestMode ? "Betal og book (test)" : "Betal og book";
   }
 });
 
 loadBookingConfig();
+setBookingSubmitAllowed(false);

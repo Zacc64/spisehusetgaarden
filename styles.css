@@ -918,7 +918,7 @@ button.hero__cta {
 .social-banner__label {
   margin: 0 0 1rem;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(0.72rem, 1.4vw, 0.82rem);
+  font-size: 1.4rem;
   font-weight: 400;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -1066,10 +1066,19 @@ button.hero__cta {
   transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
   background: var(--green-deep);
   color: var(--white);
   transform: translateY(-1px);
+}
+
+.btn-submit:disabled,
+.btn-submit--blocked {
+  background: #c8ccc4;
+  color: #f7f8f6;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.92;
 }
 
 .booking-availability {
