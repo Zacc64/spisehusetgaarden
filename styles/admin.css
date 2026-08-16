@@ -354,10 +354,10 @@ body {
   overscroll-behavior: contain;
   align-content: start;
   width: 100%;
-  --cal-gap: 2px;
+  --cal-gap: 0.3rem;
   gap: var(--cal-gap);
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: auto;
+  grid-auto-rows: minmax(0, auto);
 }
 
 #bookings-panel .admin-bookings-month-list {
@@ -404,6 +404,9 @@ body {
   aspect-ratio: 1;
   height: auto;
   max-height: none;
+  align-self: start;
+  justify-self: stretch;
+  box-sizing: border-box;
 }
 
 #bookings-panel .admin-bookings-calendar--large .admin-bookings-calendar__day {
@@ -1089,6 +1092,7 @@ body {
 .admin-bookings-calendar--large .admin-bookings-calendar__pad {
   min-height: 0;
   aspect-ratio: 1;
+  align-self: start;
 }
 
 .admin-bookings-calendar--large .admin-bookings-calendar__day {
