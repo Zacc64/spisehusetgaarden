@@ -519,25 +519,28 @@ function renderCalendar() {
     const count = counts[iso] || 0;
     const closed = closedDates.has(iso);
     const customHours = hasCustomHours(iso);
-    const indicators = [];
+    const capacity = getCapacityForDate(iso);
+    const badges = [];
 
     if (closed) {
-      button.title = "Lukket for booking";
+      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--closed">Lukket</span>');
     } else if (count) {
-      button.title = `${count} booking${count === 1 ? "" : "er"}`;
+      badges.push(`<span class="admin-bookings-calendar__badge">${count} booking${count === 1 ? "" : "er"}</span>`);
     }
 
     if (customHours && !closed) {
-      indicators.push('<span class="admin-bookings-calendar__dot admin-bookings-calendar__dot--hours" aria-hidden="true"></span>');
+      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--hours">Egne timer</span>');
     }
 
     button.innerHTML = `
       <div class="admin-bookings-calendar__day-top">
         <span class="admin-bookings-calendar__day-num">${day}</span>
         ${count ? `<span class="admin-bookings-calendar__count">${count}</span>` : ""}
-        ${indicators.join("")}
       </div>
-      ${closed ? '<span class="admin-bookings-calendar__closed-label">Lukket</span>' : ""}
+      <div class="admin-bookings-calendar__meta">
+        ${badges.join("")}
+        ${!closed ? `<span class="admin-bookings-calendar__capacity">Max ${capacity}</span>` : ""}
+      </div>
     `;
 
     button.addEventListener("click", () => {
