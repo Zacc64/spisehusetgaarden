@@ -111,10 +111,10 @@ function getBookingRedirectUrls(req) {
   };
 }
 
+const BOOKING_DEPOSIT_PER_PERSON_DKK = 50;
+
 function getDepositDkk() {
-  const value = Number(process.env.BOOKING_DEPOSIT_DKK || 50);
-  if (!Number.isFinite(value) || value <= 0) return 50;
-  return Math.round(value);
+  return BOOKING_DEPOSIT_PER_PERSON_DKK;
 }
 
 function getDepositOre() {
