@@ -243,15 +243,22 @@
                 <p class="admin-muted admin-bookings-loading" id="bookings-loading" hidden>Henter bookinger…</p>
                 <p class="admin-bookings-action" id="bookings-action-feedback" hidden></p>
 
-                <div class="admin-bookings-calendar-wrap admin-bookings-calendar-wrap--large">
-                  <div class="admin-bookings-calendar__head">
-                    <div class="admin-bookings-calendar__nav-group">
-                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
-                      <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
-                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-next" aria-label="Næste måned">›</button>
+                <div class="admin-bookings-calendar-row">
+                  <div class="admin-bookings-calendar-wrap admin-bookings-calendar-wrap--large">
+                    <div class="admin-bookings-calendar__head">
+                      <div class="admin-bookings-calendar__nav-group">
+                        <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-prev" aria-label="Forrige måned">‹</button>
+                        <h4 class="admin-bookings-calendar__title" id="bookings-cal-title"></h4>
+                        <button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-calendar__nav" id="bookings-cal-next" aria-label="Næste måned">›</button>
+                      </div>
                     </div>
+                    <div class="admin-bookings-calendar admin-bookings-calendar--large" id="bookings-calendar" aria-label="Bookingkalender"></div>
                   </div>
-                  <div class="admin-bookings-calendar admin-bookings-calendar--large" id="bookings-calendar" aria-label="Bookingkalender"></div>
+
+                  <aside class="admin-bookings-month-list" aria-labelledby="bookings-month-list-title">
+                    <h4 class="admin-block-title" id="bookings-month-list-title">Bookinger denne måned</h4>
+                    <div id="bookings-month-list" class="admin-bookings-month-list__body"></div>
+                  </aside>
                 </div>
 
                 <div class="admin-bookings-day-panel" id="bookings-day-panel" hidden>

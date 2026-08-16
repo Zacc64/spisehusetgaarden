@@ -1,4 +1,7 @@
 const DEFAULT_BOOKING_HOURS = [
+  "11:00",
+  "12:00",
+  "13:00",
   "14:00",
   "15:00",
   "16:00",
@@ -7,6 +10,7 @@ const DEFAULT_BOOKING_HOURS = [
   "19:00",
   "20:00",
   "21:00",
+  "22:00",
 ];
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;

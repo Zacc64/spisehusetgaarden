@@ -1,4 +1,7 @@
 const ALL_BOOKING_HOURS = [
+  "11:00",
+  "12:00",
+  "13:00",
   "14:00",
   "15:00",
   "16:00",
@@ -7,6 +10,7 @@ const ALL_BOOKING_HOURS = [
   "19:00",
   "20:00",
   "21:00",
+  "22:00",
 ];
 
 let capacityState = {
@@ -757,9 +761,80 @@ function renderBookingsList() {
   }
 }
 
+function getBookingsForMonth(year, month) {
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  return sortBookings(
+    allBookings.filter((booking) => booking.date && booking.date.startsWith(`${monthKey}-`)),
+    "date-asc"
+  );
+}
+
+function renderMonthBookingsList() {
+  const container = document.getElementById("bookings-month-list");
+  const title = document.getElementById("bookings-month-list-title");
+  if (!container || !title) return;
+
+  const { calendarYear, calendarMonth } = bookingsView;
+  const monthDate = new Date(calendarYear, calendarMonth, 1);
+  const monthBookings = getBookingsForMonth(calendarYear, calendarMonth);
+
+  title.textContent = `Bookinger i ${monthDate.toLocaleDateString("da-DK", {
+    month: "long",
+    year: "numeric",
+  })}`;
+
+  container.innerHTML = "";
+
+  if (!monthBookings.length) {
+    container.innerHTML = '<p class="admin-muted">Ingen bookinger denne måned.</p>';
+    return;
+  }
+
+  const byDate = new Map();
+  monthBookings.forEach((booking) => {
+    if (!byDate.has(booking.date)) {
+      byDate.set(booking.date, []);
+    }
+    byDate.get(booking.date).push(booking);
+  });
+
+  [...byDate.keys()].sort().forEach((date) => {
+    const dayBlock = document.createElement("section");
+    dayBlock.className = "admin-bookings-month-list__day";
+
+    const dayTitle = document.createElement("h5");
+    dayTitle.className = "admin-bookings-month-list__date";
+    dayTitle.textContent = formatDateLabel(date);
+    dayBlock.appendChild(dayTitle);
+
+    const list = document.createElement("ul");
+    list.className = "admin-bookings-month-list__items";
+
+    byDate.get(date).forEach((booking) => {
+      const item = document.createElement("li");
+      item.className = "admin-bookings-month-list__item";
+      item.innerHTML = `
+        <span class="admin-bookings-month-list__time">${escapeHtml(booking.time || "—")}</span>
+        <span class="admin-bookings-month-list__name">${escapeHtml(booking.name || "—")}</span>
+        <span class="admin-bookings-month-list__guests">${escapeHtml(booking.guests || booking.guestCount || "—")} pers.</span>
+      `;
+      item.addEventListener("click", () => {
+        openDayModal(date);
+        selectDayForList(date);
+      });
+      if (booking.message) item.title = booking.message;
+      list.appendChild(item);
+    });
+
+    dayBlock.appendChild(list);
+    container.appendChild(dayBlock);
+  });
+}
+
 function refreshBookingsView() {
   renderDateFilterOptions();
   renderCalendar();
+  renderMonthBookingsList();
   renderDayPanel();
   renderBookingsList();
   updateBulkUi();
@@ -782,6 +857,7 @@ function applyCapacityState(data) {
   document.getElementById("default-capacity").value = capacityState.defaultCapacity;
   renderDefaultHoursForm();
   renderCalendar();
+  renderMonthBookingsList();
   updateStats(allBookings.length);
 }
 
@@ -972,6 +1048,7 @@ function wireBookingsPanel() {
       bookingsView.calendarYear -= 1;
     }
     renderCalendar();
+    renderMonthBookingsList();
   });
 
   document.getElementById("bookings-cal-next")?.addEventListener("click", () => {
@@ -981,6 +1058,7 @@ function wireBookingsPanel() {
       bookingsView.calendarYear += 1;
     }
     renderCalendar();
+    renderMonthBookingsList();
   });
 
   document.getElementById("bookings-day-clear")?.addEventListener("click", () => {
