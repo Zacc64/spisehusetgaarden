@@ -13,7 +13,7 @@ const {
   normalizeHoursArray,
   hoursEqual,
   getDefaultBookingHours,
-  getHoursForDate,
+  getBookableSlotsForDate,
   isTimeAllowed,
   normalizeHoursByDate,
 } = require("./booking-hours");
@@ -176,7 +176,7 @@ function getBookedGuestsForDate(store, date) {
 async function getAvailability(date, req) {
   const store = await readStore(req);
 
-  const hours = getHoursForDate(store, date);
+  const hours = getBookableSlotsForDate(store, date);
 
   if (isDateClosed(store, date)) {
     return {

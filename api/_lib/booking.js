@@ -112,8 +112,8 @@ function getBookingRedirectUrls(req) {
 }
 
 function getDepositDkk() {
-  const value = Number(process.env.BOOKING_DEPOSIT_DKK || 100);
-  if (!Number.isFinite(value) || value <= 0) return 100;
+  const value = Number(process.env.BOOKING_DEPOSIT_DKK || 50);
+  if (!Number.isFinite(value) || value <= 0) return 50;
   return Math.round(value);
 }
 
