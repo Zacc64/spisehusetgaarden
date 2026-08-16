@@ -517,29 +517,27 @@ function renderCalendar() {
     if (bulkSelected.has(iso)) button.classList.add("admin-bookings-calendar__day--bulk-selected");
 
     const count = counts[iso] || 0;
+    const closed = closedDates.has(iso);
     const customHours = hasCustomHours(iso);
-    const capacity = getCapacityForDate(iso);
-    const badges = [];
+    const indicators = [];
 
-    if (closedDates.has(iso)) {
-      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--closed">Lukket</span>');
+    if (closed) {
+      button.title = "Lukket for booking";
     } else if (count) {
-      badges.push(`<span class="admin-bookings-calendar__badge">${count} booking${count === 1 ? "" : "er"}</span>`);
+      button.title = `${count} booking${count === 1 ? "" : "er"}`;
     }
 
-    if (customHours && !closedDates.has(iso)) {
-      badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--hours">Egne timer</span>');
+    if (customHours && !closed) {
+      indicators.push('<span class="admin-bookings-calendar__dot admin-bookings-calendar__dot--hours" aria-hidden="true"></span>');
     }
 
     button.innerHTML = `
       <div class="admin-bookings-calendar__day-top">
         <span class="admin-bookings-calendar__day-num">${day}</span>
         ${count ? `<span class="admin-bookings-calendar__count">${count}</span>` : ""}
+        ${indicators.join("")}
       </div>
-      <div class="admin-bookings-calendar__meta">
-        ${badges.join("")}
-        ${!closedDates.has(iso) ? `<span class="admin-bookings-calendar__capacity">Max ${capacity}</span>` : ""}
-      </div>
+      ${closed ? '<span class="admin-bookings-calendar__closed-label">Lukket</span>' : ""}
     `;
 
     button.addEventListener("click", () => {
@@ -790,6 +788,9 @@ function renderMonthBookingsList() {
     return;
   }
 
+  const list = document.createElement("ul");
+  list.className = "admin-bookings-month-list__items";
+
   const byDate = new Map();
   monthBookings.forEach((booking) => {
     if (!byDate.has(booking.date)) {
@@ -799,21 +800,11 @@ function renderMonthBookingsList() {
   });
 
   [...byDate.keys()].sort().forEach((date) => {
-    const dayBlock = document.createElement("section");
-    dayBlock.className = "admin-bookings-month-list__day";
-
-    const dayTitle = document.createElement("h5");
-    dayTitle.className = "admin-bookings-month-list__date";
-    dayTitle.textContent = formatDateLabel(date);
-    dayBlock.appendChild(dayTitle);
-
-    const list = document.createElement("ul");
-    list.className = "admin-bookings-month-list__items";
-
     byDate.get(date).forEach((booking) => {
       const item = document.createElement("li");
       item.className = "admin-bookings-month-list__item";
       item.innerHTML = `
+        <span class="admin-bookings-month-list__date">${escapeHtml(formatDateLabel(date))}</span>
         <span class="admin-bookings-month-list__time">${escapeHtml(booking.time || "—")}</span>
         <span class="admin-bookings-month-list__name">${escapeHtml(booking.name || "—")}</span>
         <span class="admin-bookings-month-list__guests">${escapeHtml(booking.guests || booking.guestCount || "—")} pers.</span>
@@ -825,10 +816,9 @@ function renderMonthBookingsList() {
       if (booking.message) item.title = booking.message;
       list.appendChild(item);
     });
-
-    dayBlock.appendChild(list);
-    container.appendChild(dayBlock);
   });
+
+  container.appendChild(list);
 }
 
 function refreshBookingsView() {
