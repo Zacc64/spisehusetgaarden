@@ -121,6 +121,22 @@ function getDepositOre() {
   return getDepositDkk() * 100;
 }
 
+function parseGuestCount(guests) {
+  if (String(guests).trim() === "7+") return 7;
+  const n = Number.parseInt(String(guests), 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function getDepositTotalDkk(guestCount) {
+  const count = typeof guestCount === "number" ? guestCount : parseGuestCount(guestCount);
+  if (!count) return 0;
+  return getDepositDkk() * count;
+}
+
+function getDepositTotalOre(guestCount) {
+  return getDepositTotalDkk(guestCount) * 100;
+}
+
 function getNotifyEmail() {
   return (process.env.BOOKING_NOTIFY_EMAIL || "info@spisehusetgaarden.dk").trim();
 }
@@ -202,6 +218,7 @@ const { isStripeConfigured, isStripeTestMode } = require("./stripe-client");
 function getPublicBookingConfig() {
   return {
     depositDkk: getDepositDkk(),
+    depositPerPersonDkk: getDepositDkk(),
     currency: "DKK",
     paymentsEnabled: isStripeConfigured(),
     testMode: isStripeTestMode(),
@@ -216,6 +233,9 @@ module.exports = {
   isUsableSiteUrl,
   getDepositDkk,
   getDepositOre,
+  parseGuestCount,
+  getDepositTotalDkk,
+  getDepositTotalOre,
   getNotifyEmail,
   getMaxBookableDate,
   getMaxBookingMonths,

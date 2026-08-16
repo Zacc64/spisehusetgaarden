@@ -7,7 +7,7 @@ const {
   readBlobJson,
   writeBlobJson,
 } = require("./blob-store");
-const { getDepositDkk } = require("./booking");
+const { getDepositDkk, parseGuestCount } = require("./booking");
 const {
   DEFAULT_BOOKING_HOURS,
   normalizeHoursArray,
@@ -153,10 +153,11 @@ function clampCapacity(value) {
   return Math.round(n);
 }
 
-function parseGuestCount(guests) {
-  if (String(guests).trim() === "7+") return 7;
-  const n = Number.parseInt(String(guests), 10);
-  return Number.isFinite(n) && n > 0 ? n : 0;
+function getPaidAmountDkk(session, guests) {
+  if (session.amount_total) {
+    return Math.round(session.amount_total / 100);
+  }
+  return getDepositDkk() * parseGuestCount(guests);
 }
 
 function getCapacityForDate(store, date) {
@@ -241,7 +242,7 @@ function bookingFromSession(session) {
     guests,
     guestCount: parseGuestCount(guests),
     message: metadata.message || "",
-    amountDkk: getDepositDkk(),
+    amountDkk: getPaidAmountDkk(session, guests),
     paidAt: new Date().toISOString(),
     status: "paid",
   };

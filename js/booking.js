@@ -12,6 +12,41 @@ const timeInput = form?.querySelector('select[name="time"]');
 let isTestMode = false;
 let paymentsEnabled = true;
 let bookingSubmitAllowed = false;
+let depositPerPersonDkk = 0;
+
+function parseGuestCount(value) {
+  if (String(value || "").trim() === "7+") return 7;
+  const n = Number.parseInt(String(value), 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function updateDepositNote() {
+  if (!depositNote) return;
+
+  if (!paymentsEnabled) {
+    depositNote.textContent = "Online betaling er ikke sat op endnu.";
+    return;
+  }
+
+  if (!depositPerPersonDkk) {
+    depositNote.textContent = "Depositum betales ved booking.";
+    return;
+  }
+
+  const guestCount = parseGuestCount(guestsInput?.value);
+  if (!guestCount) {
+    depositNote.textContent = `Depositum: ${depositPerPersonDkk} kr. pr. person. Betales nu for at bekræfte booking.`;
+    return;
+  }
+
+  const total = depositPerPersonDkk * guestCount;
+  if (guestCount === 1) {
+    depositNote.textContent = `Depositum: ${total} kr. Betales nu for at bekræfte booking.`;
+    return;
+  }
+
+  depositNote.textContent = `Depositum: ${total} kr. (${depositPerPersonDkk} kr. × ${guestCount} personer). Betales nu for at bekræfte booking.`;
+}
 
 function setBookingSubmitAllowed(allowed) {
   bookingSubmitAllowed = Boolean(allowed);
@@ -92,14 +127,12 @@ async function loadBookingConfig() {
   try {
     const res = await fetch("/api/booking/config");
     const config = await res.json();
-    if (config.depositDkk) {
-      depositNote.textContent = `Depositum: ${config.depositDkk} kr. Betales nu for at bekræfte booking.`;
-    }
+    depositPerPersonDkk = Number(config.depositPerPersonDkk || config.depositDkk) || 0;
     paymentsEnabled = Boolean(config.paymentsEnabled);
     if (!paymentsEnabled) {
       setBookingSubmitAllowed(false);
-      depositNote.textContent = "Online betaling er ikke sat op endnu.";
     }
+    updateDepositNote();
     if (config.testMode && testBanner) {
       isTestMode = true;
       testBanner.hidden = false;
@@ -115,6 +148,7 @@ async function loadBookingConfig() {
       }
     }
   } catch {
+    depositPerPersonDkk = 0;
     depositNote.textContent = "Depositum betales ved booking.";
   }
 }
@@ -122,7 +156,10 @@ async function loadBookingConfig() {
 if (dateInput) {
   dateInput.addEventListener("change", updateAvailability);
 }
-guestsInput?.addEventListener("change", updateAvailability);
+guestsInput?.addEventListener("change", () => {
+  updateAvailability();
+  updateDepositNote();
+});
 
 const params = new URLSearchParams(window.location.search);
 if (params.get("booking") === "success") {

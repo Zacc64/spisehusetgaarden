@@ -1,7 +1,7 @@
 const { getStripe } = require("../stripe-client");
 const {
   getDepositOre,
-  getDepositDkk,
+  getDepositTotalDkk,
   parseBookingBody,
   getBookingRedirectUrls,
   isUsableSiteUrl,
@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
     }
 
     const stripe = getStripe();
-    const depositDkk = getDepositDkk();
+    const { guestCount } = availabilityCheck;
+    const depositDkk = getDepositTotalDkk(guestCount);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -48,13 +49,13 @@ module.exports = async (req, res) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          quantity: 1,
+          quantity: guestCount,
           price_data: {
             currency: "dkk",
             unit_amount: getDepositOre(),
             product_data: {
-              name: "Bordbooking — depositum",
-              description: `${booking.date} kl. ${booking.time}, ${booking.guests} personer`,
+              name: "Bordbooking — depositum pr. person",
+              description: `${booking.date} kl. ${booking.time}, ${guestCount} person${guestCount === 1 ? "" : "er"}`,
             },
           },
         },
@@ -66,6 +67,7 @@ module.exports = async (req, res) => {
         date: booking.date,
         time: booking.time,
         guests: booking.guests,
+        guestCount: String(guestCount),
         message: booking.message,
       },
       success_url: successUrl,
