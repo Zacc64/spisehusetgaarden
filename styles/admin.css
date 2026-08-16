@@ -80,6 +80,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .admin-topbar {
@@ -168,13 +170,18 @@ body {
   width: min(100%, 1100px);
   margin: 0 auto;
   padding: 1.75rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+  min-height: 0;
 }
 
 .admin-main:has(#bookings-panel.admin-panel--active) {
   width: 100%;
   max-width: none;
-  padding-left: clamp(1rem, 2.5vw, 2rem);
-  padding-right: clamp(1rem, 2.5vw, 2rem);
+  padding: 0.65rem clamp(1rem, 2.5vw, 2rem);
+  height: calc(100vh - var(--topbar-height));
+  max-height: calc(100vh - var(--topbar-height));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-panel {
@@ -193,12 +200,12 @@ body {
 
 #bookings-panel.admin-panel--active {
   max-width: none;
-  gap: 0.65rem;
-}
-
-.admin-main:has(#bookings-panel.admin-panel--active) {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .admin-panel__header--compact h2 {
@@ -207,6 +214,20 @@ body {
 
 .admin-panel__header--compact {
   gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+#bookings-panel .admin-panel__header--compact,
+#bookings-panel .admin-bookings-stats,
+#bookings-panel .admin-bookings-status,
+#bookings-panel .admin-bookings-list-card {
+  flex-shrink: 0;
+}
+
+#bookings-panel .admin-bookings-workspace {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .admin-card-block__head--compact {
@@ -269,7 +290,7 @@ body {
 
 #bookings-panel .admin-bookings-stats {
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 #bookings-panel .admin-stat-card {
@@ -287,10 +308,82 @@ body {
 
 #bookings-panel .admin-bookings-workspace {
   gap: 0.65rem;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 #bookings-panel .admin-bookings-sidebar {
   gap: 0.65rem;
+  min-height: 0;
+}
+
+#bookings-panel .admin-bookings-center {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#bookings-panel .admin-calendar-main {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#bookings-panel .admin-bookings-calendar-row {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+#bookings-panel .admin-bookings-calendar-wrap--large {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#bookings-panel .admin-bookings-calendar--large {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-content: start;
+}
+
+#bookings-panel .admin-bookings-month-list {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#bookings-panel .admin-bookings-month-list__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-height: none;
+}
+
+#bookings-panel .admin-card-block__head--compact {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+#bookings-panel .admin-bookings-loading,
+#bookings-panel .admin-bookings-action {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+#bookings-panel .admin-calendar-main .admin-card-block__head--compact {
+  margin-bottom: 0.25rem;
 }
 
 #bookings-panel .admin-bookings-calendar {
@@ -303,6 +396,7 @@ body {
 #bookings-panel .admin-bookings-calendar--large .admin-bookings-calendar__pad {
   min-height: 0;
   aspect-ratio: 1;
+  max-height: clamp(2.6rem, calc((100vh - var(--topbar-height) - 12rem) / 7), 4.35rem);
 }
 
 #bookings-panel .admin-bookings-calendar--large .admin-bookings-calendar__day {
@@ -344,7 +438,8 @@ body {
 }
 
 #bookings-panel .admin-bookings-calendar__head {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.45rem;
+  flex-shrink: 0;
 }
 
 #bookings-panel .admin-bookings-calendar__nav-group {
@@ -382,15 +477,24 @@ body {
 }
 
 #bookings-panel .admin-bookings-list-card {
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.85rem;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+#bookings-panel .admin-bookings-list-body:not([hidden]) {
+  max-height: min(38vh, 22rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .admin-bookings-calendar-row {
   display: grid;
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  min-height: 0;
 }
 
 .admin-bookings-calendar-wrap--large {
@@ -478,7 +582,6 @@ body {
 @media (min-width: 1100px) {
   #bookings-panel .admin-bookings-workspace {
     grid-template-columns: minmax(18rem, 21rem) minmax(0, 1fr);
-    max-height: calc(100vh - var(--topbar-height) - 8.5rem);
     align-items: stretch;
   }
 
@@ -488,42 +591,9 @@ body {
     overscroll-behavior: contain;
   }
 
-  #bookings-panel .admin-bookings-center,
-  #bookings-panel .admin-calendar-main {
-    min-height: 0;
-    max-height: 100%;
-  }
-
-  #bookings-panel .admin-calendar-main {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  #bookings-panel .admin-bookings-calendar-wrap--large {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
   #bookings-panel .admin-bookings-calendar-row {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
     width: 100%;
-  }
-
-  #bookings-panel .admin-bookings-calendar-wrap--large {
-    width: 100%;
-  }
-
-  #bookings-panel .admin-bookings-month-list__body {
-    max-height: calc(100vh - var(--topbar-height) - 12rem);
-  }
-
-  #bookings-panel .admin-bookings-calendar--large {
-    width: 100%;
-    max-width: none;
   }
 }
 
