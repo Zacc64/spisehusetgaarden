@@ -113,12 +113,19 @@
         <p class="section-label">Booking</p>
         <h2 style="font-size: 2.5rem;">Book bord til arrangement</h2>
         <p class="lead">
-  Det er ikke muligt at booke bord i cafeens åbningstider. 
-<br>Booking af bord er kun under arrangementerne.
-<br> 
-<br>Vælg dato og tid — betal depositum for at bekræfte. 
-</p>
-<p class="section-label">50 kr.- pr. person.</p>
+          Det er ikke muligt at booke bord i cafeens åbningstider.
+          <br>Booking af bord er kun under arrangementerne.
+          <br>
+          <br>Vælg dato og tid — betal depositum for at bekræfte.
+        </p>
+        <p class="section-label">50 kr.- pr. person.</p>
+
+        <aside class="booking-event" id="booking-day-event" hidden aria-live="polite">
+          <p class="booking-event__label">Arrangement</p>
+          <p class="booking-event__date" id="booking-day-event-date"></p>
+          <h3 class="booking-event__title" id="booking-day-event-title"></h3>
+          <p class="booking-event__text" id="booking-day-event-text"></p>
+        </aside>
       </div>
 
       <form class="booking-form" id="booking-form" novalidate>
@@ -146,11 +153,6 @@
             </div>
             <div class="booking-calendar__grid" id="booking-cal-grid"></div>
             <input type="hidden" name="date" id="booking-date" required>
-            <div class="booking-calendar__event" id="booking-day-event" hidden>
-              <p class="booking-calendar__event-label">Arrangement denne dag</p>
-              <h4 class="booking-calendar__event-title" id="booking-day-event-title"></h4>
-              <p class="booking-calendar__event-text" id="booking-day-event-text"></p>
-            </div>
           </div>
         </label>
         <div class="form-row">

@@ -20,6 +20,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--font-ui);
   color: var(--ink);
   background: var(--cream);
@@ -80,11 +82,20 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.admin-shell:has(#bookings-panel.admin-panel--active:not([hidden])) {
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 .admin-topbar {
+  flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -166,14 +177,15 @@ body {
 /* Main content */
 
 .admin-main {
-  flex: 1;
-  width: min(100%, 1100px);
-  margin: 0 auto;
-  padding: 1.75rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0;
+  padding: 1.75rem clamp(1.25rem, 4vw, 2.5rem) 4rem;
   min-height: 0;
+  overflow: visible;
 }
 
-.admin-main:has(#bookings-panel.admin-panel--active) {
+.admin-main:has(#bookings-panel.admin-panel--active:not([hidden])) {
   width: 100%;
   max-width: none;
   padding: 0.65rem clamp(1rem, 2.5vw, 2rem);
@@ -195,7 +207,131 @@ body {
 }
 
 .admin-main > form.admin-panel {
-  max-width: 640px;
+  max-width: 720px;
+}
+
+#community-post-form.admin-panel--active {
+  width: 100%;
+  max-width: 760px;
+  gap: 0.85rem;
+  padding-bottom: 2.5rem;
+}
+
+.admin-slideshow-bar {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  background: var(--cream);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-slideshow-bar__count {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--green-deep);
+}
+
+.admin-slideshow-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-btn--add {
+  background: transparent;
+  border: 1.5px solid var(--green-deep);
+  color: var(--green-deep);
+}
+
+.admin-btn--add:hover {
+  background: rgba(47, 69, 53, 0.06);
+}
+
+.admin-slides {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.admin-add-slide {
+  flex-shrink: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1.5px dashed var(--green-deep);
+  border-radius: 1rem;
+  background: rgba(47, 69, 53, 0.04);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-add-slide:hover,
+.admin-add-slide:focus-visible {
+  background: rgba(47, 69, 53, 0.08);
+  outline: none;
+}
+
+.admin-add-slide__plus {
+  font-size: 1.45rem;
+  line-height: 1;
+  color: var(--green-deep);
+}
+
+.admin-add-slide span:last-child {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+#community-post-form .admin-panel__footer {
+  flex-shrink: 0;
+}
+
+#community-post-form .admin-slide {
+  gap: 0.85rem;
+  padding: 1.05rem 1.15rem;
+  scroll-margin-top: 0.4rem;
+}
+
+#community-post-form .admin-slide textarea {
+  min-height: 5.5rem;
+}
+
+.admin-slide__media {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .admin-slide__media {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 639px) {
+  .admin-slideshow-bar {
+    align-items: stretch;
+  }
+
+  .admin-slideshow-bar__actions {
+    width: 100%;
+  }
+
+  .admin-slideshow-bar__actions .admin-btn {
+    flex: 1;
+  }
 }
 
 #bookings-panel.admin-panel--active {

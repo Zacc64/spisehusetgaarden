@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/admin.css">
+  <link rel="stylesheet" href="styles/admin.css?v=scroll-fix-2">
 </head>
 <body>
   <div class="admin" id="admin-app">
@@ -97,21 +97,32 @@
           </footer>
         </form>
 
-        <form class="admin-panel" id="community-post-form" data-panel="faellesskab" hidden>
+        <form class="admin-panel admin-panel--slideshow" id="community-post-form" data-panel="faellesskab" hidden>
           <header class="admin-panel__header">
             <p class="admin-eyebrow">Fællesskab</p>
             <h2>Slideshow på forsiden</h2>
-            <p class="admin-panel__desc">Hvert slide vises som et opslag i <strong>Fællesskab</strong>-sektionen. Gæster kan bladre mellem billeder og tekst. Kopiér tekst fra Facebook og tilføj billede via URL eller upload.</p>
+            <p class="admin-panel__desc">Hvert slide vises i <strong>Fællesskab</strong>. Tilføj flere med <strong>+ Tilføj slide</strong> eller den grønne knap nederst.</p>
           </header>
+
+          <div class="admin-slideshow-bar">
+            <p class="admin-slideshow-bar__count" id="community-slide-count">1 slide</p>
+            <div class="admin-slideshow-bar__actions">
+              <button type="button" class="admin-btn admin-btn--add" id="community-add-slide">+ Tilføj slide</button>
+              <button type="submit" class="admin-btn">Gem slideshow</button>
+            </div>
+          </div>
 
           <div class="admin-slides" id="community-slides"></div>
 
-          <button type="button" class="admin-btn admin-btn--ghost" id="community-add-slide">Tilføj slide</button>
+          <button type="button" class="admin-add-slide" data-add-slide aria-label="Tilføj et slide mere">
+            <span class="admin-add-slide__plus">+</span>
+            <strong>Tilføj et slide mere</strong>
+            <span>Nyt billede og tekst til slideshowet</span>
+          </button>
 
           <footer class="admin-panel__footer">
             <p class="admin-error" data-save-error hidden></p>
             <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem slideshow</button>
           </footer>
         </form>
 

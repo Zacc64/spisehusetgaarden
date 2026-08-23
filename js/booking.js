@@ -14,6 +14,7 @@ const calendarTitle = document.getElementById("booking-cal-title");
 const calendarPrev = document.getElementById("booking-cal-prev");
 const calendarNext = document.getElementById("booking-cal-next");
 const dayEventBox = document.getElementById("booking-day-event");
+const dayEventDate = document.getElementById("booking-day-event-date");
 const dayEventTitle = document.getElementById("booking-day-event-title");
 const dayEventText = document.getElementById("booking-day-event-text");
 
@@ -89,19 +90,47 @@ function showMessage(el) {
   document.getElementById("book")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function showDayEvent(event) {
+function formatLongDate(iso) {
+  if (!iso) return "";
+  const formatted = new Date(`${iso}T12:00:00`).toLocaleDateString("da-DK", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+function eventForDate(iso) {
+  if (!iso) return null;
+  const [year, month] = iso.split("-").map(Number);
+  const days = monthCache.get(monthKey(year, month - 1)) || {};
+  return days[iso]?.event || null;
+}
+
+function showDayEvent(event, iso = dateInput?.value) {
   if (!dayEventBox) return;
-  const title = String(event?.title || "").trim();
-  const text = String(event?.description || "").trim();
-  if (!title && !text) {
+  if (!iso) {
     dayEventBox.hidden = true;
     return;
   }
-  if (dayEventTitle) dayEventTitle.textContent = title || "Arrangement";
-  if (dayEventText) {
-    dayEventText.textContent = text;
-    dayEventText.hidden = !text;
+
+  const title = String(event?.title || "").trim();
+  const text = String(event?.description || "").trim();
+  const hasEvent = Boolean(title || text);
+
+  if (dayEventDate) dayEventDate.textContent = formatLongDate(iso);
+  dayEventBox.classList.toggle("booking-event--empty", !hasEvent);
+
+  if (dayEventTitle) {
+    dayEventTitle.textContent = hasEvent ? title || "Arrangement" : "Intet arrangement denne dag";
   }
+  if (dayEventText) {
+    dayEventText.textContent = hasEvent
+      ? text
+      : "Der er ikke oprettet et arrangement for den valgte dato.";
+    dayEventText.hidden = hasEvent && !text;
+  }
+
   dayEventBox.hidden = false;
 }
 
@@ -164,6 +193,8 @@ async function renderBookingCalendar() {
 
   calendarGrid.innerHTML = html.join("");
 
+  if (selected) showDayEvent(eventForDate(selected), selected);
+
   if (calendarPrev) {
     const prev = new Date(calendarYear, calendarMonth, 1);
     prev.setMonth(prev.getMonth() - 1);
@@ -183,8 +214,7 @@ async function renderBookingCalendar() {
 async function selectBookingDate(iso) {
   if (!dateInput || !iso) return;
   dateInput.value = iso;
-  const days = monthCache.get(monthKey(calendarYear, calendarMonth)) || {};
-  showDayEvent(days[iso]?.event);
+  showDayEvent(eventForDate(iso), iso);
   calendarGrid?.querySelectorAll(".booking-calendar__day").forEach((btn) => {
     btn.classList.toggle("is-selected", btn.dataset.date === iso);
   });
@@ -206,7 +236,18 @@ async function updateAvailability() {
     const data = await res.json();
     if (!res.ok) throw new Error();
 
-    if (data.event) showDayEvent(data.event);
+    showDayEvent(data.event || eventForDate(dateInput.value), dateInput.value);
+
+    const iso = dateInput.value;
+    const [year, month] = iso.split("-").map(Number);
+    const key = monthKey(year, month - 1);
+    const days = monthCache.get(key) || {};
+    days[iso] = {
+      ...(days[iso] || {}),
+      hasEvent: Boolean(data.event),
+      event: data.event || null,
+    };
+    monthCache.set(key, days);
 
     if (timeInput) {
       const hours = Array.isArray(data.hours) && data.hours.length ? data.hours : [];

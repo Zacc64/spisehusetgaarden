@@ -1,6 +1,5 @@
 const communityPostForm = document.getElementById("community-post-form");
 const communitySlidesEl = document.getElementById("community-slides");
-const communityAddSlideBtn = document.getElementById("community-add-slide");
 const pendingFiles = new Map();
 
 function communityAuthHeaders() {
@@ -84,19 +83,21 @@ function renderSlideCard(slide, index, total, version) {
 
       <label class="admin-field">
         <span>Tekst</span>
-        <textarea data-field="text" rows="8" placeholder="Beskriv menu, priser og praktisk info. Brug tom linje mellem afsnit, **fed tekst** til fremhævning, og - foran menupunkter.">${escapeText(slide.text || "")}</textarea>
+        <textarea data-field="text" rows="5" placeholder="Beskriv menu, priser og praktisk info. Brug tom linje mellem afsnit, **fed tekst** til fremhævning, og - foran menupunkter.">${escapeText(slide.text || "")}</textarea>
       </label>
 
-      <label class="admin-field">
-        <span>Billede-URL <em>(valgfrit)</em></span>
-        <input type="url" data-field="image-url" value="${slide.imageUrl && !String(slide.imageUrl).startsWith("/api/media") ? escapeAttr(slide.imageUrl) : ""}" placeholder="https://...">
-      </label>
+      <div class="admin-slide__media">
+        <label class="admin-field">
+          <span>Billede-URL <em>(valgfrit)</em></span>
+          <input type="url" data-field="image-url" value="${slide.imageUrl && !String(slide.imageUrl).startsWith("/api/media") ? escapeAttr(slide.imageUrl) : ""}" placeholder="https://...">
+        </label>
 
-      <label class="admin-field">
-        <span>Eller upload billede</span>
-        <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
-        <p class="admin-muted">Store billeder komprimeres automatisk før upload.</p>
-      </label>
+        <label class="admin-field">
+          <span>Eller upload billede</span>
+          <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+          <p class="admin-muted">Store billeder komprimeres automatisk.</p>
+        </label>
+      </div>
 
       <div class="admin-preview" data-image-preview ${previewUrl ? "" : "hidden"}>
         <img data-preview-img alt="Forhåndsvisning" ${previewUrl ? `src="${escapeAttr(withCacheBust(previewUrl, version))}"` : ""}>
@@ -120,6 +121,20 @@ function renderSlides(slides, version) {
   if (!communitySlidesEl) return;
   const list = slides.length ? slides : [emptySlide()];
   communitySlidesEl.innerHTML = list.map((slide, index) => renderSlideCard(slide, index, list.length, version)).join("");
+  const countEl = document.getElementById("community-slide-count");
+  if (countEl) {
+    countEl.textContent = list.length === 1 ? "1 slide" : `${list.length} slides`;
+  }
+}
+
+function addSlide() {
+  const slides = collectSlidesFromDom();
+  const next = emptySlide();
+  slides.push(next);
+  renderSlides(slides);
+  const card = communitySlidesEl?.querySelector(`[data-slide-id="${next.id}"]`);
+  card?.scrollIntoView({ behavior: "smooth", block: "start" });
+  card?.querySelector('[data-field="title"]')?.focus();
 }
 
 function showCardPreview(card, url) {
@@ -153,10 +168,11 @@ async function uploadCommunityImage(file) {
 function wireCommunityPostForm() {
   if (!communityPostForm || !communitySlidesEl) return;
 
-  communityAddSlideBtn?.addEventListener("click", () => {
-    const slides = collectSlidesFromDom();
-    slides.push(emptySlide());
-    renderSlides(slides);
+  communityPostForm.addEventListener("click", (event) => {
+    if (event.target.closest("[data-add-slide], #community-add-slide")) {
+      event.preventDefault();
+      addSlide();
+    }
   });
 
   communitySlidesEl.addEventListener("click", (event) => {
@@ -271,6 +287,5 @@ function wireCommunityPostForm() {
   });
 }
 
-window.loadCommunityPostAdmin = loadCommunityPost;
 window.loadCommunityPostAdmin = loadCommunityPost;
 wireCommunityPostForm();

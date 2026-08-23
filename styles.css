@@ -520,10 +520,8 @@ button.hero__cta {
     radial-gradient(ellipse 90% 70% at 8% 12%, rgba(168, 196, 154, 0.28), transparent 52%),
     radial-gradient(ellipse 70% 55% at 92% 8%, rgba(214, 227, 186, 0.16), transparent 48%),
     radial-gradient(ellipse 80% 60% at 78% 92%, rgba(109, 148, 112, 0.32), transparent 58%),
-    radial-gradient(ellipse 50% 40% at 30% 78%, rgba(196, 214, 168, 0.12), transparent 55%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Cg fill='none' stroke='%23c5d6b4' stroke-width='1.1' opacity='0.22'%3E%3Cpath d='M34 48c18-28 54-22 58 10 2 18-10 32-28 34-22 2-42-16-30-44z'/%3E%3Cpath d='M168 36c8 22-4 46-28 52-18 4-36-8-34-28 2-22 24-36 62-24z'/%3E%3Cpath d='M62 168c12-24 48-22 54 6 4 18-8 34-26 38-24 4-42-14-28-44z'/%3E%3Cpath d='M198 176c22-8 46 10 42 32-4 20-26 30-46 24-22-6-28-30-4-56z'/%3E%3Cpath d='M132 118c18-6 28 12 18 28-8 12-28 12-34 2-8-12 2-24 16-30z'/%3E%3C/g%3E%3Ccircle cx='48' cy='96' r='3' fill='%23d7e6c8' opacity='0.18'/%3E%3Ccircle cx='214' cy='72' r='2.5' fill='%23e7f0d8' opacity='0.16'/%3E%3Ccircle cx='156' cy='208' r='3.5' fill='%23cfe0bc' opacity='0.16'/%3E%3C/svg%3E");
-  background-size: auto, auto, auto, auto, 280px 280px;
-  background-blend-mode: screen, screen, multiply, screen, overlay;
+    radial-gradient(ellipse 50% 40% at 30% 78%, rgba(196, 214, 168, 0.12), transparent 55%);
+  background-blend-mode: screen, screen, multiply, screen;
 }
 
 #faellesskab .section-label,
@@ -1078,6 +1076,77 @@ button.hero__cta {
   align-items: start;
 }
 
+.booking__intro {
+  max-width: 36rem;
+}
+
+.booking-event {
+  margin-top: 1.6rem;
+  padding: 1.2rem 1.3rem 1.25rem;
+  background: var(--white);
+  border: 1px solid var(--green-soft);
+  border-left: 4px solid var(--green);
+  border-radius: 0.2rem 0.9rem 0.9rem 0.2rem;
+  box-shadow: 0 12px 30px rgba(47, 69, 53, 0.07);
+  animation: bookingEventIn 0.28s ease;
+}
+
+.booking-event[hidden] {
+  display: none !important;
+}
+
+.booking-event--empty {
+  border-left-color: var(--green-soft);
+  background: var(--green-whisper);
+  box-shadow: none;
+}
+
+.booking-event__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.booking-event__date {
+  margin: 0.15rem 0 0.7rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.booking-event__title {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.booking-event--empty .booking-event__title {
+  font-size: 1.15rem;
+  font-family: var(--font-ui);
+}
+
+.booking-event__text {
+  margin: 0.65rem 0 0;
+  color: var(--green-deep);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+@keyframes bookingEventIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .booking__note {
   margin: 1.25rem 0 0;
   font-size: 0.95rem;
@@ -1242,26 +1311,30 @@ button.hero__cta {
   place-items: center;
   min-height: 2.5rem;
   padding: 0.2rem;
-  border: 1px solid transparent;
+  border: 1px solid rgba(20, 20, 20, 0.08);
   border-radius: 0.5rem;
-  background: var(--green-whisper);
+  background: var(--white);
   color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
 
-.booking-calendar__day:hover:not(:disabled) {
+.booking-calendar__day:hover:not(:disabled):not(.is-selected) {
   border-color: var(--green-soft);
-  background: #eef3ee;
+  background: var(--green-whisper);
 }
 
-.booking-calendar__day.is-selected {
-  background: var(--green-deep);
-  color: var(--white);
+.booking-calendar__day.is-selected,
+.booking-calendar__day.is-selected:hover {
+  background: #dce8df;
+  border-color: var(--green);
+  color: var(--green-deep);
+  box-shadow: inset 0 0 0 1px var(--green);
 }
 
 .booking-calendar__day.is-closed:not(.is-selected) {
   background: #f7eeee;
+  border-color: #f0d4d4;
   color: #8b2f2f;
 }
 
@@ -1270,11 +1343,18 @@ button.hero__cta {
   opacity: 0.38;
   cursor: default;
   background: transparent;
+  border-color: transparent;
 }
 
 .booking-calendar__num {
   font-size: 0.92rem;
   font-weight: 600;
+  color: inherit;
+}
+
+.booking-calendar__day.is-selected .booking-calendar__num {
+  font-weight: 800;
+  color: var(--green-deep);
 }
 
 .booking-calendar__dot {
@@ -1287,35 +1367,7 @@ button.hero__cta {
 }
 
 .booking-calendar__day.is-selected .booking-calendar__dot {
-  background: var(--white);
-}
-
-.booking-calendar__event {
-  margin-top: 0.85rem;
-  padding: 0.8rem 0.9rem;
-  border-radius: 0.6rem;
-  background: #f3eee4;
-}
-
-.booking-calendar__event-label {
-  margin: 0 0 0.2rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #6a542b;
-}
-
-.booking-calendar__event-title {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--ink);
-}
-
-.booking-calendar__event-text {
-  margin: 0.35rem 0 0;
-  color: var(--green-deep);
-  line-height: 1.5;
+  background: var(--green-deep);
 }
 
 .booking-calendar__pad {
@@ -1600,6 +1652,11 @@ button.hero__cta {
 
   .booking__layout {
     grid-template-columns: 0.9fr 1.1fr;
+  }
+
+  .booking__intro {
+    position: sticky;
+    top: 6.5rem;
   }
 
   .form-row {
