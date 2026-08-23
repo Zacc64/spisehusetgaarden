@@ -100,41 +100,18 @@
         <form class="admin-panel" id="community-post-form" data-panel="faellesskab" hidden>
           <header class="admin-panel__header">
             <p class="admin-eyebrow">Fællesskab</p>
-            <h2>Opslag på forsiden</h2>
-            <p class="admin-panel__desc">Vises i <strong>Fællesskab</strong>-sektionen. Kopiér tekst fra Facebook og tilføj billede via URL eller upload.</p>
+            <h2>Slideshow på forsiden</h2>
+            <p class="admin-panel__desc">Hvert slide vises som et opslag i <strong>Fællesskab</strong>-sektionen. Gæster kan bladre mellem billeder og tekst. Kopiér tekst fra Facebook og tilføj billede via URL eller upload.</p>
           </header>
 
-          <div class="admin-card-block">
-            <label class="admin-field">
-              <span>Titel</span>
-              <input type="text" data-field="title" placeholder="F.eks. Brunch hos Spisehuset Gaarden">
-            </label>
+          <div class="admin-slides" id="community-slides"></div>
 
-            <label class="admin-field">
-              <span>Tekst</span>
-              <textarea data-field="text" rows="12" placeholder="Beskriv menu, priser og praktisk info. Brug tom linje mellem afsnit, **fed tekst** til fremhævning, og - foran menupunkter."></textarea>
-            </label>
-
-            <label class="admin-field">
-              <span>Billede-URL <em>(valgfrit)</em></span>
-              <input type="url" data-field="image-url" placeholder="https://...">
-            </label>
-
-            <label class="admin-field">
-              <span>Eller upload billede</span>
-              <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
-              <p class="admin-muted">Store billeder komprimeres automatisk før upload.</p>
-            </label>
-
-            <div class="admin-preview" data-image-preview hidden>
-              <img data-preview-img alt="Forhåndsvisning">
-            </div>
-          </div>
+          <button type="button" class="admin-btn admin-btn--ghost" id="community-add-slide">Tilføj slide</button>
 
           <footer class="admin-panel__footer">
             <p class="admin-error" data-save-error hidden></p>
             <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem opslag</button>
+            <button type="submit" class="admin-btn">Gem slideshow</button>
           </footer>
         </form>
 
@@ -347,6 +324,15 @@
                 <input type="number" id="day-modal-capacity" min="0" step="1" placeholder="Bruger standard">
               </label>
               <p class="admin-muted admin-day-modal__hint" id="day-modal-capacity-hint"></p>
+
+              <label class="admin-field">
+                <span>Arrangement <em>(valgfrit)</em></span>
+                <input type="text" id="day-modal-event-title" placeholder="F.eks. Søndagsbrunch">
+              </label>
+              <label class="admin-field">
+                <span>Beskrivelse af arrangement <em>(valgfrit)</em></span>
+                <textarea id="day-modal-event-text" rows="3" placeholder="Kort tekst som gæster ser, når de vælger dagen."></textarea>
+              </label>
 
               <fieldset class="admin-day-modal__hours">
                 <legend>Tilgængelige tidspunkter</legend>

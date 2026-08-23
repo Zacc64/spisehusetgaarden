@@ -19,6 +19,7 @@ let capacityState = {
   closedDates: [],
   defaultBookingHours: [...ALL_BOOKING_HOURS],
   hoursByDate: {},
+  eventsByDate: {},
 };
 
 let allBookings = [];
@@ -532,6 +533,11 @@ function renderCalendar() {
       badges.push('<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--hours">Egne timer</span>');
     }
 
+    const event = capacityState.eventsByDate?.[iso];
+    if (event) {
+      badges.push(`<span class="admin-bookings-calendar__badge admin-bookings-calendar__badge--event">${escapeHtml(event.title || "Event")}</span>`);
+    }
+
     button.innerHTML = `
       <div class="admin-bookings-calendar__day-top">
         <span class="admin-bookings-calendar__day-num">${day}</span>
@@ -593,6 +599,12 @@ function openDayModal(date) {
     namePrefix: "day-hour",
   });
 
+  const event = capacityState.eventsByDate?.[date] || {};
+  const eventTitleInput = document.getElementById("day-modal-event-title");
+  const eventTextInput = document.getElementById("day-modal-event-text");
+  if (eventTitleInput) eventTitleInput.value = event.title || "";
+  if (eventTextInput) eventTextInput.value = event.description || "";
+
   document.getElementById("day-modal-bookings-title").textContent = `Bookinger ${formatDateLabel(date)}`;
   renderBookingCards(
     document.getElementById("day-modal-bookings-list"),
@@ -650,6 +662,17 @@ async function saveDayModal() {
   if (hoursEqual(hours, getDefaultHours())) {
     settings.clearHours = true;
     delete settings.hours;
+  }
+
+  const eventTitle = document.getElementById("day-modal-event-title")?.value.trim() || "";
+  const eventDescription = document.getElementById("day-modal-event-text")?.value.trim() || "";
+  if (eventTitle || eventDescription) {
+    settings.event = {
+      title: eventTitle,
+      description: eventDescription,
+    };
+  } else {
+    settings.clearEvent = true;
   }
 
   const result = await saveSettings(
@@ -845,6 +868,7 @@ function applyCapacityState(data) {
     closedDates: data.closedDates || [],
     defaultBookingHours: normalizeHours(data.defaultBookingHours),
     hoursByDate: data.hoursByDate || {},
+    eventsByDate: data.eventsByDate || {},
   };
 
   document.getElementById("default-capacity").value = capacityState.defaultCapacity;

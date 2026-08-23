@@ -53,7 +53,7 @@
     </div>
   </section>
 
-  <section class="section" id="faellesskab">
+  <section class="section community-section" id="faellesskab">
     <div class="container">
       <div class="community-post__header">
         <div>
@@ -136,11 +136,24 @@
           <span>Email</span>
           <input type="email" name="email" required autocomplete="email" placeholder="dig@email.dk">
         </label>
+        <label class="form-field booking-calendar-field">
+          <span>Dato</span>
+          <div class="booking-calendar" id="booking-calendar">
+            <div class="booking-calendar__head">
+              <button type="button" class="booking-calendar__nav" id="booking-cal-prev" aria-label="Forrige måned">‹</button>
+              <h3 class="booking-calendar__title" id="booking-cal-title"></h3>
+              <button type="button" class="booking-calendar__nav" id="booking-cal-next" aria-label="Næste måned">›</button>
+            </div>
+            <div class="booking-calendar__grid" id="booking-cal-grid"></div>
+            <input type="hidden" name="date" id="booking-date" required>
+            <div class="booking-calendar__event" id="booking-day-event" hidden>
+              <p class="booking-calendar__event-label">Arrangement denne dag</p>
+              <h4 class="booking-calendar__event-title" id="booking-day-event-title"></h4>
+              <p class="booking-calendar__event-text" id="booking-day-event-text"></p>
+            </div>
+          </div>
+        </label>
         <div class="form-row">
-          <label class="form-field">
-            <span>Dato</span>
-            <input type="date" name="date" required>
-          </label>
           <label class="form-field">
             <span>Tidspunkt</span>
             <select name="time" required>

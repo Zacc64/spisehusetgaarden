@@ -2,22 +2,45 @@ const form = document.getElementById("booking-form");
 const success = document.getElementById("form-success");
 const cancelled = document.getElementById("form-cancelled");
 const errorEl = document.getElementById("form-error");
-const submitBtn = document.getElementById("booking-submit");
-const depositNote = document.getElementById("booking-deposit-note");
-const availabilityNote = document.getElementById("booking-availability-note");
-const testBanner = document.getElementById("booking-test-banner");
-const dateInput = form?.querySelector('input[name="date"]');
+const submitBtn = document.getElementById("booking-submit") || document.getElementById("booking-submit");
+const depositNote = document.getElementById("booking-deposit-note") || document.getElementById("booking-deposit-note");
+const availabilityNote = document.getElementById("booking-availability-note") || document.getElementById("booking-availability-note");
+const testBanner = document.getElementById("booking-test-banner") || document.getElementById("booking-test-banner");
+const dateInput = document.getElementById("booking-date") || form?.querySelector('input[name="date"]');
 const guestsInput = form?.querySelector('[name="guests"]');
 const timeInput = form?.querySelector('select[name="time"]');
+const calendarGrid = document.getElementById("booking-cal-grid");
+const calendarTitle = document.getElementById("booking-cal-title");
+const calendarPrev = document.getElementById("booking-cal-prev");
+const calendarNext = document.getElementById("booking-cal-next");
+const dayEventBox = document.getElementById("booking-day-event");
+const dayEventTitle = document.getElementById("booking-day-event-title");
+const dayEventText = document.getElementById("booking-day-event-text");
+
+const WEEKDAYS = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
+const monthCache = new Map();
+
 let isTestMode = false;
 let paymentsEnabled = true;
 let bookingSubmitAllowed = false;
 let depositPerPersonDkk = 0;
+let minBookableDate = new Date().toISOString().split("T")[0];
+let maxBookableDate = "";
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth();
 
 function parseGuestCount(value) {
   if (String(value || "").trim() === "7+") return 7;
   const n = Number.parseInt(String(value), 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function monthKey(year, month) {
+  return `${year}-${String(month + 1).padStart(2, "0")}`;
+}
+
+function toIsoDate(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function updateDepositNote() {
@@ -66,6 +89,108 @@ function showMessage(el) {
   document.getElementById("book")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function showDayEvent(event) {
+  if (!dayEventBox) return;
+  const title = String(event?.title || "").trim();
+  const text = String(event?.description || "").trim();
+  if (!title && !text) {
+    dayEventBox.hidden = true;
+    return;
+  }
+  if (dayEventTitle) dayEventTitle.textContent = title || "Arrangement";
+  if (dayEventText) {
+    dayEventText.textContent = text;
+    dayEventText.hidden = !text;
+  }
+  dayEventBox.hidden = false;
+}
+
+async function loadMonth(year, month) {
+  const key = monthKey(year, month);
+  if (monthCache.has(key)) return monthCache.get(key);
+
+  const res = await fetch(`/api/booking/availability?month=${encodeURIComponent(key)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Kunne ikke hente kalender");
+  monthCache.set(key, data.days || {});
+  return monthCache.get(key);
+}
+
+async function renderBookingCalendar() {
+  if (!calendarGrid || !calendarTitle) return;
+
+  calendarTitle.textContent = new Date(calendarYear, calendarMonth, 1).toLocaleDateString("da-DK", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const selected = dateInput?.value || "";
+  let days = {};
+  try {
+    days = await loadMonth(calendarYear, calendarMonth);
+  } catch {
+    days = {};
+  }
+
+  const firstWeekday = (new Date(calendarYear, calendarMonth, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const html = [];
+
+  WEEKDAYS.forEach((label) => {
+    html.push(`<div class="booking-calendar__weekday">${label}</div>`);
+  });
+
+  for (let i = 0; i < firstWeekday; i += 1) {
+    html.push('<div class="booking-calendar__pad"></div>');
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const iso = toIsoDate(calendarYear, calendarMonth, day);
+    const info = days[iso] || {};
+    const disabled = iso < minBookableDate || (maxBookableDate && iso > maxBookableDate);
+    const classes = ["booking-calendar__day"];
+    if (iso === selected) classes.push("is-selected");
+    if (info.closed) classes.push("is-closed");
+    if (info.hasEvent) classes.push("has-event");
+    if (disabled) classes.push("is-disabled");
+
+    html.push(`
+      <button type="button" class="${classes.join(" ")}" data-date="${iso}" ${disabled ? "disabled" : ""}>
+        <span class="booking-calendar__num">${day}</span>
+        ${info.hasEvent ? '<span class="booking-calendar__dot" aria-hidden="true"></span>' : ""}
+      </button>
+    `);
+  }
+
+  calendarGrid.innerHTML = html.join("");
+
+  if (calendarPrev) {
+    const prev = new Date(calendarYear, calendarMonth, 1);
+    prev.setMonth(prev.getMonth() - 1);
+    const prevStart = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}-01`;
+    const currentStart = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-01`;
+    calendarPrev.disabled = prevStart < currentStart;
+  }
+
+  if (calendarNext && maxBookableDate) {
+    const next = new Date(calendarYear, calendarMonth, 1);
+    next.setMonth(next.getMonth() + 1);
+    const nextStart = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+    calendarNext.disabled = nextStart > maxBookableDate;
+  }
+}
+
+async function selectBookingDate(iso) {
+  if (!dateInput || !iso) return;
+  dateInput.value = iso;
+  const days = monthCache.get(monthKey(calendarYear, calendarMonth)) || {};
+  showDayEvent(days[iso]?.event);
+  calendarGrid?.querySelectorAll(".booking-calendar__day").forEach((btn) => {
+    btn.classList.toggle("is-selected", btn.dataset.date === iso);
+  });
+  await updateAvailability();
+}
+
 async function updateAvailability() {
   if (!availabilityNote || !dateInput?.value) {
     if (availabilityNote) availabilityNote.hidden = true;
@@ -73,8 +198,7 @@ async function updateAvailability() {
     return;
   }
 
-  const timeSelect = timeInput;
-  const previousTime = timeSelect?.value || "";
+  const previousTime = timeInput?.value || "";
   setBookingSubmitAllowed(false);
 
   try {
@@ -82,19 +206,21 @@ async function updateAvailability() {
     const data = await res.json();
     if (!res.ok) throw new Error();
 
-    if (timeSelect) {
+    if (data.event) showDayEvent(data.event);
+
+    if (timeInput) {
       const hours = Array.isArray(data.hours) && data.hours.length ? data.hours : [];
-      timeSelect.innerHTML = '<option value="" disabled selected>Vælg tid</option>';
+      timeInput.innerHTML = '<option value="" disabled selected>Vælg tid</option>';
       hours.forEach((hour) => {
         const option = document.createElement("option");
         option.value = hour;
         option.textContent = hour;
-        timeSelect.appendChild(option);
+        timeInput.appendChild(option);
       });
       if (previousTime && hours.includes(previousTime)) {
-        timeSelect.value = previousTime;
+        timeInput.value = previousTime;
       }
-      timeSelect.disabled = !hours.length;
+      timeInput.disabled = !hours.length;
     }
 
     availabilityNote.hidden = false;
@@ -129,33 +255,48 @@ async function loadBookingConfig() {
     const config = await res.json();
     depositPerPersonDkk = Number(config.depositPerPersonDkk || config.depositDkk) || 0;
     paymentsEnabled = Boolean(config.paymentsEnabled);
-    if (!paymentsEnabled) {
-      setBookingSubmitAllowed(false);
-    }
+    if (!paymentsEnabled) setBookingSubmitAllowed(false);
     updateDepositNote();
     if (config.testMode && testBanner) {
       isTestMode = true;
       testBanner.hidden = false;
       if (submitBtn) submitBtn.textContent = "Betal og book (test)";
     }
-    if (dateInput) {
-      dateInput.min = new Date().toISOString().split("T")[0];
-      if (config.maxBookableDate) {
-        dateInput.max = config.maxBookableDate;
-      }
-      if (dateInput.value) {
-        updateAvailability();
-      }
-    }
+    minBookableDate = new Date().toISOString().split("T")[0];
+    if (config.maxBookableDate) maxBookableDate = config.maxBookableDate;
+    await renderBookingCalendar();
+    if (dateInput?.value) await updateAvailability();
   } catch {
     depositPerPersonDkk = 0;
     depositNote.textContent = "Depositum betales ved booking.";
+    await renderBookingCalendar();
   }
 }
 
-if (dateInput) {
-  dateInput.addEventListener("change", updateAvailability);
-}
+calendarPrev?.addEventListener("click", async () => {
+  calendarMonth -= 1;
+  if (calendarMonth < 0) {
+    calendarMonth = 11;
+    calendarYear -= 1;
+  }
+  await renderBookingCalendar();
+});
+
+calendarNext?.addEventListener("click", async () => {
+  calendarMonth += 1;
+  if (calendarMonth > 11) {
+    calendarMonth = 0;
+    calendarYear += 1;
+  }
+  await renderBookingCalendar();
+});
+
+calendarGrid?.addEventListener("click", async (event) => {
+  const button = event.target.closest(".booking-calendar__day");
+  if (!button || button.disabled) return;
+  await selectBookingDate(button.dataset.date);
+});
+
 guestsInput?.addEventListener("change", () => {
   updateAvailability();
   updateDepositNote();
@@ -176,6 +317,12 @@ if (params.get("booking") === "success") {
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorEl.hidden = true;
+
+  if (!dateInput?.value) {
+    errorEl.textContent = "Vælg en dato i kalenderen.";
+    errorEl.hidden = false;
+    return;
+  }
 
   if (!bookingSubmitAllowed || !paymentsEnabled) {
     errorEl.textContent = "Vælg en dato der er åben for booking.";

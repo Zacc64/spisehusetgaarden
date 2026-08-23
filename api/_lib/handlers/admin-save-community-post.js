@@ -1,4 +1,4 @@
-const { writeCommunityPost } = require("../community-post-store");
+const { writeCommunityPost, normalizeCommunityPost, createSlideId } = require("../community-post-store");
 const { requireAuth } = require("../auth");
 const { sendJson, readJsonBody } = require("../http");
 
@@ -12,21 +12,28 @@ module.exports = async function handleAdminSaveCommunityPost(req, res) {
     if (!requireAuth(req, res, sendJson)) return;
 
     const body = await readJsonBody(req);
-    const title = String(body?.title || "").trim();
-    const text = String(body?.text || "").trim();
-    const imageUrl = String(body?.imageUrl || "").trim() || null;
+    const incoming = Array.isArray(body?.slides)
+      ? body
+      : {
+          slides: [
+            {
+              id: createSlideId(),
+              title: body?.title,
+              text: body?.text,
+              imageUrl: body?.imageUrl,
+            },
+          ],
+        };
 
-    if (!title && !text && !imageUrl) {
-      sendJson(res, 400, { error: "Tilføj en titel, tekst eller et billede" });
+    const post = normalizeCommunityPost({
+      ...incoming,
+      updatedAt: Date.now(),
+    });
+
+    if (!post.slides.length) {
+      sendJson(res, 400, { error: "Tilføj mindst ét slide med titel, tekst eller billede" });
       return;
     }
-
-    const post = {
-      title,
-      text,
-      imageUrl,
-      updatedAt: Date.now(),
-    };
 
     const saved = await writeCommunityPost(post, req);
     sendJson(res, 200, saved);

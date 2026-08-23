@@ -32,6 +32,7 @@ function defaultStore() {
     closedDates: [],
     defaultBookingHours: [...DEFAULT_BOOKING_HOURS],
     hoursByDate: {},
+    eventsByDate: {},
     bookings: [],
   };
 }
@@ -139,8 +140,40 @@ function normalizeStore(store) {
     closedDates,
     defaultBookingHours,
     hoursByDate: normalizeHoursByDate(store?.hoursByDate),
+    eventsByDate: normalizeEventsByDate(store?.eventsByDate),
     bookings: Array.isArray(store?.bookings) ? store.bookings : [],
   };
+}
+
+function normalizeEvent(value) {
+  if (!value) return null;
+  if (typeof value === "string") {
+    const title = value.trim();
+    return title ? { title, description: "" } : null;
+  }
+  if (typeof value !== "object") return null;
+  const title = String(value.title || "").trim();
+  const description = String(value.description || "").trim();
+  if (!title && !description) return null;
+  return {
+    title: title || "Arrangement",
+    description,
+  };
+}
+
+function normalizeEventsByDate(eventsByDate) {
+  if (!eventsByDate || typeof eventsByDate !== "object") return {};
+  const result = {};
+  for (const [date, value] of Object.entries(eventsByDate)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const event = normalizeEvent(value);
+    if (event) result[date] = event;
+  }
+  return result;
+}
+
+function getEventForDate(store, date) {
+  return store.eventsByDate?.[date] || null;
 }
 
 function isDateClosed(store, date) {
@@ -187,6 +220,7 @@ async function getAvailability(date, req) {
       remaining: 0,
       hours: [],
       hasCustomHours: Boolean(store.hoursByDate?.[date]),
+      event: getEventForDate(store, date),
     };
   }
 
@@ -202,7 +236,31 @@ async function getAvailability(date, req) {
     remaining,
     hours,
     hasCustomHours: Boolean(store.hoursByDate?.[date]),
+    event: getEventForDate(store, date),
   };
+}
+
+async function getMonthOverview(month, req) {
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return { error: "Ugyldig måned." };
+  }
+
+  const store = await readStore(req);
+  const [year, monthNumber] = month.split("-").map(Number);
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const days = {};
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = `${month}-${String(day).padStart(2, "0")}`;
+    const event = getEventForDate(store, date);
+    days[date] = {
+      closed: isDateClosed(store, date),
+      hasEvent: Boolean(event),
+      event,
+    };
+  }
+
+  return { month, days };
 }
 
 async function assertAvailability(booking, req) {
@@ -277,6 +335,7 @@ async function getCapacitySettings(req) {
     closedDates: store.closedDates,
     defaultBookingHours: store.defaultBookingHours,
     hoursByDate: store.hoursByDate,
+    eventsByDate: store.eventsByDate,
   };
 }
 
@@ -293,6 +352,18 @@ function applyDateSettings(store, date, settings = {}) {
     delete store.capacityByDate[date];
   } else if (settings.capacity !== undefined && settings.capacity !== "") {
     store.capacityByDate[date] = clampCapacity(settings.capacity);
+  }
+
+  if (!store.eventsByDate || typeof store.eventsByDate !== "object") {
+    store.eventsByDate = {};
+  }
+
+  if (settings.clearEvent) {
+    delete store.eventsByDate[date];
+  } else if (settings.event !== undefined) {
+    const event = normalizeEvent(settings.event);
+    if (event) store.eventsByDate[date] = event;
+    else delete store.eventsByDate[date];
   }
 
   if (settings.clearHours) {
@@ -369,8 +440,9 @@ async function updateCapacitySettings(payload, req) {
     ].sort();
   }
 
-  if (payload.dateSettings && typeof payload.dateSettings === "object") {
-    const { date, ...settings } = payload.dateSettings;
+  const daySettings = payload.dateSettings || payload.dateSettings;
+  if (daySettings && typeof daySettings === "object") {
+    const { date, ...settings } = daySettings;
     applyDateSettings(store, date, settings);
   }
 
@@ -421,12 +493,14 @@ async function updateCapacitySettings(payload, req) {
     closedDates: store.closedDates,
     defaultBookingHours: store.defaultBookingHours,
     hoursByDate: store.hoursByDate,
+    eventsByDate: store.eventsByDate,
   };
 }
 
 module.exports = {
   parseGuestCount,
   getAvailability,
+  getMonthOverview,
   assertAvailability,
   addBookingFromSession,
   listBookings,

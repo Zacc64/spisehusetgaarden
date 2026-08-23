@@ -782,6 +782,24 @@ body {
   object-fit: contain;
 }
 
+.admin-slides {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-slide__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-slide__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 /* Buttons */
 
 .admin-btn {
@@ -1247,6 +1265,11 @@ body {
 .admin-bookings-calendar__badge--hours {
   background: #eef3fb;
   color: #2f4f7a;
+}
+
+.admin-bookings-calendar__badge--event {
+  background: #f3eee4;
+  color: #6a542b;
 }
 
 .admin-bookings-calendar__day--bulk-selected {

@@ -4,11 +4,51 @@ const { hasBlobStorage, readBlobJson, writeBlobJson } = require("./blob-store");
 
 const BLOB_PATH = "content/community-post.json";
 const DEFAULT_POST = {
+  slides: [],
   title: "",
   text: "",
   imageUrl: null,
   updatedAt: null,
 };
+
+function createSlideId() {
+  return `slide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeSlide(slide, index = 0) {
+  const source = slide && typeof slide === "object" ? slide : {};
+  return {
+    id: String(source.id || `slide-${index + 1}`),
+    title: String(source.title || "").trim(),
+    text: String(source.text || "").trim(),
+    imageUrl: String(source.imageUrl || "").trim() || null,
+  };
+}
+
+function slideHasContent(slide) {
+  return Boolean(slide?.title || slide?.text || slide?.imageUrl);
+}
+
+function normalizeCommunityPost(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  let slides = [];
+
+  if (Array.isArray(source.slides)) {
+    slides = source.slides.map(normalizeSlide).filter(slideHasContent);
+  } else if (slideHasContent(source)) {
+    slides = [normalizeSlide(source)];
+  }
+
+  const first = slides[0] || { title: "", text: "", imageUrl: null };
+
+  return {
+    slides,
+    title: first.title || "",
+    text: first.text || "",
+    imageUrl: first.imageUrl || null,
+    updatedAt: source.updatedAt || null,
+  };
+}
 
 function getPostPaths() {
   return [
@@ -28,7 +68,7 @@ function readPostFromFs() {
       // try next path
     }
   }
-  return { ...DEFAULT_POST };
+  return normalizeCommunityPost(DEFAULT_POST);
 }
 
 function writePostToFs(post) {
@@ -45,31 +85,35 @@ async function readCommunityPost(req) {
   if (hasBlobStorage(req)) {
     try {
       const blobPost = await readBlobJson(BLOB_PATH, req);
-      if (blobPost) return blobPost;
+      if (blobPost) return normalizeCommunityPost(blobPost);
     } catch {
       // fall back to filesystem
     }
   }
 
-  return readPostFromFs();
+  return normalizeCommunityPost(readPostFromFs());
 }
 
 async function writeCommunityPost(post, req) {
+  const normalized = normalizeCommunityPost(post);
   if (hasBlobStorage(req)) {
-    await writeBlobJson(BLOB_PATH, post, req);
+    await writeBlobJson(BLOB_PATH, normalized, req);
     try {
-      writePostToFs(post);
+      writePostToFs(normalized);
     } catch {
       // optional local mirror
     }
-    return post;
+    return normalized;
   }
 
-  return writePostToFs(post);
+  return writePostToFs(normalized);
 }
 
 module.exports = {
   readCommunityPost,
   writeCommunityPost,
+  normalizeCommunityPost,
+  normalizeSlide,
+  createSlideId,
   DEFAULT_POST,
 };

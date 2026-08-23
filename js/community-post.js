@@ -39,20 +39,39 @@ function formatText(text) {
     .join("");
 }
 
-function renderPost(post) {
-  const hasImage = Boolean(post.imageUrl);
+function getSlides(post) {
+  if (Array.isArray(post?.slides) && post.slides.length) {
+    return post.slides.filter((slide) => slide.title || slide.text || slide.imageUrl);
+  }
+
+  if (post?.title || post?.text || post?.imageUrl) {
+    return [
+      {
+        id: "slide-1",
+        title: post.title || "",
+        text: post.text || "",
+        imageUrl: post.imageUrl || null,
+      },
+    ];
+  }
+
+  return [];
+}
+
+function renderSlide(slide, version, index) {
+  const hasImage = Boolean(slide.imageUrl);
   const image = hasImage
-    ? `<div class="community-post__media"><img src="${escapeHtml(withCacheBust(post.imageUrl, post.updatedAt))}" alt="${escapeHtml(post.title || "Opslag")}" loading="lazy"></div>`
+    ? `<div class="community-post__media"><img src="${escapeHtml(withCacheBust(slide.imageUrl, version))}" alt="${escapeHtml(slide.title || `Opslag ${index + 1}`)}"></div>`
     : "";
-  const title = post.title
-    ? `<h3 class="community-post__title">${escapeHtml(post.title)}</h3>`
+  const title = slide.title
+    ? `<h3 class="community-post__title">${escapeHtml(slide.title)}</h3>`
     : "";
-  const text = post.text
-    ? `<div class="community-post__text">${formatText(post.text)}</div>`
+  const text = slide.text
+    ? `<div class="community-post__text">${formatText(slide.text)}</div>`
     : "";
 
   return `
-    <article class="community-post__card${hasImage ? "" : " community-post__card--text-only"}">
+    <article class="community-post__card community-slideshow__slide${hasImage ? "" : " community-post__card--text-only"}" data-slide-index="${index}" ${index === 0 ? "" : "hidden"}>
       ${image}
       <div class="community-post__content">
         ${title}
@@ -62,8 +81,93 @@ function renderPost(post) {
   `;
 }
 
+function renderSlideshow(slides, version) {
+  const cards = slides.map((slide, index) => renderSlide(slide, version, index)).join("");
+  const showControls = slides.length > 1;
+  const dots = showControls
+    ? `<div class="community-slideshow__dots" role="tablist" aria-label="Vælg opslag">${slides
+        .map(
+          (_, index) =>
+            `<button type="button" class="community-slideshow__dot${index === 0 ? " is-active" : ""}" data-slide-to="${index}" role="tab" aria-selected="${index === 0 ? "true" : "false"}" aria-label="Opslag ${index + 1}"></button>`
+        )
+        .join("")}</div>`
+    : "";
+  const controls = showControls
+    ? `
+      <div class="community-slideshow__nav">
+        <button type="button" class="community-slideshow__arrow" data-slideshow-prev aria-label="Forrige opslag">‹</button>
+        ${dots}
+        <button type="button" class="community-slideshow__arrow" data-slideshow-next aria-label="Næste opslag">›</button>
+      </div>
+    `
+    : "";
+
+  return `
+    <div class="community-slideshow" ${showControls ? 'tabindex="0"' : ""}>
+      <div class="community-slideshow__viewport">
+        ${cards}
+      </div>
+      ${controls}
+    </div>
+  `;
+}
+
 function renderEmpty() {
   return `<p class="community-post__empty">Nyt opslag kommer snart.</p>`;
+}
+
+function wireSlideshow(root) {
+  const slideshow = root.querySelector(".community-slideshow");
+  if (!slideshow) return;
+
+  const slides = [...slideshow.querySelectorAll(".community-slideshow__slide")];
+  const dots = [...slideshow.querySelectorAll("[data-slide-to]")];
+  if (slides.length < 2) return;
+
+  let current = 0;
+  let touchStartX = null;
+
+  function show(index) {
+    current = (index + slides.length) % slides.length;
+    slides.forEach((slide, i) => {
+      slide.hidden = i !== current;
+    });
+    dots.forEach((dot, i) => {
+      const active = i === current;
+      dot.classList.toggle("is-active", active);
+      dot.setAttribute("aria-selected", String(active));
+    });
+  }
+
+  slideshow.querySelector("[data-slideshow-prev]")?.addEventListener("click", () => show(current - 1));
+  slideshow.querySelector("[data-slideshow-next]")?.addEventListener("click", () => show(current + 1));
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => show(Number(dot.dataset.slideTo)));
+  });
+
+  slideshow.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      show(current - 1);
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      show(current + 1);
+    }
+  });
+
+  slideshow.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    touchStartX = event.clientX;
+  });
+
+  slideshow.addEventListener("pointerup", (event) => {
+    if (touchStartX == null) return;
+    const delta = event.clientX - touchStartX;
+    touchStartX = null;
+    if (Math.abs(delta) < 40) return;
+    show(delta < 0 ? current + 1 : current - 1);
+  });
 }
 
 async function initCommunityPost(containerSelector) {
@@ -81,12 +185,14 @@ async function initCommunityPost(containerSelector) {
       return;
     }
 
-    if (!post.title && !post.text && !post.imageUrl) {
+    const slides = getSlides(post);
+    if (!slides.length) {
       container.innerHTML = renderEmpty();
       return;
     }
 
-    container.innerHTML = renderPost(post);
+    container.innerHTML = renderSlideshow(slides, post.updatedAt);
+    wireSlideshow(container);
   } catch {
     container.innerHTML = renderEmpty();
   }
