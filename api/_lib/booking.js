@@ -142,8 +142,8 @@ function getNotifyEmail() {
 }
 
 function getMaxBookingMonths() {
-  const value = Number(process.env.BOOKING_MAX_MONTHS_AHEAD || 12);
-  if (!Number.isFinite(value) || value < 1) return 12;
+  const value = Number(process.env.BOOKING_MAX_MONTHS_AHEAD || 6);
+  if (!Number.isFinite(value) || value < 6) return 6;
   return Math.round(value);
 }
 
