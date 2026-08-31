@@ -4,6 +4,7 @@ const {
   isVercelRuntime,
   hasBlobStorage,
   getBlobSetupHint,
+  getCachedJson,
   readBlobJson,
   writeBlobJson,
 } = require("./blob-store");
@@ -93,19 +94,15 @@ async function writeStore(store, req) {
   let normalized = normalizeStore(store);
 
   if (hasBlobStorage(req)) {
-    try {
-      const existing = await readBlobJson(BLOB_PATH, req);
-      if (existing) {
-        const existingNorm = normalizeStore(existing);
-        if (normalized.bookings.length < existingNorm.bookings.length) {
-          normalized = {
-            ...normalized,
-            bookings: existingNorm.bookings,
-          };
-        }
+    const cached = getCachedJson(BLOB_PATH);
+    if (cached) {
+      const existingNorm = normalizeStore(cached);
+      if (normalized.bookings.length < existingNorm.bookings.length) {
+        normalized = {
+          ...normalized,
+          bookings: existingNorm.bookings,
+        };
       }
-    } catch {
-      // Continue with normalized store.
     }
 
     await writeBlobJson(BLOB_PATH, normalized, req);

@@ -1,6 +1,11 @@
-const { put, list, get } = require("@vercel/blob");
+const { put, get } = require("@vercel/blob");
 
 let resolvedAccess = process.env.BLOB_ACCESS === "private" ? "private" : null;
+
+const JSON_CACHE_MS = 20_000;
+const jsonCache = new Map();
+const urlCache = new Map();
+const inflightReads = new Map();
 
 function isVercelRuntime() {
   return process.env.VERCEL === "1";
@@ -98,14 +103,6 @@ function blobOptions(contentType, req, access = getBlobAccess()) {
   };
 }
 
-function listOptions(prefix, req) {
-  return {
-    prefix,
-    limit: 20,
-    ...blobCommandOptions(req),
-  };
-}
-
 function formatBlobError(err, req) {
   const hint = getBlobSetupHint(req);
   const detail = err?.message ? String(err.message) : "Unknown error";
@@ -124,27 +121,56 @@ function isPrivateStoreError(err) {
   return message.includes("private store") || message.includes("private access");
 }
 
+function isNotFoundError(err) {
+  const message = String(err?.message || "");
+  return message.includes("404") || message.includes("not found");
+}
+
+function getCachedJson(pathname) {
+  const entry = jsonCache.get(pathname);
+  if (entry && entry.expiresAt > Date.now()) return entry.data;
+  return undefined;
+}
+
+function setCachedJson(pathname, data) {
+  jsonCache.set(pathname, { data, expiresAt: Date.now() + JSON_CACHE_MS });
+}
+
+function rememberBlobUrl(pathname, url) {
+  if (url) urlCache.set(pathname, url);
+}
+
+function authHeaders(req) {
+  const headers = {};
+  const oidcToken = getOidcToken(req);
+  const token = getBlobToken();
+  if (isPrivateStore()) {
+    if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
+    else if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 async function putBlob(pathname, body, contentType, req) {
+  const preferred = getBlobAccess();
   try {
-    return await put(pathname, body, blobOptions(contentType, req, "public"));
+    const blob = await put(pathname, body, blobOptions(contentType, req, preferred));
+    rememberBlobUrl(pathname, blob?.url);
+    return blob;
   } catch (err) {
-    if (!isPrivateStoreError(err)) throw err;
+    if (preferred === "private" || !isPrivateStoreError(err)) throw err;
     markPrivateStore();
-    return put(pathname, body, blobOptions(contentType, req, "private"));
+    const blob = await put(pathname, body, blobOptions(contentType, req, "private"));
+    rememberBlobUrl(pathname, blob?.url);
+    return blob;
   }
 }
 
 async function fetchBlobJson(url, req) {
-  const headers = {};
-  const oidcToken = getOidcToken(req);
-  const token = getBlobToken();
-  if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
-  else if (token) headers.Authorization = `Bearer ${token}`;
-
   const response = await fetch(url, {
     cache: "no-store",
     headers: {
-      ...headers,
+      ...authHeaders(req),
       "Cache-Control": "no-cache",
       Pragma: "no-cache",
     },
@@ -153,45 +179,72 @@ async function fetchBlobJson(url, req) {
   return response.json();
 }
 
-async function readBlobJson(pathname, req) {
-  const accessModes = isPrivateStore() ? ["private", "public"] : ["public", "private"];
+async function getBlobByPathname(pathname, req) {
+  const accessOrder = isPrivateStore() ? ["private"] : ["public", "private"];
+  let lastError = null;
 
-  for (const access of accessModes) {
+  for (const access of accessOrder) {
     try {
       const result = await get(pathname, {
         access,
-        useCache: false,
         ...blobCommandOptions(req),
       });
-      if (!result?.stream) continue;
-
-      if (access === "private") {
-        markPrivateStore();
-      }
-
-      const text = await new Response(result.stream).text();
-      return text ? JSON.parse(text) : null;
+      if (!result) continue;
+      if (access === "private") markPrivateStore();
+      rememberBlobUrl(pathname, result.url);
+      return result;
     } catch (err) {
-      const message = String(err?.message || "");
-      if (message.includes("404") || message.includes("not found")) {
+      lastError = err;
+      if (isNotFoundError(err)) continue;
+      if (isPrivateStoreError(err)) {
+        markPrivateStore();
         continue;
       }
+      throw err;
     }
   }
 
-  // Fallback for older blobs discovered via list().
-  const { blobs } = await list(listOptions(pathname, req));
-  const blob = blobs.find((entry) => entry.pathname === pathname);
-  if (!blob) return null;
+  if (lastError && !isNotFoundError(lastError) && !isPrivateStoreError(lastError)) {
+    throw lastError;
+  }
+  return null;
+}
 
-  if (blob.url.includes(".private.blob.")) {
-    markPrivateStore();
+async function readBlobJsonUncached(pathname, req) {
+  const knownUrl = urlCache.get(pathname);
+  if (knownUrl) {
+    const fromUrl = await fetchBlobJson(knownUrl, req);
+    if (fromUrl != null) return fromUrl;
   }
 
-  return fetchBlobJson(blob.url, req);
+  const result = await getBlobByPathname(pathname, req);
+  if (!result?.stream) return null;
+  const text = await new Response(result.stream).text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function readBlobJson(pathname, req) {
+  const cached = getCachedJson(pathname);
+  if (cached !== undefined) return cached;
+
+  const pending = inflightReads.get(pathname);
+  if (pending) return pending;
+
+  const task = readBlobJsonUncached(pathname, req)
+    .then((data) => {
+      setCachedJson(pathname, data);
+      return data;
+    })
+    .finally(() => {
+      inflightReads.delete(pathname);
+    });
+
+  inflightReads.set(pathname, task);
+  return task;
 }
 
 async function writeBlobJson(pathname, data, req) {
+  setCachedJson(pathname, data);
   await putBlob(pathname, JSON.stringify(data, null, 2), "application/json", req);
 }
 
@@ -208,34 +261,27 @@ async function readBlobFile(pathname, req) {
     throw new Error("Invalid media path");
   }
 
-  const { blobs } = await list(listOptions(pathname, req));
-  const blob = blobs.find((entry) => entry.pathname === pathname);
-  if (!blob) return null;
-
-  if (blob.url.includes(".private.blob.")) {
-    markPrivateStore();
+  const knownUrl = urlCache.get(pathname);
+  if (knownUrl) {
+    const response = await fetch(knownUrl, {
+      cache: "no-store",
+      headers: authHeaders(req),
+    });
+    if (response.ok) {
+      return {
+        buffer: Buffer.from(await response.arrayBuffer()),
+        contentType: response.headers.get("content-type") || "application/octet-stream",
+      };
+    }
   }
 
-  const headers = {};
-  const oidcToken = getOidcToken(req);
-  const token = getBlobToken();
-  if (oidcToken) headers.Authorization = `Bearer ${oidcToken}`;
-  else if (token) headers.Authorization = `Bearer ${token}`;
+  const result = await getBlobByPathname(pathname, req);
+  if (!result?.stream) return null;
 
-  const response = await fetch(blob.url, {
-    cache: "no-store",
-    headers: {
-      ...headers,
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-    },
-  });
-  if (!response.ok) return null;
-
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const buffer = Buffer.from(await new Response(result.stream).arrayBuffer());
   return {
     buffer,
-    contentType: blob.contentType || response.headers.get("content-type") || "application/octet-stream",
+    contentType: result.contentType || "application/octet-stream",
   };
 }
 
@@ -260,6 +306,7 @@ module.exports = {
   getBlobSetupHint,
   formatBlobError,
   getBlobStatus,
+  getCachedJson,
   readBlobJson,
   writeBlobJson,
   writeBlobFile,
