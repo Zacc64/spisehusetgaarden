@@ -157,15 +157,9 @@ function setActionFeedback(message, type = "info") {
 
 function buildSyncMessage(data) {
   if (data.added > 0) {
-    const emailNote =
-      data.emailErrors > 0
-        ? ` ${data.emailed || 0} bekræftelse${(data.emailed || 0) === 1 ? "" : "r"} sendt, ${data.emailErrors} mail fejlede.`
-        : data.emailed
-          ? ` Bekræftelse sendt til ${data.emailed} gæst${data.emailed === 1 ? "" : "er"}.`
-          : "";
     return {
-      type: data.emailErrors > 0 ? "error" : "success",
-      message: `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.${emailNote}`,
+      type: "success",
+      message: `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.`,
     };
   }
 
@@ -632,9 +626,14 @@ function renderBookingCards(container, bookings) {
         <div class="admin-bookings-day-item__meta">
           ${escapeHtml(booking.phone || "—")}${booking.email ? ` · ${escapeHtml(booking.email)}` : ""}
         </div>
+        <div class="admin-bookings-day-item__status">
+          <span class="admin-email-status ${booking.emailSentAt ? "admin-email-status--sent" : "admin-email-status--pending"}">
+            ${booking.emailSentAt ? "Email sendt" : "Email ikke sendt"}
+          </span>
+        </div>
         <div class="admin-bookings-day-item__actions">
           <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" data-resend-email="${escapeHtml(booking.id || booking.stripeSessionId || "")}">
-            ${booking.emailSentAt ? "Send bekræftelse igen" : "Send bekræftelse"}
+            ${booking.emailSentAt ? "Send igen" : "Send bekræftelse"}
           </button>
         </div>
       </div>
