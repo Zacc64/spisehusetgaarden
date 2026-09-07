@@ -208,8 +208,7 @@ function guestEmailCopy(booking, paymentId) {
     `Personer: ${guests}\n` +
     (deposit ? `Depositum betalt: ${deposit} kr.\n` : "") +
     (remarks ? `${remarks}\n` : "") +
-    `\nHar du spørgsmål, kan du svare på denne mail.\n\n` +
-    `Vi glæder os til at se dig.\n` +
+    `\nVi glæder os til at se dig.\n` +
     `Spisehuset Gaarden`;
 
   const html = `
@@ -229,8 +228,7 @@ function guestEmailCopy(booking, paymentId) {
             ${deposit ? `<tr><td style="padding:8px 0;color:#5e635c;">Depositum</td><td style="padding:8px 0;font-weight:700;">${deposit} kr. betalt</td></tr>` : ""}
             ${booking.message ? `<tr><td style="padding:8px 0;color:#5e635c;vertical-align:top;">Bemærkninger</td><td style="padding:8px 0;">${escapeHtml(booking.message)}</td></tr>` : ""}
           </table>
-          <p style="margin:20px 0 0;">Har du spørgsmål, kan du svare på denne mail.</p>
-          <p style="margin:18px 0 0;">Vi glæder os til at se dig.<br><strong>Spisehuset Gaarden</strong></p>
+          <p style="margin:20px 0 0;">Vi glæder os til at se dig.<br><strong>Spisehuset Gaarden</strong></p>
         </div>
       </div>
     </div>
