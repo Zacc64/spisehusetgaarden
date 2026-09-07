@@ -411,6 +411,29 @@ function parseBookingGuestCount(booking) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function formatGuestLabel(booking) {
+  const raw = String(booking?.guests || booking?.guestCount || "").trim();
+  if (!raw) return "—";
+  if (raw === "7+") return "7+ personer";
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) return raw;
+  return n === 1 ? "1 person" : `${n} personer`;
+}
+
+function getPaidAmountDkk(booking) {
+  const n = Number(booking?.amountDkk);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function formatPaidAmount(booking) {
+  const amount = getPaidAmountDkk(booking);
+  return amount ? `${amount.toLocaleString("da-DK")} kr.` : "—";
+}
+
+function formatArrivalTime(booking) {
+  return booking?.time ? `kl. ${booking.time}` : "—";
+}
+
 function formatPrintDateLabel(isoDate) {
   if (!isoDate) return "—";
   const [year, month, day] = isoDate.split("-").map(Number);
@@ -441,23 +464,31 @@ function printGuestList(date) {
     minute: "2-digit",
   });
   const totalGuests = bookings.reduce((sum, booking) => sum + parseBookingGuestCount(booking), 0);
+  const totalPaid = bookings.reduce((sum, booking) => sum + getPaidAmountDkk(booking), 0);
   const hasSevenPlus = bookings.some((booking) => String(booking.guests || "").trim() === "7+");
+  const guestTotalLabel = `${totalGuests} gæst${totalGuests === 1 ? "" : "er"}${
+    hasSevenPlus ? " (7+ tælles som 7)" : ""
+  }`;
+  const paidTotalLabel = totalPaid
+    ? `${totalPaid.toLocaleString("da-DK")} kr. betalt i depositum`
+    : "Ingen beløb registreret";
 
   const rows = bookings.length
     ? bookings
         .map(
           (booking) => `
             <tr>
-              <td>${escapeHtml(booking.time || "—")}</td>
+              <td>${escapeHtml(formatArrivalTime(booking))}</td>
               <td>${escapeHtml(booking.name || "—")}</td>
-              <td>${escapeHtml(String(booking.guests || booking.guestCount || "—"))}</td>
+              <td>${escapeHtml(formatGuestLabel(booking))}</td>
+              <td>${escapeHtml(formatPaidAmount(booking))}</td>
               <td>${escapeHtml(booking.phone || "—")}</td>
               <td>${escapeHtml(booking.email || "—")}</td>
               <td>${escapeHtml(booking.message || "")}</td>
             </tr>`
         )
         .join("")
-    : `<tr><td colspan="6">Ingen bookinger denne dag.</td></tr>`;
+    : `<tr><td colspan="7">Ingen bookinger denne dag.</td></tr>`;
 
   const eventBlock =
     event.title || event.description
@@ -495,13 +526,15 @@ function printGuestList(date) {
   <div class="actions"><button type="button" onclick="window.print()">Print</button></div>
   <h1>Spisehuset Gaarden — gæsteliste</h1>
   <p class="meta">${escapeHtml(dateLabel)}</p>
+  <p class="totals">${bookings.length} booking${bookings.length === 1 ? "" : "er"} · ${escapeHtml(guestTotalLabel)} · ${escapeHtml(paidTotalLabel)}</p>
   ${eventBlock}
   <table>
     <thead>
       <tr>
-        <th>Tid</th>
+        <th>Kommer</th>
         <th>Navn</th>
         <th>Personer</th>
+        <th>Depositum</th>
         <th>Telefon</th>
         <th>Email</th>
         <th>Bemærkninger</th>
@@ -511,9 +544,8 @@ function printGuestList(date) {
     <tfoot>
       <tr>
         <td colspan="2">${bookings.length} booking${bookings.length === 1 ? "" : "er"}</td>
-        <td colspan="4">${totalGuests} gæst${totalGuests === 1 ? "" : "er"}${
-          hasSevenPlus ? " (7+ tælles som 7)" : ""
-        }</td>
+        <td>${escapeHtml(guestTotalLabel)}</td>
+        <td colspan="4">${escapeHtml(paidTotalLabel)}</td>
       </tr>
     </tfoot>
   </table>
@@ -551,15 +583,17 @@ function renderBookingCards(container, bookings) {
     const item = document.createElement("article");
     item.className = "admin-bookings-day-item";
     item.innerHTML = `
-      <div class="admin-bookings-day-item__time">${escapeHtml(booking.time || "—")}</div>
+      <div class="admin-bookings-day-item__time">${escapeHtml(formatArrivalTime(booking))}</div>
       <div>
         <strong>${escapeHtml(booking.name || "—")}</strong>
         <div class="admin-bookings-day-item__meta">
-          ${escapeHtml(booking.guests || booking.guestCount || "—")} personer
-          ${booking.phone ? ` · ${escapeHtml(booking.phone)}` : ""}
+          ${escapeHtml(formatGuestLabel(booking))}
+          ${getPaidAmountDkk(booking) ? ` · ${escapeHtml(formatPaidAmount(booking))} betalt` : ""}
+        </div>
+        <div class="admin-bookings-day-item__meta">
+          ${escapeHtml(booking.phone || "—")}${booking.email ? ` · ${escapeHtml(booking.email)}` : ""}
         </div>
       </div>
-      <div class="admin-bookings-day-item__meta">${escapeHtml(booking.email || "")}</div>
     `;
     if (booking.message) item.title = booking.message;
     container.appendChild(item);

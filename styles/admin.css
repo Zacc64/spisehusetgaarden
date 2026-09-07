@@ -1670,9 +1670,9 @@ body {
 
 .admin-bookings-day-item {
   display: grid;
-  grid-template-columns: 4.5rem 1fr auto;
+  grid-template-columns: 5.25rem 1fr;
   gap: 0.75rem;
-  align-items: center;
+  align-items: start;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--line);
   border-radius: 0.6rem;
