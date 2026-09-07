@@ -1,15 +1,73 @@
-const { formatBookingSummary, getNotifyEmail } = require("./booking");
+const nodemailer = require("nodemailer");
+const { formatBookingSummary, getNotifyEmail, getDepositDkk, parseGuestCount } = require("./booking");
 
-async function sendEmail({ to, subject, text, html }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("RESEND_API_KEY missing — booking email not sent.");
-    return false;
-  }
+let smtpTransport = null;
 
-  const from =
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatDanishDate(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
+  const formatted = new Date(`${iso}T12:00:00`).toLocaleDateString("da-DK", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+function getFromAddress() {
+  return (
+    process.env.SMTP_FROM ||
     process.env.RESEND_FROM_EMAIL ||
-    "Spisehuset Gaarden <onboarding@resend.dev>";
+    "Spisehuset Gaarden <booking@spisehusetgaarden.dk>"
+  );
+}
+
+function hasSmtpConfig() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
+function getSmtpTransport() {
+  if (!hasSmtpConfig()) return null;
+  if (smtpTransport) return smtpTransport;
+
+  const port = Number(process.env.SMTP_PORT || 587);
+  smtpTransport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465 || process.env.SMTP_SECURE === "true",
+    requireTLS: port === 587,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+  return smtpTransport;
+}
+
+async function sendViaSmtp({ to, subject, text, html }) {
+  const transport = getSmtpTransport();
+  const result = await transport.sendMail({
+    from: getFromAddress(),
+    replyTo: process.env.SMTP_USER || "booking@spisehusetgaarden.dk",
+    to,
+    subject,
+    text,
+    html,
+  });
+  return Boolean(result.messageId);
+}
+
+async function sendViaResend({ to, subject, text, html }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -18,7 +76,7 @@ async function sendEmail({ to, subject, text, html }) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from,
+      from: getFromAddress(),
       to: Array.isArray(to) ? to : [to],
       subject,
       text,
@@ -32,6 +90,65 @@ async function sendEmail({ to, subject, text, html }) {
   }
 
   return true;
+}
+
+async function sendEmail(message) {
+  if (hasSmtpConfig()) {
+    return sendViaSmtp(message);
+  }
+  if (process.env.RESEND_API_KEY) {
+    return sendViaResend(message);
+  }
+  console.warn("No SMTP or RESEND config — booking email not sent.");
+  return false;
+}
+
+function guestEmailCopy(booking, paymentId) {
+  const dateLabel = formatDanishDate(booking.date);
+  const guests = booking.guests || "";
+  const guestCount = parseGuestCount(guests);
+  const deposit = guestCount ? getDepositDkk() * guestCount : null;
+  const remarks = booking.message ? `Bemærkninger: ${booking.message}` : "";
+
+  const text =
+    `Hej ${booking.name},\n\n` +
+    `Tak for din booking hos Spisehuset Gaarden. Vi har modtaget dit depositum, og bordet er bekræftet.\n\n` +
+    `Dato: ${dateLabel}\n` +
+    `Tid: ${booking.time}\n` +
+    `Personer: ${guests}\n` +
+    (deposit ? `Depositum betalt: ${deposit} kr.\n` : "") +
+    (remarks ? `${remarks}\n` : "") +
+    `\nBetalingsreference: ${paymentId}\n\n` +
+    `Har du spørgsmål, kan du svare på denne mail.\n\n` +
+    `Vi glæder os til at se dig.\n` +
+    `Spisehuset Gaarden`;
+
+  const html = `
+    <div style="margin:0;padding:24px;background:#f3f5f1;font-family:Georgia,serif;color:#141414;">
+      <div style="max-width:560px;margin:0 auto;background:#fafbf8;border:1px solid #d8e2d8;border-radius:16px;overflow:hidden;">
+        <div style="padding:22px 24px;background:#2f4535;color:#fafbf8;">
+          <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.8;">Spisehuset Gaarden</p>
+          <h1 style="margin:0;font-size:24px;font-weight:700;">Booking bekræftet</h1>
+        </div>
+        <div style="padding:24px;">
+          <p style="margin:0 0 16px;">Hej ${escapeHtml(booking.name)},</p>
+          <p style="margin:0 0 20px;">Tak for din booking. Vi har modtaget dit depositum, og bordet er reserveret.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:16px;">
+            <tr><td style="padding:8px 0;color:#5e635c;width:140px;">Dato</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(dateLabel)}</td></tr>
+            <tr><td style="padding:8px 0;color:#5e635c;">Tid</td><td style="padding:8px 0;font-weight:700;">kl. ${escapeHtml(booking.time)}</td></tr>
+            <tr><td style="padding:8px 0;color:#5e635c;">Personer</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(String(guests))}</td></tr>
+            ${deposit ? `<tr><td style="padding:8px 0;color:#5e635c;">Depositum</td><td style="padding:8px 0;font-weight:700;">${deposit} kr. betalt</td></tr>` : ""}
+            ${booking.message ? `<tr><td style="padding:8px 0;color:#5e635c;vertical-align:top;">Bemærkninger</td><td style="padding:8px 0;">${escapeHtml(booking.message)}</td></tr>` : ""}
+          </table>
+          <p style="margin:20px 0 0;font-size:14px;color:#5e635c;">Betalingsreference: ${escapeHtml(String(paymentId))}</p>
+          <p style="margin:18px 0 0;">Har du spørgsmål, kan du svare på denne mail.</p>
+          <p style="margin:18px 0 0;">Vi glæder os til at se dig.<br><strong>Spisehuset Gaarden</strong></p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return { text, html };
 }
 
 async function sendBookingEmails(session) {
@@ -52,28 +169,18 @@ async function sendBookingEmails(session) {
 
   const summary = formatBookingSummary(booking);
   const paymentId = session.payment_intent || session.id;
+  const guestCopy = guestEmailCopy(booking, paymentId);
 
   await sendEmail({
     to: booking.email,
-    subject: "Booking bekræftet — Spisehuset Gaarden",
-    text:
-      `Hej ${booking.name},\n\n` +
-      `Tak for din booking. Vi har modtaget dit depositum.\n\n` +
-      `${summary}\n\n` +
-      `Betalingsreference: ${paymentId}\n\n` +
-      `Vi glæder os til at se dig.\n` +
-      `Spisehuset Gaarden`,
-    html:
-      `<p>Hej ${escapeHtml(booking.name)},</p>` +
-      `<p>Tak for din booking. Vi har modtaget dit depositum.</p>` +
-      `<pre style="font-family:inherit;white-space:pre-wrap">${escapeHtml(summary)}</pre>` +
-      `<p>Betalingsreference: ${escapeHtml(String(paymentId))}</p>` +
-      `<p>Vi glæder os til at se dig.<br>Spisehuset Gaarden</p>`,
+    subject: `Booking bekræftet — ${formatDanishDate(booking.date)} kl. ${booking.time}`,
+    text: guestCopy.text,
+    html: guestCopy.html,
   });
 
   await sendEmail({
     to: getNotifyEmail(),
-    subject: `Ny betalt booking — ${booking.name}`,
+    subject: `Ny betalt booking — ${booking.name} · ${booking.date} kl. ${booking.time}`,
     text:
       `Ny betalt bordbooking:\n\n` +
       `${summary}\n\n` +
@@ -83,14 +190,6 @@ async function sendBookingEmails(session) {
       `<pre style="font-family:inherit;white-space:pre-wrap">${escapeHtml(summary)}</pre>` +
       `<p>Stripe session: ${escapeHtml(session.id)}</p>`,
   });
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 module.exports = { sendBookingEmails };
