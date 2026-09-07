@@ -365,6 +365,14 @@ form?.addEventListener("submit", async (e) => {
     return;
   }
 
+  const email = String(form.elements.email?.value || "").trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errorEl.textContent = "Angiv en gyldig email. Bekræftelsen sendes dertil.";
+    errorEl.hidden = false;
+    form.elements.email?.focus();
+    return;
+  }
+
   if (!bookingSubmitAllowed || !paymentsEnabled) {
     errorEl.textContent = "Vælg en dato der er åben for booking.";
     errorEl.hidden = false;

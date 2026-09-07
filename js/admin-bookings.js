@@ -401,6 +401,143 @@ function getBookingsForDate(date) {
   );
 }
 
+function parseBookingGuestCount(booking) {
+  if (typeof booking?.guestCount === "number" && Number.isFinite(booking.guestCount)) {
+    return booking.guestCount;
+  }
+  const raw = String(booking?.guests || "").trim();
+  if (raw === "7+") return 7;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatPrintDateLabel(isoDate) {
+  if (!isoDate) return "—";
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const d = new Date(year, month - 1, day);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString("da-DK", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function printGuestList(date) {
+  if (!date) {
+    setStatus("Vælg en dag i kalenderen for at printe gæstelisten.", "error");
+    return;
+  }
+
+  const bookings = getBookingsForDate(date);
+  const event = capacityState.eventsByDate?.[date] || {};
+  const dateLabel = formatPrintDateLabel(date);
+  const printedAt = new Date().toLocaleString("da-DK", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const totalGuests = bookings.reduce((sum, booking) => sum + parseBookingGuestCount(booking), 0);
+  const hasSevenPlus = bookings.some((booking) => String(booking.guests || "").trim() === "7+");
+
+  const rows = bookings.length
+    ? bookings
+        .map(
+          (booking) => `
+            <tr>
+              <td>${escapeHtml(booking.time || "—")}</td>
+              <td>${escapeHtml(booking.name || "—")}</td>
+              <td>${escapeHtml(String(booking.guests || booking.guestCount || "—"))}</td>
+              <td>${escapeHtml(booking.phone || "—")}</td>
+              <td>${escapeHtml(booking.email || "—")}</td>
+              <td>${escapeHtml(booking.message || "")}</td>
+            </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="6">Ingen bookinger denne dag.</td></tr>`;
+
+  const eventBlock =
+    event.title || event.description
+      ? `<p class="event"><strong>${escapeHtml(event.title || "Arrangement")}</strong>${
+          event.description ? `<br>${escapeHtml(event.description)}` : ""
+        }</p>`
+      : "";
+
+  const html = `<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <title>Gæsteliste ${escapeHtml(dateLabel)}</title>
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: "DM Sans", "Segoe UI", system-ui, sans-serif; color: #141414; margin: 24px; }
+    h1 { font-size: 1.35rem; margin: 0 0 0.2rem; }
+    .meta, .event, .totals { color: #5e635c; margin: 0 0 0.75rem; }
+    .event { margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { border: 1px solid #d8e2d8; padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+    th { background: #f3f5f1; }
+    tfoot td { font-weight: 600; background: #f3f5f1; }
+    .actions { margin: 1rem 0 1.25rem; }
+    .actions button { font: inherit; padding: 0.55rem 1rem; cursor: pointer; }
+    @media print {
+      .actions { display: none; }
+      body { margin: 12mm; }
+      thead { display: table-header-group; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="actions"><button type="button" onclick="window.print()">Print</button></div>
+  <h1>Spisehuset Gaarden — gæsteliste</h1>
+  <p class="meta">${escapeHtml(dateLabel)}</p>
+  ${eventBlock}
+  <table>
+    <thead>
+      <tr>
+        <th>Tid</th>
+        <th>Navn</th>
+        <th>Personer</th>
+        <th>Telefon</th>
+        <th>Email</th>
+        <th>Bemærkninger</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">${bookings.length} booking${bookings.length === 1 ? "" : "er"}</td>
+        <td colspan="4">${totalGuests} gæst${totalGuests === 1 ? "" : "er"}${
+          hasSevenPlus ? " (7+ tælles som 7)" : ""
+        }</td>
+      </tr>
+    </tfoot>
+  </table>
+  <p class="meta">Printet ${escapeHtml(printedAt)}</p>
+  <script>
+    window.addEventListener("load", function () {
+      window.focus();
+      window.print();
+    });
+  <\/script>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=980,height=720");
+  if (!win) {
+    setStatus("Tillad pop-up-vinduer for at printe gæstelisten.", "error");
+    return;
+  }
+  win.opener = null;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
 function renderBookingCards(container, bookings) {
   if (!container) return;
   container.innerHTML = "";
@@ -1040,6 +1177,12 @@ function wireBookingsPanel() {
 
   document.getElementById("day-modal-close")?.addEventListener("click", closeDayModal);
   document.getElementById("day-modal-cancel")?.addEventListener("click", closeDayModal);
+  document.getElementById("day-modal-print")?.addEventListener("click", () => {
+    printGuestList(bookingsView.modalDate);
+  });
+  document.getElementById("bookings-day-print")?.addEventListener("click", () => {
+    printGuestList(bookingsView.selectedDate);
+  });
   document.getElementById("day-modal-save")?.addEventListener("click", (event) => {
     event.preventDefault();
     saveDayModal();

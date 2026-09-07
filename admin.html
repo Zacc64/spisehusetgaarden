@@ -252,7 +252,10 @@
                 <div class="admin-bookings-day-panel" id="bookings-day-panel" hidden>
                   <div class="admin-bookings-day-panel__head">
                     <h4 class="admin-block-title" id="bookings-day-title">Bookinger</h4>
-                    <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-clear">Vis alle dage</button>
+                    <div class="admin-bookings-day-panel__actions">
+                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-print">Print gæsteliste</button>
+                      <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="bookings-day-clear">Vis alle dage</button>
+                    </div>
                   </div>
                   <div id="bookings-day-list" class="admin-bookings-day-list"></div>
                 </div>
@@ -352,7 +355,10 @@
               </fieldset>
 
               <div class="admin-day-modal__bookings">
-                <h4 class="admin-block-title" id="day-modal-bookings-title">Bookinger</h4>
+                <div class="admin-day-modal__bookings-head">
+                  <h4 class="admin-block-title" id="day-modal-bookings-title">Bookinger</h4>
+                  <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="day-modal-print">Print gæsteliste</button>
+                </div>
                 <div id="day-modal-bookings-list" class="admin-bookings-day-list"></div>
               </div>
 

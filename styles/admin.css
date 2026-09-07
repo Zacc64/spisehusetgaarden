@@ -1594,8 +1594,18 @@ body {
   border-top: 1px solid var(--line);
 }
 
+.admin-day-modal__bookings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.admin-day-modal__bookings-head .admin-block-title,
 .admin-day-modal__bookings .admin-block-title {
-  margin: 0 0 0.65rem;
+  margin: 0;
 }
 
 .admin-day-modal__footer {
@@ -1636,12 +1646,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
 
 .admin-bookings-day-panel__head .admin-block-title {
   margin: 0;
+}
+
+.admin-bookings-day-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
 }
 
 .admin-bookings-day-list {
