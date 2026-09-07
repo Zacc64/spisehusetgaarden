@@ -52,12 +52,21 @@ function getSmtpTransport() {
   return smtpTransport;
 }
 
+function getMailboxAddress() {
+  return String(process.env.SMTP_USER || "").trim().toLowerCase();
+}
+
 async function sendViaSmtp({ to, subject, text, html }) {
   const transport = getSmtpTransport();
+  const mailbox = getMailboxAddress();
+  const toAddress = String(Array.isArray(to) ? to[0] : to || "").trim().toLowerCase();
+  const copyToMailbox = Boolean(mailbox && mailbox !== toAddress);
+
   const result = await transport.sendMail({
     from: getFromAddress(),
     replyTo: process.env.SMTP_USER || "booking@spisehusetgaarden.dk",
     to,
+    bcc: copyToMailbox ? mailbox : undefined,
     subject,
     text,
     html,
@@ -178,8 +187,11 @@ async function sendBookingEmails(session) {
     html: guestCopy.html,
   });
 
+  const notifyEmail = getNotifyEmail();
+  if (!notifyEmail) return;
+
   await sendEmail({
-    to: getNotifyEmail(),
+    to: notifyEmail,
     subject: `Ny betalt booking — ${booking.name} · ${booking.date} kl. ${booking.time}`,
     text:
       `Ny betalt bordbooking:\n\n` +

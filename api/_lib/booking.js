@@ -138,7 +138,7 @@ function getDepositTotalOre(guestCount) {
 }
 
 function getNotifyEmail() {
-  return (process.env.BOOKING_NOTIFY_EMAIL || "info@spisehusetgaarden.dk").trim();
+  return String(process.env.BOOKING_NOTIFY_EMAIL || "").trim();
 }
 
 function getMaxBookingMonths() {
