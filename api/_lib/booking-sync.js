@@ -1,5 +1,6 @@
 const { getStripe } = require("./stripe-client");
 const { addBookingFromSession, readStore } = require("./booking-store");
+const { emailRecentBookingIfNeeded } = require("./fulfill-booking");
 
 function isBookingSession(session) {
   const metadata = session?.metadata || {};
@@ -12,6 +13,8 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
   const existingIds = new Set(store.bookings.map((b) => b.stripeSessionId));
 
   let added = 0;
+  let emailed = 0;
+  let emailErrors = 0;
   let checked = 0;
   let paid = 0;
   let bookingLike = 0;
@@ -41,11 +44,22 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
 
       if (!isBookingSession(fullSession)) continue;
       bookingLike += 1;
-      if (existingIds.has(fullSession.id)) continue;
 
-      await addBookingFromSession(fullSession, req);
+      if (existingIds.has(fullSession.id)) {
+        const existing = store.bookings.find((item) => item.stripeSessionId === fullSession.id);
+        const status = await emailRecentBookingIfNeeded(existing, req);
+        if (status === "sent") emailed += 1;
+        if (status === "failed") emailErrors += 1;
+        continue;
+      }
+
+      const booking = await addBookingFromSession(fullSession, req);
       existingIds.add(fullSession.id);
       added += 1;
+
+      const status = await emailRecentBookingIfNeeded(booking, req);
+      if (status === "sent") emailed += 1;
+      if (status === "failed") emailErrors += 1;
     }
 
     hasMore = page.has_more;
@@ -56,7 +70,15 @@ async function syncBookingsFromStripe(req, { limit = 100 } = {}) {
     }
   }
 
-  return { added, checked, paid, bookingLike, totalBookings: store.bookings.length + added };
+  return {
+    added,
+    emailed,
+    emailErrors,
+    checked,
+    paid,
+    bookingLike,
+    totalBookings: store.bookings.length + added,
+  };
 }
 
 module.exports = { syncBookingsFromStripe };

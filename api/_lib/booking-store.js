@@ -300,6 +300,7 @@ function bookingFromSession(session) {
     amountDkk: getPaidAmountDkk(session, guests),
     paidAt: new Date().toISOString(),
     status: "paid",
+    emailSentAt: null,
   };
 }
 
@@ -311,6 +312,24 @@ async function addBookingFromSession(session, req) {
 
   const booking = bookingFromSession(session);
   store.bookings.unshift(booking);
+  await writeStore(store, req);
+  return booking;
+}
+
+async function getBookingById(id, req) {
+  const store = await readStore(req);
+  return (
+    store.bookings.find((booking) => booking.id === id || booking.stripeSessionId === id) || null
+  );
+}
+
+async function markBookingEmailed(id, req) {
+  const store = await readStore(req);
+  const booking = store.bookings.find(
+    (item) => item.id === id || item.stripeSessionId === id
+  );
+  if (!booking) return null;
+  booking.emailSentAt = new Date().toISOString();
   await writeStore(store, req);
   return booking;
 }
@@ -500,6 +519,8 @@ module.exports = {
   getMonthOverview,
   assertAvailability,
   addBookingFromSession,
+  getBookingById,
+  markBookingEmailed,
   listBookings,
   getCapacitySettings,
   updateCapacitySettings,

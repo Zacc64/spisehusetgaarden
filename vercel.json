@@ -1,10 +1,12 @@
 {
   "functions": {
     "api/admin.js": {
-      "includeFiles": "data/**"
+      "includeFiles": "data/**",
+      "maxDuration": 30
     },
     "api/booking.js": {
-      "includeFiles": "data/**"
+      "includeFiles": "data/**",
+      "maxDuration": 30
     },
     "api/menus.js": {
       "includeFiles": "data/**"

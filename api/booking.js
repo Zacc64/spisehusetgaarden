@@ -3,6 +3,7 @@ const { getSubpath } = require("./_lib/router");
 
 const ROUTES = {
   checkout: require("./_lib/handlers/booking-checkout"),
+  confirm: require("./_lib/handlers/booking-confirm"),
   webhook: require("./_lib/handlers/booking-webhook"),
   availability: require("./_lib/handlers/booking-availability"),
   config: require("./_lib/handlers/booking-config"),

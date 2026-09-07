@@ -1689,6 +1689,10 @@ body {
   color: var(--muted);
 }
 
+.admin-bookings-day-item__actions {
+  margin-top: 0.55rem;
+}
+
 .admin-bookings-toolbar {
   display: flex;
   flex-wrap: wrap;

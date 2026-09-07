@@ -346,6 +346,14 @@ guestsInput?.addEventListener("change", () => {
 const params = new URLSearchParams(window.location.search);
 if (params.get("booking") === "success") {
   showMessage(success);
+  const sessionId = params.get("session_id");
+  if (sessionId) {
+    fetch("/api/booking/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    }).catch(() => {});
+  }
   window.history.replaceState({}, "", `${window.location.pathname}#book`);
 } else if (params.get("booking") === "cancelled" && cancelled) {
   cancelled.hidden = false;

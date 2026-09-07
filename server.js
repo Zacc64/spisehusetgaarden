@@ -47,6 +47,10 @@ app.post("/api/booking/checkout", async (req, res) => {
   await require("./api/_lib/handlers/booking-checkout")(req, res);
 });
 
+app.post("/api/booking/confirm", async (req, res) => {
+  await require("./api/_lib/handlers/booking-confirm")(req, res);
+});
+
 app.get("/api/booking/availability", async (req, res) => {
   await require("./api/_lib/handlers/booking-availability")(req, res);
 });
@@ -57,6 +61,10 @@ app.get("/api/admin/bookings", async (req, res) => {
 
 app.post("/api/admin/sync-bookings", async (req, res) => {
   await require("./api/_lib/handlers/booking-sync")(req, res);
+});
+
+app.post("/api/admin/resend-booking-email", async (req, res) => {
+  await require("./api/_lib/handlers/resend-booking-email")(req, res);
 });
 
 app.get("/api/admin/blob-status", async (req, res) => {

@@ -1,6 +1,5 @@
 const { getStripe } = require("../stripe-client");
-const { sendBookingEmails } = require("../email");
-const { addBookingFromSession } = require("../booking-store");
+const { fulfillPaidCheckoutSession } = require("../fulfill-booking");
 const { sendJson, readRawBody } = require("../http");
 
 module.exports = async (req, res) => {
@@ -28,20 +27,12 @@ module.exports = async (req, res) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      if (session.payment_status === "paid") {
-        try {
-          await addBookingFromSession(session, req);
-        } catch (storeErr) {
-          console.error("Booking storage failed:", storeErr.message);
-          sendJson(res, 500, { error: storeErr.message || "Booking storage failed" });
-          return;
-        }
-
-        try {
-          await sendBookingEmails(session);
-        } catch (emailErr) {
-          console.error("Booking emails failed:", emailErr.message);
-        }
+      try {
+        await fulfillPaidCheckoutSession(session, req);
+      } catch (storeErr) {
+        console.error("Booking storage failed:", storeErr.message);
+        sendJson(res, 500, { error: storeErr.message || "Booking storage failed" });
+        return;
       }
     }
 

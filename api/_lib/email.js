@@ -1,8 +1,6 @@
 const nodemailer = require("nodemailer");
 const { formatBookingSummary, getNotifyEmail, getDepositDkk, parseGuestCount } = require("./booking");
 
-let smtpTransport = null;
-
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -24,54 +22,79 @@ function formatDanishDate(iso) {
 
 function getFromAddress() {
   return (
-    process.env.SMTP_FROM ||
+    smtpEnv("SMTP_FROM") ||
     process.env.RESEND_FROM_EMAIL ||
     "Spisehuset Gaarden <booking@spisehusetgaarden.dk>"
   );
 }
 
-function hasSmtpConfig() {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+function smtpEnv(name) {
+  return String(process.env[name] || "")
+    .trim()
+    .replace(/^["']|["']$/g, "");
 }
 
-function getSmtpTransport() {
-  if (!hasSmtpConfig()) return null;
-  if (smtpTransport) return smtpTransport;
+function hasSmtpConfig() {
+  return Boolean(smtpEnv("SMTP_HOST") && smtpEnv("SMTP_USER") && smtpEnv("SMTP_PASS"));
+}
 
-  const port = Number(process.env.SMTP_PORT || 587);
-  smtpTransport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+function createSmtpTransport() {
+  const port = Number(smtpEnv("SMTP_PORT") || 587);
+  return nodemailer.createTransport({
+    host: smtpEnv("SMTP_HOST"),
     port,
-    secure: port === 465 || process.env.SMTP_SECURE === "true",
+    secure: port === 465 || smtpEnv("SMTP_SECURE") === "true",
     requireTLS: port === 587,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpEnv("SMTP_USER"),
+      pass: smtpEnv("SMTP_PASS"),
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    tls: {
+      servername: smtpEnv("SMTP_HOST"),
+      minVersion: "TLSv1.2",
     },
   });
-  return smtpTransport;
 }
 
 function getMailboxAddress() {
-  return String(process.env.SMTP_USER || "").trim().toLowerCase();
+  return smtpEnv("SMTP_USER").toLowerCase();
 }
 
 async function sendViaSmtp({ to, subject, text, html }) {
-  const transport = getSmtpTransport();
+  const transport = createSmtpTransport();
   const mailbox = getMailboxAddress();
   const toAddress = String(Array.isArray(to) ? to[0] : to || "").trim().toLowerCase();
   const copyToMailbox = Boolean(mailbox && mailbox !== toAddress);
 
-  const result = await transport.sendMail({
-    from: getFromAddress(),
-    replyTo: process.env.SMTP_USER || "booking@spisehusetgaarden.dk",
-    to,
-    bcc: copyToMailbox ? mailbox : undefined,
-    subject,
-    text,
-    html,
-  });
-  return Boolean(result.messageId);
+  try {
+    const result = await transport.sendMail({
+      from: getFromAddress(),
+      replyTo: smtpEnv("SMTP_USER") || "booking@spisehusetgaarden.dk",
+      to,
+      bcc: copyToMailbox ? mailbox : undefined,
+      subject,
+      text,
+      html,
+    });
+
+    if (!result.messageId) {
+      throw new Error("SMTP accepted the connection but did not return a message id.");
+    }
+
+    console.log("Booking email sent", {
+      to: toAddress,
+      id: result.messageId,
+      response: result.response || "",
+    });
+    return true;
+  } catch (err) {
+    throw new Error(`SMTP send failed: ${err.message || "unknown error"}`);
+  } finally {
+    transport.close();
+  }
 }
 
 async function sendViaResend({ to, subject, text, html }) {
@@ -108,9 +131,67 @@ async function sendEmail(message) {
   if (process.env.RESEND_API_KEY) {
     return sendViaResend(message);
   }
-  console.warn("No SMTP or RESEND config — booking email not sent.");
-  return false;
+  throw new Error(
+    "Email is not configured. Set SMTP_HOST, SMTP_USER and SMTP_PASS in Vercel Production."
+  );
 }
+
+function bookingFromStripeSession(session) {
+  const metadata = session?.metadata || {};
+  return {
+    name: metadata.name || "",
+    phone: metadata.phone || "",
+    email: metadata.email || session?.customer_email || session?.customer_details?.email || "",
+    date: metadata.date || "",
+    time: metadata.time || "",
+    guests: metadata.guests || "",
+    message: metadata.message || "",
+  };
+}
+
+async function sendGuestConfirmation(booking, paymentId) {
+  if (!booking?.email) {
+    throw new Error("Booking email missing.");
+  }
+
+  const guestCopy = guestEmailCopy(booking, paymentId || booking.stripeSessionId || booking.id || "");
+  await sendEmail({
+    to: booking.email,
+    subject: `Booking bekræftet — ${formatDanishDate(booking.date)} kl. ${booking.time}`,
+    text: guestCopy.text,
+    html: guestCopy.html,
+  });
+}
+
+async function sendBookingEmails(session) {
+  const booking = bookingFromStripeSession(session);
+
+  if (!booking.email) {
+    throw new Error("Booking email missing in Stripe session metadata.");
+  }
+
+  const summary = formatBookingSummary(booking);
+  const paymentId = session.payment_intent || session.id;
+  await sendGuestConfirmation(booking, paymentId);
+
+  const notifyEmail = getNotifyEmail();
+  if (!notifyEmail) return;
+
+  await sendEmail({
+    to: notifyEmail,
+    subject: `Ny betalt booking — ${booking.name} · ${booking.date} kl. ${booking.time}`,
+    text:
+      `Ny betalt bordbooking:\n\n` +
+      `${summary}\n\n` +
+      `Stripe session: ${session.id}`,
+    html:
+      `<p><strong>Ny betalt bordbooking</strong></p>` +
+      `<pre style="font-family:inherit;white-space:pre-wrap">${escapeHtml(summary)}</pre>` +
+      `<p>Stripe session: ${escapeHtml(session.id)}</p>`,
+  });
+}
+
+module.exports = { sendBookingEmails, sendGuestConfirmation, bookingFromStripeSession };
 
 function guestEmailCopy(booking, paymentId) {
   const dateLabel = formatDanishDate(booking.date);
@@ -159,49 +240,3 @@ function guestEmailCopy(booking, paymentId) {
 
   return { text, html };
 }
-
-async function sendBookingEmails(session) {
-  const metadata = session.metadata || {};
-  const booking = {
-    name: metadata.name || "",
-    phone: metadata.phone || "",
-    email: metadata.email || session.customer_email || session.customer_details?.email || "",
-    date: metadata.date || "",
-    time: metadata.time || "",
-    guests: metadata.guests || "",
-    message: metadata.message || "",
-  };
-
-  if (!booking.email) {
-    throw new Error("Booking email missing in Stripe session metadata.");
-  }
-
-  const summary = formatBookingSummary(booking);
-  const paymentId = session.payment_intent || session.id;
-  const guestCopy = guestEmailCopy(booking, paymentId);
-
-  await sendEmail({
-    to: booking.email,
-    subject: `Booking bekræftet — ${formatDanishDate(booking.date)} kl. ${booking.time}`,
-    text: guestCopy.text,
-    html: guestCopy.html,
-  });
-
-  const notifyEmail = getNotifyEmail();
-  if (!notifyEmail) return;
-
-  await sendEmail({
-    to: notifyEmail,
-    subject: `Ny betalt booking — ${booking.name} · ${booking.date} kl. ${booking.time}`,
-    text:
-      `Ny betalt bordbooking:\n\n` +
-      `${summary}\n\n` +
-      `Stripe session: ${session.id}`,
-    html:
-      `<p><strong>Ny betalt bordbooking</strong></p>` +
-      `<pre style="font-family:inherit;white-space:pre-wrap">${escapeHtml(summary)}</pre>` +
-      `<p>Stripe session: ${escapeHtml(session.id)}</p>`,
-  });
-}
-
-module.exports = { sendBookingEmails };

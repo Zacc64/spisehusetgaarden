@@ -157,9 +157,15 @@ function setActionFeedback(message, type = "info") {
 
 function buildSyncMessage(data) {
   if (data.added > 0) {
+    const emailNote =
+      data.emailErrors > 0
+        ? ` ${data.emailed || 0} bekræftelse${(data.emailed || 0) === 1 ? "" : "r"} sendt, ${data.emailErrors} mail fejlede.`
+        : data.emailed
+          ? ` Bekræftelse sendt til ${data.emailed} gæst${data.emailed === 1 ? "" : "er"}.`
+          : "";
     return {
-      type: "success",
-      message: `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.`,
+      type: data.emailErrors > 0 ? "error" : "success",
+      message: `${data.added} booking${data.added === 1 ? "" : "er"} hentet fra Stripe.${emailNote}`,
     };
   }
 
@@ -218,6 +224,39 @@ async function syncBookingsFromStripe() {
   } finally {
     button.disabled = false;
     button.textContent = defaultLabel;
+  }
+}
+
+async function resendBookingEmail(id, button) {
+  if (!id) return;
+
+  const defaultLabel = button?.textContent || "Send bekræftelse";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Sender…";
+  }
+
+  try {
+    const res = await fetch("/api/admin/resend-booking-email", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || "Kunne ikke sende bekræftelse.");
+    }
+
+    const booking = allBookings.find((item) => item.id === id || item.stripeSessionId === id);
+    if (booking) booking.emailSentAt = new Date().toISOString();
+    refreshBookingsView();
+    setStatus(`Bekræftelse sendt til ${data.email || "gæsten"}.`, "success");
+  } catch (err) {
+    setStatus(err.message || "Kunne ikke sende bekræftelse.", "error");
+    if (button) {
+      button.disabled = false;
+      button.textContent = defaultLabel;
+    }
   }
 }
 
@@ -592,6 +631,11 @@ function renderBookingCards(container, bookings) {
         </div>
         <div class="admin-bookings-day-item__meta">
           ${escapeHtml(booking.phone || "—")}${booking.email ? ` · ${escapeHtml(booking.email)}` : ""}
+        </div>
+        <div class="admin-bookings-day-item__actions">
+          <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" data-resend-email="${escapeHtml(booking.id || booking.stripeSessionId || "")}">
+            ${booking.emailSentAt ? "Send bekræftelse igen" : "Send bekræftelse"}
+          </button>
         </div>
       </div>
     `;
@@ -1168,6 +1212,13 @@ async function loadBookingsAdmin(options = {}) {
 function wireBookingsPanel() {
   const panel = document.getElementById("bookings-panel");
   if (!panel) return;
+
+  panel.addEventListener("click", (event) => {
+    const resendBtn = event.target.closest("[data-resend-email]");
+    if (!resendBtn) return;
+    event.preventDefault();
+    resendBookingEmail(resendBtn.dataset.resendEmail, resendBtn);
+  });
 
   panel.querySelectorAll("form").forEach((form) => {
     form.addEventListener("submit", (event) => {

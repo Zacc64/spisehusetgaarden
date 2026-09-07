@@ -106,7 +106,7 @@ function getBookingRedirectUrls(req) {
   const siteUrl = getSiteUrl(req);
   return {
     siteUrl,
-    successUrl: `${siteUrl}/?booking=success`,
+    successUrl: `${siteUrl}/?booking=success&session_id={CHECKOUT_SESSION_ID}`,
     cancelUrl: `${siteUrl}/?booking=cancelled`,
   };
 }
