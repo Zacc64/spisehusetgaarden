@@ -151,6 +151,7 @@ function wireSlideshow(root) {
       dot.classList.toggle("is-active", active);
       dot.setAttribute("aria-selected", String(active));
     });
+    fitSlideFrame(root);
   }
 
   function go(index) {
@@ -202,6 +203,46 @@ function wireSlideshow(root) {
   startAutoplay();
 }
 
+function fitSlideFrame(root) {
+  const embed = root.classList?.contains("community-post__embed")
+    ? root
+    : root.closest(".community-post__embed");
+  if (!embed) return;
+
+  const img = root.querySelector(".community-slideshow__slide:not([hidden]) .community-post__media--portrait img");
+  const wide = window.matchMedia("(min-width: 800px)").matches;
+  if (!img || !wide) {
+    embed.classList.remove("community-post__embed--framed");
+    embed.style.removeProperty("--slide-frame");
+    return;
+  }
+
+  embed.classList.remove("community-post__embed--framed");
+  embed.style.removeProperty("--slide-frame");
+  const width = Math.ceil(img.getBoundingClientRect().width);
+  if (!width) return;
+  embed.style.setProperty("--slide-frame", `${width}px`);
+  embed.classList.add("community-post__embed--framed");
+}
+
+function markMediaOrientation(root) {
+  root.querySelectorAll(".community-post__media img").forEach((img) => {
+    const apply = () => {
+      const media = img.closest(".community-post__media");
+      if (!media || !img.naturalWidth || !img.naturalHeight) return;
+      media.classList.toggle("community-post__media--portrait", img.naturalHeight >= img.naturalWidth);
+      fitSlideFrame(root);
+    };
+
+    if (img.complete) apply();
+    else img.addEventListener("load", apply, { once: true });
+  });
+}
+
+window.addEventListener("resize", () => {
+  document.querySelectorAll(".community-post__embed").forEach((embed) => fitSlideFrame(embed));
+});
+
 async function initCommunityPost(containerSelector) {
   const container = document.querySelector(containerSelector);
   if (!container) return;
@@ -224,6 +265,7 @@ async function initCommunityPost(containerSelector) {
     }
 
     container.innerHTML = renderSlideshow(slides, post.updatedAt);
+    markMediaOrientation(container);
     wireSlideshow(container);
   } catch {
     container.innerHTML = renderEmpty();

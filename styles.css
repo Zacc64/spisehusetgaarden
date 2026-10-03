@@ -777,6 +777,48 @@ button.hero__cta {
   object-position: center;
 }
 
+.community-post__media--portrait {
+  aspect-ratio: auto;
+  width: max-content;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  padding: 0;
+  background: transparent;
+}
+
+.community-post__media--portrait img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(72vh, 40rem);
+  object-fit: contain;
+}
+
+.community-post__card:has(.community-post__media--portrait) {
+  width: max-content;
+  max-width: 100%;
+}
+
+@media (min-width: 800px) {
+  .community-post__embed--framed {
+    width: min(100%, var(--slide-frame, 36rem));
+    margin-inline: auto;
+  }
+
+  .community-post__embed--framed .community-post__card,
+  .community-post__embed--framed .community-post__media--portrait,
+  .community-post__embed--framed .community-post__media--portrait img {
+    width: 100%;
+    max-width: none;
+  }
+
+  .community-post__embed--framed .community-post__content {
+    min-width: 0;
+  }
+}
+
 .community-post__content {
   display: flex;
   flex-direction: column;
