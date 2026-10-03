@@ -1658,6 +1658,43 @@ body {
   min-width: 0;
 }
 
+.admin-confirm {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 0;
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+.admin-confirm::backdrop {
+  background: rgba(20, 28, 20, 0.45);
+}
+
+.admin-confirm__inner {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.35rem 1.35rem 1.2rem;
+}
+
+.admin-confirm__title {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--green-deep);
+}
+
+.admin-confirm__text {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.admin-confirm__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
 .admin-day-modal {
   width: min(34rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);

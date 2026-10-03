@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/admin.css?v=studio-4">
+  <link rel="stylesheet" href="styles/admin.css?v=cancel-confirm">
 </head>
 <body>
   <div class="admin" id="admin-app">
@@ -399,9 +399,21 @@
     </section>
   </div>
 
+  <dialog class="admin-confirm" id="cancel-booking-dialog">
+    <div class="admin-confirm__inner">
+      <p class="admin-eyebrow">Aflys booking</p>
+      <h3 class="admin-confirm__title">Er du sikker?</h3>
+      <p class="admin-confirm__text" id="cancel-booking-dialog-text"></p>
+      <footer class="admin-confirm__footer">
+        <button type="button" class="admin-btn admin-btn--ghost" id="cancel-booking-dismiss">Annuller</button>
+        <button type="button" class="admin-btn" id="cancel-booking-confirm">Ja, aflys</button>
+      </footer>
+    </div>
+  </dialog>
+
   <script src="js/admin-image-upload.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/admin-community-post.js"></script>
-  <script src="js/admin-bookings.js"></script>
+  <script src="js/admin-bookings.js?v=cancel-confirm"></script>
 </body>
 </html>

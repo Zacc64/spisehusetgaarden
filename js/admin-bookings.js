@@ -261,9 +261,7 @@ async function cancelBooking(id, button) {
 
   const amount = getPaidAmountDkk(booking);
   const amountLabel = amount ? `${amount.toLocaleString("da-DK")} kr.` : "depositummet";
-  const confirmed = window.confirm(
-    `Aflys booking for ${booking.name || "gæsten"} den ${formatDateLabel(booking.date)} ${formatArrivalTime(booking)} og refundér ${amountLabel} via Stripe?`
-  );
+  const confirmed = await askToCancelBooking(booking, amountLabel);
   if (!confirmed) return;
 
   const defaultLabel = button?.textContent || "Aflys";
@@ -301,6 +299,42 @@ async function cancelBooking(id, button) {
       button.textContent = defaultLabel;
     }
   }
+}
+
+function askToCancelBooking(booking, amountLabel) {
+  const dialog = document.getElementById("cancel-booking-dialog");
+  const text = document.getElementById("cancel-booking-dialog-text");
+  const confirmBtn = document.getElementById("cancel-booking-confirm");
+  const dismissBtn = document.getElementById("cancel-booking-dismiss");
+  const message = `Aflys booking for ${booking.name || "gæsten"} den ${formatDateLabel(booking.date)} ${formatArrivalTime(booking)} og refundér ${amountLabel} via Stripe?`;
+
+  if (!dialog || typeof dialog.showModal !== "function") {
+    return Promise.resolve(window.confirm(message));
+  }
+
+  if (text) text.textContent = message;
+
+  return new Promise((resolve) => {
+    const finish = (accepted) => {
+      confirmBtn?.removeEventListener("click", onConfirm);
+      dismissBtn?.removeEventListener("click", onDismiss);
+      dialog.removeEventListener("cancel", onCancel);
+      if (dialog.open) dialog.close();
+      resolve(accepted);
+    };
+    const onConfirm = () => finish(true);
+    const onDismiss = () => finish(false);
+    const onCancel = (event) => {
+      event.preventDefault();
+      finish(false);
+    };
+
+    confirmBtn?.addEventListener("click", onConfirm);
+    dismissBtn?.addEventListener("click", onDismiss);
+    dialog.addEventListener("cancel", onCancel);
+    dialog.showModal();
+    dismissBtn?.focus();
+  });
 }
 
 function setStatus(message, type = "success") {
