@@ -84,5 +84,52 @@ async function uploadAdminImage(file, kind, getAuthHeaders) {
   return res.json();
 }
 
+function filenameFromImageUrl(url, fallback) {
+  try {
+    const path = new URL(url, window.location.origin).searchParams.get("path");
+    if (path) {
+      const name = decodeURIComponent(path).split("/").pop();
+      if (name) return name;
+    }
+  } catch {
+    // Keep the fallback name.
+  }
+  return fallback || "billede.jpg";
+}
+
+async function downloadAdminImage(url, filename) {
+  if (!url) return;
+  const name = filename || filenameFromImageUrl(url, "billede.jpg");
+
+  if (String(url).startsWith("blob:")) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    link.click();
+    return;
+  }
+
+  const downloadUrl = String(url).startsWith("/")
+    ? `${url}${url.includes("?") ? "&" : "?"}download=1`
+    : url;
+
+  try {
+    const res = await fetch(downloadUrl);
+    if (!res.ok) throw new Error("Download fejlede");
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+  } catch {
+    window.open(url, "_blank", "noopener");
+  }
+}
+
 window.uploadAdminImage = uploadAdminImage;
 window.prepareImageForUpload = prepareImageForUpload;
+window.downloadAdminImage = downloadAdminImage;

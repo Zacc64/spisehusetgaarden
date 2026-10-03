@@ -9,7 +9,8 @@ module.exports = async (req, res) => {
     }
 
     const query = String(req.url || "").split("?")[1] || "";
-    const pathname = new URLSearchParams(query).get("path");
+    const params = new URLSearchParams(query);
+    const pathname = params.get("path");
 
     if (!pathname || !pathname.startsWith("menus/")) {
       res.statusCode = 400;
@@ -27,6 +28,10 @@ module.exports = async (req, res) => {
     res.statusCode = 200;
     res.setHeader("Content-Type", file.contentType || "application/octet-stream");
     res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
+    if (params.get("download") === "1") {
+      const filename = String(pathname.split("/").pop() || "billede").replace(/["\r\n]/g, "");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    }
     res.end(file.buffer);
   } catch (err) {
     res.statusCode = 500;

@@ -118,14 +118,20 @@ function withCacheBust(url, version) {
 function showPreview(type, url, version) {
   const form = getForm(type);
   const preview = form.querySelector("[data-image-preview]");
+  const empty = form.querySelector("[data-image-empty]");
+  const download = form.querySelector("[data-download-image]");
   const img = form.querySelector("[data-preview-img]");
   if (!url) {
     preview.hidden = true;
+    if (empty) empty.hidden = false;
+    if (download) download.hidden = true;
     img.removeAttribute("src");
     return;
   }
   img.src = withCacheBust(url, version);
   preview.hidden = false;
+  if (empty) empty.hidden = true;
+  if (download) download.hidden = false;
 }
 
 async function loadMenu(type) {
@@ -158,6 +164,14 @@ function wireForm(type) {
     const file = e.target.files?.[0];
     menuState[type].pendingFile = file || null;
     if (file) showPreview(type, URL.createObjectURL(file));
+  });
+
+  form.querySelector("[data-download-image]")?.addEventListener("click", () => {
+    const pending = menuState[type].pendingFile;
+    const url = pending ? URL.createObjectURL(pending) : menuState[type].imageUrl;
+    if (!url || typeof window.downloadAdminImage !== "function") return;
+    const fallback = type === "cafe" ? "frokostmenu.jpg" : "aabningstider.jpg";
+    window.downloadAdminImage(url, pending?.name || fallback);
   });
 
   form.addEventListener("submit", async (e) => {

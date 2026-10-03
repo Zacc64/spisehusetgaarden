@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/admin.css?v=scroll-fix-2">
+  <link rel="stylesheet" href="styles/admin.css?v=studio-4">
 </head>
 <body>
   <div class="admin" id="admin-app">
@@ -29,101 +29,127 @@
     </section>
 
     <section class="admin-shell" id="editor-panel" hidden>
-      <header class="admin-topbar">
-        <div class="admin-topbar__brand">
+      <aside class="admin-sidebar">
+        <div class="admin-sidebar__brand">
           <p class="admin-eyebrow">Spisehuset Gaarden</p>
-          <h1 class="admin-topbar__title">Admin</h1>
+          <p class="admin-sidebar__title">Admin</p>
         </div>
 
         <nav class="admin-nav" aria-label="Vælg sektion">
-          <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">Café</button>
-          <button type="button" class="admin-nav__item" data-tab="arrangementer">Åbningstider</button>
-          <button type="button" class="admin-nav__item" data-tab="faellesskab">Fællesskab</button>
-          <button type="button" class="admin-nav__item" data-tab="bookings">Bookinger</button>
+          <button type="button" class="admin-nav__item admin-nav__item--active" data-tab="cafe">
+            <span class="admin-nav__label">Café</span>
+            <span class="admin-nav__hint">Frokostmenu</span>
+          </button>
+          <button type="button" class="admin-nav__item" data-tab="arrangementer">
+            <span class="admin-nav__label">Åbningstider</span>
+            <span class="admin-nav__hint">Månedens plan</span>
+          </button>
+          <button type="button" class="admin-nav__item" data-tab="faellesskab">
+            <span class="admin-nav__label">Fællesskab</span>
+            <span class="admin-nav__hint">Slides på forsiden</span>
+          </button>
+          <button type="button" class="admin-nav__item" data-tab="bookings">
+            <span class="admin-nav__label">Bookinger</span>
+            <span class="admin-nav__hint">Kalender og kapacitet</span>
+          </button>
         </nav>
 
-        <div class="admin-topbar__actions">
-          <a class="admin-link" href="/" target="_blank" rel="noopener">Se siden ↗</a>
+        <div class="admin-sidebar__foot">
+          <a class="admin-link" href="/" target="_blank" rel="noopener">Se siden</a>
           <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" id="logout-btn">Log ud</button>
         </div>
-      </header>
+      </aside>
 
       <main class="admin-main">
-        <form class="admin-panel admin-panel--active" id="cafe-menu-form" data-menu="cafe">
-          <header class="admin-panel__header">
-            <p class="admin-eyebrow">Café</p>
-            <h2>Frokostmenu</h2>
-            <p class="admin-panel__desc">Vises når gæster klikker <strong>Café</strong> i menuen.</p>
+        <form class="admin-panel admin-panel--studio admin-panel--active" id="cafe-menu-form" data-menu="cafe">
+          <header class="admin-studio-head">
+            <div>
+              <p class="admin-eyebrow">Café</p>
+              <h2>Frokostmenu</h2>
+              <p class="admin-panel__desc">Billedet vises, når gæster klikker <strong>Café</strong>.</p>
+            </div>
+            <div class="admin-studio-head__actions">
+              <p class="admin-error" data-save-error hidden></p>
+              <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
+              <button type="submit" class="admin-btn">Gem</button>
+            </div>
           </header>
 
-          <div class="admin-card-block">
-            <label class="admin-field">
-              <span>Popup-billede</span>
-              <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
-            </label>
-            <div class="admin-preview" data-image-preview hidden>
-              <img data-preview-img alt="Forhåndsvisning">
-            </div>
+          <div class="admin-media-studio">
+            <figure class="admin-media-stage">
+              <div class="admin-preview admin-preview--stage" data-image-preview hidden>
+                <img data-preview-img alt="Frokostmenu">
+              </div>
+              <div class="admin-media-empty" data-image-empty>
+                <strong>Intet billede endnu</strong>
+                <span>Upload menuen, så den vises i popuppen.</span>
+              </div>
+            </figure>
+            <aside class="admin-media-tools">
+              <label class="admin-field">
+                <span>Udskift billede</span>
+                <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+              </label>
+              <p class="admin-muted">JPG, PNG eller WebP. Store billeder komprimeres, når de gemmes.</p>
+              <button type="button" class="admin-btn admin-btn--ghost" data-download-image hidden>Download billede</button>
+            </aside>
           </div>
-
-          <footer class="admin-panel__footer">
-            <p class="admin-error" data-save-error hidden></p>
-            <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem café-menu</button>
-          </footer>
         </form>
 
-        <form class="admin-panel" id="arrangementer-menu-form" data-menu="arrangementer" hidden>
-          <header class="admin-panel__header">
-            <p class="admin-eyebrow">Åbningstider</p>
-            <h2>Åbningstider</h2>
-            <p class="admin-panel__desc">Vises når gæster klikker <strong>Åbningstider</strong> i hero-sektionen.</p>
+        <form class="admin-panel admin-panel--studio" id="arrangementer-menu-form" data-menu="arrangementer" hidden>
+          <header class="admin-studio-head">
+            <div>
+              <p class="admin-eyebrow">Åbningstider</p>
+              <h2>Åbningstider</h2>
+              <p class="admin-panel__desc">Billedet vises, når gæster klikker <strong>Åbningstider</strong>.</p>
+            </div>
+            <div class="admin-studio-head__actions">
+              <p class="admin-error" data-save-error hidden></p>
+              <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
+              <button type="submit" class="admin-btn">Gem</button>
+            </div>
           </header>
 
-          <div class="admin-card-block">
-            <label class="admin-field">
-              <span>Popup-billede</span>
-              <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
-            </label>
-            <div class="admin-preview" data-image-preview hidden>
-              <img data-preview-img alt="Forhåndsvisning">
-            </div>
+          <div class="admin-media-studio">
+            <figure class="admin-media-stage">
+              <div class="admin-preview admin-preview--stage" data-image-preview hidden>
+                <img data-preview-img alt="Åbningstider">
+              </div>
+              <div class="admin-media-empty" data-image-empty>
+                <strong>Intet billede endnu</strong>
+                <span>Upload månedsplanen, så den vises i popuppen.</span>
+              </div>
+            </figure>
+            <aside class="admin-media-tools">
+              <label class="admin-field">
+                <span>Udskift billede</span>
+                <input type="file" data-field="image-file" accept="image/jpeg,image/png,image/webp,image/gif">
+              </label>
+              <p class="admin-muted">JPG, PNG eller WebP. Store billeder komprimeres, når de gemmes.</p>
+              <button type="button" class="admin-btn admin-btn--ghost" data-download-image hidden>Download billede</button>
+            </aside>
           </div>
-
-          <footer class="admin-panel__footer">
-            <p class="admin-error" data-save-error hidden></p>
-            <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-            <button type="submit" class="admin-btn">Gem åbningstider</button>
-          </footer>
         </form>
 
-        <form class="admin-panel admin-panel--slideshow" id="community-post-form" data-panel="faellesskab" hidden>
-          <header class="admin-panel__header">
-            <p class="admin-eyebrow">Fællesskab</p>
-            <h2>Slideshow på forsiden</h2>
-            <p class="admin-panel__desc">Hvert slide vises i <strong>Fællesskab</strong>. Tilføj flere med <strong>+ Tilføj slide</strong> eller den grønne knap nederst.</p>
+        <form class="admin-panel admin-panel--studio" id="community-post-form" data-panel="faellesskab" hidden>
+          <header class="admin-studio-head">
+            <div>
+              <p class="admin-eyebrow">Fællesskab</p>
+              <h2>Slides på forsiden</h2>
+              <p class="admin-panel__desc">Vælg et slide til venstre. Gæster ser dem i <strong>Fællesskab</strong>.</p>
+            </div>
+            <div class="admin-studio-head__actions">
+              <p class="admin-error" data-save-error hidden></p>
+              <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
+              <button type="button" class="admin-btn admin-btn--ghost" id="community-add-slide">Nyt slide</button>
+              <button type="submit" class="admin-btn">Gem</button>
+            </div>
           </header>
 
-          <div class="admin-slideshow-bar">
-            <p class="admin-slideshow-bar__count" id="community-slide-count">1 slide</p>
-            <div class="admin-slideshow-bar__actions">
-              <button type="button" class="admin-btn admin-btn--add" id="community-add-slide">+ Tilføj slide</button>
-              <button type="submit" class="admin-btn">Gem slideshow</button>
-            </div>
+          <div class="admin-slideshow-studio">
+            <aside class="admin-rail" id="community-rail" aria-label="Slides"></aside>
+            <div id="community-slides"></div>
           </div>
-
-          <div class="admin-slides" id="community-slides"></div>
-
-          <button type="button" class="admin-add-slide" data-add-slide aria-label="Tilføj et slide mere">
-            <span class="admin-add-slide__plus">+</span>
-            <strong>Tilføj et slide mere</strong>
-            <span>Nyt billede og tekst til slideshowet</span>
-          </button>
-
-          <footer class="admin-panel__footer">
-            <p class="admin-error" data-save-error hidden></p>
-            <p class="admin-success" data-save-success hidden>Gemt — ændringerne er live.</p>
-          </footer>
         </form>
 
         <section class="admin-panel admin-panel--bookings" id="bookings-panel" data-panel="bookings" hidden>
