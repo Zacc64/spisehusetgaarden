@@ -127,18 +127,21 @@ function wireSlideshow(root) {
   let current = 0;
   let touchStartX = null;
   let timer = null;
-  const intervalMs = 6000;
+  const intervalMs = 10000;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function stopAutoplay() {
-    if (timer) window.clearInterval(timer);
+    if (timer) window.clearTimeout(timer);
     timer = null;
   }
 
   function startAutoplay() {
     stopAutoplay();
     if (reduceMotion || document.hidden) return;
-    timer = window.setInterval(() => show(current + 1), intervalMs);
+    timer = window.setTimeout(() => {
+      show(current + 1);
+      startAutoplay();
+    }, intervalMs);
   }
 
   function show(index) {
@@ -189,12 +192,6 @@ function wireSlideshow(root) {
     go(delta < 0 ? current + 1 : current - 1);
   });
 
-  slideshow.addEventListener("mouseenter", stopAutoplay);
-  slideshow.addEventListener("mouseleave", startAutoplay);
-  slideshow.addEventListener("focusin", stopAutoplay);
-  slideshow.addEventListener("focusout", (event) => {
-    if (!slideshow.contains(event.relatedTarget)) startAutoplay();
-  });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) stopAutoplay();
     else startAutoplay();
