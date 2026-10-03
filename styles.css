@@ -425,25 +425,26 @@ button.hero__cta {
   z-index: -1;
 }
 
-#faellesskab::before,
-#faellesskab::after {
-  z-index: 0;
-}
-
 #faellesskab::before {
-  top: 8%;
-  right: -8%;
-  width: min(32rem, 55vw);
-  height: min(32rem, 55vw);
-  background: radial-gradient(circle, rgba(214, 227, 186, 0.22) 0%, transparent 68%);
+  z-index: 0;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 14, 10, 0.82) 0%,
+    rgba(8, 14, 10, 0.55) 18%,
+    rgba(8, 14, 10, 0.12) 42%,
+    rgba(8, 14, 10, 0) 50%,
+    rgba(8, 14, 10, 0.12) 58%,
+    rgba(8, 14, 10, 0.55) 82%,
+    rgba(8, 14, 10, 0.82) 100%
+  );
 }
 
 #faellesskab::after {
-  bottom: 5%;
-  left: -12%;
-  width: min(24rem, 45vw);
-  height: min(24rem, 45vw);
-  background: radial-gradient(circle, rgba(196, 214, 168, 0.2) 0%, transparent 70%);
+  content: none;
 }
 
 #faellesskab .container {
@@ -515,13 +516,11 @@ button.hero__cta {
   position: relative;
   overflow: hidden;
   color: var(--white);
-  background-color: #2f4535;
-  background-image:
-    radial-gradient(ellipse 90% 70% at 8% 12%, rgba(168, 196, 154, 0.28), transparent 52%),
-    radial-gradient(ellipse 70% 55% at 92% 8%, rgba(214, 227, 186, 0.16), transparent 48%),
-    radial-gradient(ellipse 80% 60% at 78% 92%, rgba(109, 148, 112, 0.32), transparent 58%),
-    radial-gradient(ellipse 50% 40% at 30% 78%, rgba(196, 214, 168, 0.12), transparent 55%);
-  background-blend-mode: screen, screen, multiply, screen;
+  background-color: #1c2820;
+  background-image: url("assets/images/faellesskab-bg.jpg");
+  background-size: cover;
+  background-position: center 42%;
+  background-repeat: no-repeat;
 }
 
 #faellesskab .section-label,
