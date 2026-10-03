@@ -425,24 +425,7 @@ button.hero__cta {
   z-index: -1;
 }
 
-#faellesskab::before {
-  z-index: 0;
-  inset: 0;
-  width: auto;
-  height: auto;
-  border-radius: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(8, 14, 10, 0.82) 0%,
-    rgba(8, 14, 10, 0.55) 18%,
-    rgba(8, 14, 10, 0.12) 42%,
-    rgba(8, 14, 10, 0) 50%,
-    rgba(8, 14, 10, 0.12) 58%,
-    rgba(8, 14, 10, 0.55) 82%,
-    rgba(8, 14, 10, 0.82) 100%
-  );
-}
-
+#faellesskab::before,
 #faellesskab::after {
   content: none;
 }
@@ -515,31 +498,15 @@ button.hero__cta {
 #faellesskab {
   position: relative;
   overflow: hidden;
-  color: var(--white);
-  background-color: #1c2820;
-  background-image: url("assets/images/faellesskab-bg.jpg");
-  background-size: cover;
-  background-position: center 42%;
-  background-repeat: no-repeat;
+  color: var(--ink);
+  background: #fff;
 }
 
 #faellesskab .section-label,
 #faellesskab h2,
 #faellesskab .lead,
 #faellesskab .community-post__link {
-  color: var(--white);
-}
-
-#faellesskab .section-label {
-  opacity: 0.78;
-}
-
-#faellesskab .lead {
-  opacity: 0.9;
-}
-
-#faellesskab .community-post__link:hover {
-  opacity: 0.75;
+  color: var(--ink);
 }
 
 .section--tight {
@@ -662,9 +629,9 @@ button.hero__cta {
   overflow: hidden;
   width: 100%;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: var(--white);
-  box-shadow: 0 18px 50px rgba(20, 32, 24, 0.28);
+  border: 1px solid rgba(20, 20, 20, 0.1);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(20, 20, 20, 0.08);
 }
 
 .community-slideshow {
