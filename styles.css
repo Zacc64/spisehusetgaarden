@@ -1088,6 +1088,14 @@ button.hero__cta {
   max-width: 36rem;
 }
 
+.booking__intro .lead + .lead {
+  margin-top: 0.9rem;
+}
+
+.booking__intro .lead + .section-label {
+  margin-top: 1.25rem;
+}
+
 .booking-event {
   margin-top: 1.6rem;
   padding: 1.2rem 1.3rem 1.25rem;
