@@ -734,7 +734,7 @@ body {
 
 .admin-bookings-month-list__item {
   display: grid;
-  grid-template-columns: 7.5rem 3.2rem 1fr auto;
+  grid-template-columns: 7.2rem 3.2rem minmax(0, 1fr) auto auto;
   gap: 0.65rem;
   align-items: center;
   padding: 0.42rem 0;
@@ -775,6 +775,33 @@ body {
   color: var(--muted);
   font-size: 0.75rem;
   white-space: nowrap;
+}
+
+.admin-bookings-month-list__item--cancelled {
+  opacity: 0.62;
+}
+
+.admin-bookings-month-list__item--cancelled .admin-bookings-month-list__name {
+  text-decoration: line-through;
+}
+
+.admin-bookings-month-list__cancel {
+  padding: 0.35rem 0.65rem;
+}
+
+.admin-bookings-day-item--cancelled {
+  opacity: 0.72;
+}
+
+.admin-bookings-day-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-email-status--cancelled {
+  background: #f3e6d8;
+  color: #7a4a1e;
 }
 
 @media (min-width: 1100px) {

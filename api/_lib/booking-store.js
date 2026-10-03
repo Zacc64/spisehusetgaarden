@@ -298,6 +298,7 @@ function bookingFromSession(session) {
     guestCount: parseGuestCount(guests),
     message: metadata.message || "",
     amountDkk: getPaidAmountDkk(session, guests),
+    paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : "",
     paidAt: new Date().toISOString(),
     status: "paid",
     emailSentAt: null,
@@ -330,6 +331,23 @@ async function markBookingEmailed(id, req) {
   );
   if (!booking) return null;
   booking.emailSentAt = new Date().toISOString();
+  await writeStore(store, req);
+  return booking;
+}
+
+async function markBookingCancelled(id, refund, req) {
+  const store = await readStore(req);
+  const booking = store.bookings.find(
+    (item) => item.id === id || item.stripeSessionId === id
+  );
+  if (!booking) return null;
+
+  booking.status = "cancelled";
+  booking.cancelledAt = booking.cancelledAt || new Date().toISOString();
+  booking.refundId = refund?.id || booking.refundId || "";
+  booking.refundDkk = Number(refund?.amountDkk) || booking.refundDkk || booking.amountDkk || 0;
+  booking.refundedAt = booking.refundId ? booking.refundedAt || new Date().toISOString() : null;
+  if (refund?.paymentIntentId) booking.paymentIntentId = refund.paymentIntentId;
   await writeStore(store, req);
   return booking;
 }
@@ -521,6 +539,7 @@ module.exports = {
   addBookingFromSession,
   getBookingById,
   markBookingEmailed,
+  markBookingCancelled,
   listBookings,
   getCapacitySettings,
   updateCapacitySettings,

@@ -63,7 +63,7 @@
         </div>
       </div>
 
-      <div class="community-post__embed" id="community-post" aria-live="polite"></div>
+      <div class="community-post__embed" id="community-post"></div>
     </div>
   </section>
 
@@ -254,9 +254,23 @@
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <p class="site-footer__brand">Spisehuset Gaarden · Kulturhuset Risbjerggaard · Hvidovre</p>
+      <nav class="site-footer__links" aria-label="Juridisk">
+        <a href="vilkaar.html">Bookingvilkår</a>
+        <a href="privatliv.html">Privatliv</a>
+        <a href="cookies.html">Cookies</a>
+      </nav>
     </div>
   </footer>
 
+  <div class="cookie-notice" id="cookie-notice" hidden>
+    <p>Vi bruger kun nødvendige cookies til booking og betaling via Stripe.</p>
+    <div class="cookie-notice__actions">
+      <a href="cookies.html">Læs mere</a>
+      <button type="button" id="cookie-notice-ok">OK</button>
+    </div>
+  </div>
+
+  <script src="js/cookie-notice.js"></script>
   <script src="js/menu-popup.js"></script>
   <script src="js/booking.js"></script>
   <script src="js/community-post.js"></script>

@@ -254,6 +254,55 @@ async function resendBookingEmail(id, button) {
   }
 }
 
+async function cancelBooking(id, button) {
+  if (!id) return;
+  const booking = allBookings.find((item) => item.id === id || item.stripeSessionId === id);
+  if (!booking || isCancelledBooking(booking)) return;
+
+  const amount = getPaidAmountDkk(booking);
+  const amountLabel = amount ? `${amount.toLocaleString("da-DK")} kr.` : "depositummet";
+  const confirmed = window.confirm(
+    `Aflys booking for ${booking.name || "gæsten"} den ${formatDateLabel(booking.date)} ${formatArrivalTime(booking)} og refundér ${amountLabel} via Stripe?`
+  );
+  if (!confirmed) return;
+
+  const defaultLabel = button?.textContent || "Aflys";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Refunderer…";
+  }
+
+  try {
+    const res = await fetch("/api/admin/cancel-booking", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || "Kunne ikke aflyse bookingen.");
+    }
+
+    const index = allBookings.findIndex((item) => item.id === id || item.stripeSessionId === id);
+    if (index >= 0 && data.booking) allBookings[index] = data.booking;
+    refreshBookingsView();
+
+    const refundLabel = data.refundDkk ? `${Number(data.refundDkk).toLocaleString("da-DK")} kr. er refunderet.` : "Depositummet er refunderet.";
+    const mailLabel = data.emailSent
+      ? " Aflysningsmail er sendt."
+      : data.emailError
+        ? " Aflysningsmailen blev ikke sendt."
+        : "";
+    setStatus(`${booking.name || "Bookingen"} er aflyst. ${refundLabel}${mailLabel}`, data.emailError ? "error" : "success");
+  } catch (err) {
+    setStatus(err.message || "Kunne ikke aflyse bookingen.", "error");
+    if (button) {
+      button.disabled = false;
+      button.textContent = defaultLabel;
+    }
+  }
+}
+
 function setStatus(message, type = "success") {
   const banner = document.getElementById("bookings-status");
   const text = document.getElementById("bookings-status-text");
@@ -395,10 +444,14 @@ function getTodayIso() {
   return toIsoDate(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
+function isCancelledBooking(booking) {
+  return booking?.status === "cancelled";
+}
+
 function getBookingCountsByDate() {
   const counts = {};
   allBookings.forEach((booking) => {
-    if (!booking.date) return;
+    if (!booking.date || isCancelledBooking(booking)) return;
     counts[booking.date] = (counts[booking.date] || 0) + 1;
   });
   return counts;
@@ -486,7 +539,7 @@ function printGuestList(date) {
     return;
   }
 
-  const bookings = getBookingsForDate(date);
+  const bookings = getBookingsForDate(date).filter((booking) => !isCancelledBooking(booking));
   const event = capacityState.eventsByDate?.[date] || {};
   const dateLabel = formatPrintDateLabel(date);
   const printedAt = new Date().toLocaleString("da-DK", {
@@ -613,8 +666,10 @@ function renderBookingCards(container, bookings) {
   }
 
   bookings.forEach((booking) => {
+    const cancelled = isCancelledBooking(booking);
     const item = document.createElement("article");
-    item.className = "admin-bookings-day-item";
+    item.className = `admin-bookings-day-item${cancelled ? " admin-bookings-day-item--cancelled" : ""}`;
+    const bookingId = escapeHtml(booking.id || booking.stripeSessionId || "");
     item.innerHTML = `
       <div class="admin-bookings-day-item__time">${escapeHtml(formatArrivalTime(booking))}</div>
       <div>
@@ -627,15 +682,22 @@ function renderBookingCards(container, bookings) {
           ${escapeHtml(booking.phone || "—")}${booking.email ? ` · ${escapeHtml(booking.email)}` : ""}
         </div>
         <div class="admin-bookings-day-item__status">
-          <span class="admin-email-status ${booking.emailSentAt ? "admin-email-status--sent" : "admin-email-status--pending"}">
-            ${booking.emailSentAt ? "Email sendt" : "Email ikke sendt"}
-          </span>
+          ${
+            cancelled
+              ? `<span class="admin-email-status admin-email-status--cancelled">Aflyst${booking.refundDkk ? ` · ${escapeHtml(String(booking.refundDkk))} kr. refunderet` : ""}</span>`
+              : `<span class="admin-email-status ${booking.emailSentAt ? "admin-email-status--sent" : "admin-email-status--pending"}">${booking.emailSentAt ? "Email sendt" : "Email ikke sendt"}</span>`
+          }
         </div>
-        <div class="admin-bookings-day-item__actions">
-          <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" data-resend-email="${escapeHtml(booking.id || booking.stripeSessionId || "")}">
+        ${
+          cancelled
+            ? ""
+            : `<div class="admin-bookings-day-item__actions">
+          <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" data-resend-email="${bookingId}">
             ${booking.emailSentAt ? "Send igen" : "Send bekræftelse"}
           </button>
-        </div>
+          <button type="button" class="admin-btn admin-btn--ghost admin-btn--small" data-cancel-booking="${bookingId}">Aflys og refundér</button>
+        </div>`
+        }
       </div>
     `;
     if (booking.message) item.title = booking.message;
@@ -966,7 +1028,7 @@ function renderBookingsList() {
   const pageItems = filtered.slice(start, start + pageSize);
 
   body.innerHTML = "";
-  updateStats(allBookings.length);
+  updateStats(allBookings.filter((booking) => !isCancelledBooking(booking)).length);
 
   if (!allBookings.length) {
     wrap.hidden = true;
@@ -1041,15 +1103,23 @@ function renderMonthBookingsList() {
 
   [...byDate.keys()].sort().forEach((date) => {
     byDate.get(date).forEach((booking) => {
+      const cancelled = isCancelledBooking(booking);
       const item = document.createElement("li");
-      item.className = "admin-bookings-month-list__item";
+      item.className = `admin-bookings-month-list__item${cancelled ? " admin-bookings-month-list__item--cancelled" : ""}`;
+      const bookingId = escapeHtml(booking.id || booking.stripeSessionId || "");
       item.innerHTML = `
         <span class="admin-bookings-month-list__date">${escapeHtml(formatDateLabel(date))}</span>
         <span class="admin-bookings-month-list__time">${escapeHtml(booking.time || "—")}</span>
         <span class="admin-bookings-month-list__name">${escapeHtml(booking.name || "—")}</span>
-        <span class="admin-bookings-month-list__guests">${escapeHtml(booking.guests || booking.guestCount || "—")} pers.</span>
+        <span class="admin-bookings-month-list__guests">${escapeHtml(booking.guests || booking.guestCount || "—")} pers.${cancelled ? " · Aflyst" : ""}</span>
+        ${
+          cancelled
+            ? ""
+            : `<button type="button" class="admin-btn admin-btn--ghost admin-btn--small admin-bookings-month-list__cancel" data-cancel-booking="${bookingId}">Aflys</button>`
+        }
       `;
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (event) => {
+        if (event.target.closest("[data-cancel-booking]")) return;
         openDayModal(date);
         selectDayForList(date);
       });
@@ -1089,7 +1159,7 @@ function applyCapacityState(data) {
   renderDefaultHoursForm();
   renderCalendar();
   renderMonthBookingsList();
-  updateStats(allBookings.length);
+  updateStats(allBookings.filter((booking) => !isCancelledBooking(booking)).length);
 }
 
 async function saveSettings(payload, successMessage) {
@@ -1214,9 +1284,18 @@ function wireBookingsPanel() {
 
   panel.addEventListener("click", (event) => {
     const resendBtn = event.target.closest("[data-resend-email]");
-    if (!resendBtn) return;
+    if (resendBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      resendBookingEmail(resendBtn.dataset.resendEmail, resendBtn);
+      return;
+    }
+
+    const cancelBtn = event.target.closest("[data-cancel-booking]");
+    if (!cancelBtn) return;
     event.preventDefault();
-    resendBookingEmail(resendBtn.dataset.resendEmail, resendBtn);
+    event.stopPropagation();
+    cancelBooking(cancelBtn.dataset.cancelBooking, cancelBtn);
   });
 
   panel.querySelectorAll("form").forEach((form) => {

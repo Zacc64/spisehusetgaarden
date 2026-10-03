@@ -126,6 +126,20 @@ function wireSlideshow(root) {
 
   let current = 0;
   let touchStartX = null;
+  let timer = null;
+  const intervalMs = 6000;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function stopAutoplay() {
+    if (timer) window.clearInterval(timer);
+    timer = null;
+  }
+
+  function startAutoplay() {
+    stopAutoplay();
+    if (reduceMotion || document.hidden) return;
+    timer = window.setInterval(() => show(current + 1), intervalMs);
+  }
 
   function show(index) {
     current = (index + slides.length) % slides.length;
@@ -139,20 +153,25 @@ function wireSlideshow(root) {
     });
   }
 
-  slideshow.querySelector("[data-slideshow-prev]")?.addEventListener("click", () => show(current - 1));
-  slideshow.querySelector("[data-slideshow-next]")?.addEventListener("click", () => show(current + 1));
+  function go(index) {
+    show(index);
+    startAutoplay();
+  }
+
+  slideshow.querySelector("[data-slideshow-prev]")?.addEventListener("click", () => go(current - 1));
+  slideshow.querySelector("[data-slideshow-next]")?.addEventListener("click", () => go(current + 1));
   dots.forEach((dot) => {
-    dot.addEventListener("click", () => show(Number(dot.dataset.slideTo)));
+    dot.addEventListener("click", () => go(Number(dot.dataset.slideTo)));
   });
 
   slideshow.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      show(current - 1);
+      go(current - 1);
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      show(current + 1);
+      go(current + 1);
     }
   });
 
@@ -166,8 +185,21 @@ function wireSlideshow(root) {
     const delta = event.clientX - touchStartX;
     touchStartX = null;
     if (Math.abs(delta) < 40) return;
-    show(delta < 0 ? current + 1 : current - 1);
+    go(delta < 0 ? current + 1 : current - 1);
   });
+
+  slideshow.addEventListener("mouseenter", stopAutoplay);
+  slideshow.addEventListener("mouseleave", startAutoplay);
+  slideshow.addEventListener("focusin", stopAutoplay);
+  slideshow.addEventListener("focusout", (event) => {
+    if (!slideshow.contains(event.relatedTarget)) startAutoplay();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoplay();
+    else startAutoplay();
+  });
+
+  startAutoplay();
 }
 
 async function initCommunityPost(containerSelector) {

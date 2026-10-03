@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookies — Spisehuset Gaarden</title>
+  <meta name="description" content="Cookies hos Spisehuset Gaarden. Kun nødvendige cookies til booking og betaling.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&family=Oswald:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="legal-header">
+    <a class="logo" href="index.html">Spisehuset Gaarden</a>
+    <a class="legal-header__back" href="index.html">Til forsiden</a>
+  </header>
+
+  <main class="legal-page">
+    <p class="section-label">Cookies</p>
+    <h1>Cookiepolitik</h1>
+    <p class="legal-page__lead">Sitet bruger ikke reklame- eller analysecookies. Det, der sættes, er nødvendigt for booking og betaling.</p>
+
+    <h2>På vores side</h2>
+    <p>Vi gemmer i din browser, at du har lukket cookie-beskeden. Det er ikke en tracking-cookie, og den bruges ikke til markedsføring.</p>
+
+    <h2>Når du betaler</h2>
+    <p>Depositummet betales hos Stripe. Stripe kan sætte egne cookies for at gennemføre betalingen og beskytte mod misbrug. De cookies tilhører Stripe og bruges kun i betalingsforløbet.</p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p class="site-footer__brand">Spisehuset Gaarden · Kulturhuset Risbjerggaard · Hvidovre</p>
+      <nav class="site-footer__links" aria-label="Juridisk">
+        <a href="vilkaar.html">Bookingvilkår</a>
+        <a href="privatliv.html">Privatliv</a>
+        <a href="cookies.html" aria-current="page">Cookies</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="cookie-notice" id="cookie-notice" hidden>
+    <p>Vi bruger kun nødvendige cookies til booking og betaling via Stripe.</p>
+    <div class="cookie-notice__actions">
+      <a href="cookies.html">Læs mere</a>
+      <button type="button" id="cookie-notice-ok">OK</button>
+    </div>
+  </div>
+  <script src="js/cookie-notice.js"></script>
+</body>
+</html>

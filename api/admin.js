@@ -16,6 +16,7 @@ const ROUTES = {
   "blob-status": require("./_lib/handlers/blob-status"),
   "sync-bookings": require("./_lib/handlers/booking-sync"),
   "resend-booking-email": require("./_lib/handlers/resend-booking-email"),
+  "cancel-booking": require("./_lib/handlers/cancel-booking"),
   "community-post": require("./_lib/handlers/admin-save-community-post"),
 };
 

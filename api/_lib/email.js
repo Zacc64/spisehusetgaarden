@@ -191,7 +191,65 @@ async function sendBookingEmails(session) {
   });
 }
 
-module.exports = { sendBookingEmails, sendGuestConfirmation, bookingFromStripeSession };
+async function sendCancellationEmail(booking) {
+  if (!booking?.email) return false;
+
+  const dateLabel = formatDanishDate(booking.date);
+  const guests = booking.guests || booking.guestCount || "";
+  const refund = Number(booking.refundDkk) || getPaidAmountFromBooking(booking);
+  const refundLine = refund ? `Depositum på ${refund} kr. er sendt retur. Det kan tage et par bankdage.` : "Depositummet er sendt retur. Det kan tage et par bankdage.";
+
+  const text =
+    `Hej ${booking.name},\n\n` +
+    `Din booking hos Spisehuset Gaarden er aflyst.\n\n` +
+    `Dato: ${dateLabel}\n` +
+    `Tid: ${booking.time}\n` +
+    `Personer: ${guests}\n` +
+    `${refundLine}\n\n` +
+    `Spisehuset Gaarden`;
+
+  const html = `
+    <div style="margin:0;padding:24px;background:#f3f5f1;font-family:Georgia,serif;color:#141414;">
+      <div style="max-width:560px;margin:0 auto;background:#fafbf8;border:1px solid #d8e2d8;border-radius:16px;overflow:hidden;">
+        <div style="padding:22px 24px;background:#2f4535;color:#fafbf8;">
+          <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.8;">Spisehuset Gaarden</p>
+          <h1 style="margin:0;font-size:24px;font-weight:700;">Booking aflyst</h1>
+        </div>
+        <div style="padding:24px;">
+          <p style="margin:0 0 16px;">Hej ${escapeHtml(booking.name)},</p>
+          <p style="margin:0 0 20px;">Din booking er aflyst.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:16px;">
+            <tr><td style="padding:8px 0;color:#5e635c;width:140px;">Dato</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(dateLabel)}</td></tr>
+            <tr><td style="padding:8px 0;color:#5e635c;">Tid</td><td style="padding:8px 0;font-weight:700;">kl. ${escapeHtml(booking.time || "")}</td></tr>
+            <tr><td style="padding:8px 0;color:#5e635c;">Personer</td><td style="padding:8px 0;font-weight:700;">${escapeHtml(String(guests))}</td></tr>
+            ${refund ? `<tr><td style="padding:8px 0;color:#5e635c;">Depositum</td><td style="padding:8px 0;font-weight:700;">${refund} kr. refunderet</td></tr>` : ""}
+          </table>
+          <p style="margin:20px 0 0;">${escapeHtml(refundLine)}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: booking.email,
+    subject: `Booking aflyst — ${dateLabel} kl. ${booking.time}`,
+    text,
+    html,
+  });
+  return true;
+}
+
+function getPaidAmountFromBooking(booking) {
+  const amount = Number(booking?.amountDkk);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+}
+
+module.exports = {
+  sendBookingEmails,
+  sendGuestConfirmation,
+  sendCancellationEmail,
+  bookingFromStripeSession,
+};
 
 function guestEmailCopy(booking, paymentId) {
   const dateLabel = formatDanishDate(booking.date);

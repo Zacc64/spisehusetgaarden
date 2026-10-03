@@ -67,6 +67,10 @@ app.post("/api/admin/resend-booking-email", async (req, res) => {
   await require("./api/_lib/handlers/resend-booking-email")(req, res);
 });
 
+app.post("/api/admin/cancel-booking", async (req, res) => {
+  await require("./api/_lib/handlers/cancel-booking")(req, res);
+});
+
 app.get("/api/admin/blob-status", async (req, res) => {
   await require("./api/_lib/handlers/blob-status")(req, res);
 });
