@@ -30,10 +30,28 @@ let maxBookableDate = "";
 let calendarYear = new Date().getFullYear();
 let calendarMonth = new Date().getMonth();
 
+const partyDialog = document.getElementById("party-dialog");
+
 function parseGuestCount(value) {
-  if (String(value || "").trim() === "7+") return 7;
-  const n = Number.parseInt(String(value), 10);
-  return Number.isFinite(n) && n > 0 ? n : 0;
+  const raw = String(value || "").trim();
+  if (raw.endsWith("+")) return 0;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 && n <= 15 ? n : 0;
+}
+
+function isLargeParty(value) {
+  return String(value || "").trim() === "15+";
+}
+
+function openLargePartyDialog() {
+  if (!partyDialog || partyDialog.open) return;
+  if (typeof partyDialog.showModal === "function") {
+    partyDialog.showModal();
+  }
+}
+
+function closeLargePartyDialog() {
+  if (partyDialog?.open) partyDialog.close();
 }
 
 function monthKey(year, month) {
@@ -339,8 +357,22 @@ calendarGrid?.addEventListener("click", async (event) => {
 });
 
 guestsInput?.addEventListener("change", () => {
+  if (isLargeParty(guestsInput.value)) {
+    guestsInput.value = "";
+    openLargePartyDialog();
+    updateDepositNote();
+    return;
+  }
   updateAvailability();
   updateDepositNote();
+});
+
+partyDialog?.addEventListener("click", (event) => {
+  if (event.target === partyDialog) closeLargePartyDialog();
+});
+
+partyDialog?.querySelectorAll("[data-party-close]").forEach((button) => {
+  button.addEventListener("click", () => closeLargePartyDialog());
 });
 
 const params = new URLSearchParams(window.location.search);
@@ -366,6 +398,11 @@ if (params.get("booking") === "success") {
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorEl.hidden = true;
+
+  if (isLargeParty(guestsInput?.value)) {
+    openLargePartyDialog();
+    return;
+  }
 
   if (!dateInput?.value) {
     errorEl.textContent = "Vælg en dato i kalenderen.";

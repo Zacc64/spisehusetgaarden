@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600&family=Oswald:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=booking-copy">
+  <link rel="stylesheet" href="styles.css?v=party-15">
 </head>
 <body class="is-loading">
 
@@ -170,7 +170,16 @@
               <option value="4">4</option>
               <option value="5">5</option>
               <option value="6">6</option>
-              <option value="7+">7+</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="15+">15+</option>
             </select>
           </label>
         </div>
@@ -260,6 +269,27 @@
     </div>
   </footer>
 
+  <dialog class="party-dialog" id="party-dialog" aria-labelledby="party-dialog-title">
+    <div class="party-dialog__panel">
+      <button class="party-dialog__close" type="button" data-party-close aria-label="Luk">×</button>
+      <p class="section-label">Større selskab</p>
+      <h2 id="party-dialog-title">Mere end 15 personer</h2>
+      <p>Online booking gælder for op til 15 personer. For større selskaber skal I kontakte restauranten, så vi kan finde plads til jer.</p>
+      <div class="party-dialog__contacts">
+        <a class="party-dialog__contact" href="tel:+4531350935">
+          <span>Telefon</span>
+          <strong>31 35 09 35</strong>
+        </a>
+        <a class="party-dialog__contact" href="mailto:info@spisehusetgaarden.dk">
+          <span>Email</span>
+          <strong>info@spisehusetgaarden.dk</strong>
+        </a>
+      </div>
+      <p class="party-dialog__address">Hvidovrevej 241, 2650 Hvidovre</p>
+      <button class="btn-submit" type="button" data-party-close>Luk</button>
+    </div>
+  </dialog>
+
   <div class="cookie-notice" id="cookie-notice" hidden>
     <p>Vi bruger kun nødvendige cookies til booking og betaling via Stripe.</p>
     <div class="cookie-notice__actions">
@@ -270,7 +300,7 @@
 
   <script src="js/cookie-notice.js"></script>
   <script src="js/menu-popup.js"></script>
-  <script src="js/booking.js"></script>
+  <script src="js/booking.js?v=party-15"></script>
   <script src="js/community-post.js?v=slide-auto-10"></script>
   <script>
     initMenuModals("#menu-modal", [

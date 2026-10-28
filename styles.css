@@ -1448,6 +1448,104 @@ button.hero__cta {
   color: var(--green-deep);
 }
 
+.party-dialog {
+  width: min(100% - 2rem, 28rem);
+  padding: 0;
+  border: none;
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(20, 20, 20, 0.22);
+}
+
+.party-dialog::backdrop {
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.party-dialog__panel {
+  position: relative;
+  padding: 2rem 1.75rem 1.6rem;
+}
+
+.party-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.party-dialog__close:hover {
+  background: var(--green-soft);
+}
+
+.party-dialog h2 {
+  margin: 0 0 0.75rem;
+  padding-right: 2rem;
+  font-size: clamp(1.7rem, 4vw, 2.15rem);
+  line-height: 1.1;
+}
+
+.party-dialog__panel > p:not(.section-label) {
+  margin: 0;
+  color: var(--green-deep);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.party-dialog__contacts {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.party-dialog__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--cream);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.party-dialog__contact span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.party-dialog__contact strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.party-dialog__contact:hover {
+  background: var(--green-soft);
+}
+
+.party-dialog .party-dialog__address {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.party-dialog .btn-submit {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
 .form-error {
   margin: 0.75rem 0 0;
   padding: 0.9rem 1rem;

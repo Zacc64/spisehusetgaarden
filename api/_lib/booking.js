@@ -121,9 +121,13 @@ function getDepositOre() {
   return getDepositDkk() * 100;
 }
 
+const MAX_ONLINE_GUESTS = 15;
+
 function parseGuestCount(guests) {
-  if (String(guests).trim() === "7+") return 7;
-  const n = Number.parseInt(String(guests), 10);
+  const raw = String(guests ?? "").trim();
+  if (raw === "7+") return 7;
+  if (raw.endsWith("+")) return 0;
+  const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
@@ -178,8 +182,13 @@ function parseBookingBody(body) {
   if (!time) {
     return { error: "Vælg et tidspunkt." };
   }
-  if (!guests) {
-    return { error: "Vælg antal personer." };
+  if (!guests || guests.endsWith("+")) {
+    return { error: "Vælg mellem 1 og 15 personer. For større selskaber skal I kontakte restauranten." };
+  }
+
+  const guestCount = parseGuestCount(guests);
+  if (guestCount < 1 || guestCount > MAX_ONLINE_GUESTS) {
+    return { error: "Vælg mellem 1 og 15 personer." };
   }
 
   const today = new Date().toISOString().split("T")[0];
